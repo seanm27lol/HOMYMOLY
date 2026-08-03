@@ -61,6 +61,12 @@ def _slice_batch(batch: StructuredBatch, indices: Tensor) -> StructuredBatch:
         num_vertices=take(batch.num_vertices),
         num_edges=take(batch.num_edges),
         num_faces=take(batch.num_faces),
+        face_boundary=(
+            None if batch.face_boundary is None else take(batch.face_boundary)
+        ),
+        face_vertices=(
+            None if batch.face_vertices is None else take(batch.face_vertices)
+        ),
     )
 
 

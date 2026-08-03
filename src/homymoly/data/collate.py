@@ -52,10 +52,19 @@ def collate_structured(samples: Sequence[StructuredSample]) -> StructuredBatch:
         if any(tensor.device != device for tensor in tensors):
             raise ValueError("all sample tensors must be on the same device")
 
+    boundary_present = [sample.face_boundary is not None for sample in samples]
+    if any(boundary_present) and not all(boundary_present):
+        raise ValueError("boundary lists must be present on every sample or none")
+
     batch_size = len(samples)
     max_vertices = max(sample.num_vertices for sample in samples)
     max_edges = max(sample.num_edges for sample in samples)
     max_faces = max(sample.num_faces for sample in samples)
+    max_length = (
+        max(int(sample.face_boundary.shape[1]) for sample in samples)
+        if all(boundary_present)
+        else 0
+    )
 
     node_features = torch.zeros(
         (batch_size, max_vertices, node_dim), dtype=dtype, device=device
@@ -91,6 +100,20 @@ def collate_structured(samples: Sequence[StructuredSample]) -> StructuredBatch:
         face_mask[batch_index, :num_faces] = True
         face_active[batch_index, :num_faces] = sample.face_active
 
+    face_boundary = None
+    face_vertices = None
+    if all(boundary_present):
+        face_boundary = torch.zeros(
+            (batch_size, max_faces, max_length, 2), dtype=torch.long, device=device
+        )
+        face_vertices = torch.full(
+            (batch_size, max_faces, max_length), -1, dtype=torch.long, device=device
+        )
+        for batch_index, sample in enumerate(samples):
+            length = int(sample.face_boundary.shape[1])
+            face_boundary[batch_index, : sample.num_faces, :length] = sample.face_boundary
+            face_vertices[batch_index, : sample.num_faces, :length] = sample.face_vertices
+
     return StructuredBatch(
         observations=StructuredObservations(
             node_features=node_features,
@@ -116,6 +139,8 @@ def collate_structured(samples: Sequence[StructuredSample]) -> StructuredBatch:
         num_faces=torch.tensor(
             [sample.num_faces for sample in samples], dtype=torch.long, device=device
         ),
+        face_boundary=face_boundary,
+        face_vertices=face_vertices,
     )
 
 

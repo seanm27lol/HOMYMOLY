@@ -122,6 +122,8 @@ def face_holonomy(
     edge_mask: Tensor,
     face_index: Tensor,
     face_valid: Tensor,
+    *,
+    face_boundary: Tensor | None = None,
 ) -> Tensor:
     """Per-face transport holonomy ``[B, F, 2, 2]`` for rank-2 connections.
 
@@ -139,6 +141,7 @@ def face_holonomy(
         face_index,
         face_valid,
         dtype=torch.float32,
+        face_boundary=face_boundary,
     )
     planar = transport.to(torch.float32)
     unit = torch.complex(planar[..., 0, 0], planar[..., 1, 0])
@@ -237,8 +240,32 @@ def face_boundary_coefficients(
     face_valid: Tensor,
     *,
     dtype: torch.dtype,
+    face_boundary: Tensor | None = None,
 ) -> Tensor:
-    """Return triangle-boundary coefficients ``[bc] - [ac] + [ab]``."""
+    """Return triangle-boundary coefficients ``[bc] - [ac] + [ab]``.
+
+    When ``face_boundary`` is provided (the padded oriented boundary-edge
+    representation ``[B, F, K, 2]`` of ``(edge_position, coefficient)``), the
+    dense ``[B, F, E]`` matrix is assembled from the stored lists instead of
+    endpoint matching — this is the path for non-triangular cells.
+    """
+
+    if face_boundary is not None:
+        coefficients = torch.zeros(
+            (*face_valid.shape, edge_mask.shape[1]),
+            dtype=dtype,
+            device=edge_mask.device,
+        )
+        valid_entries = face_boundary[..., 1] != 0
+        positions = face_boundary[..., 0].clamp(min=0, max=max(edge_mask.shape[1] - 1, 0))
+        contributions = torch.where(
+            valid_entries,
+            face_boundary[..., 1].to(dtype),
+            torch.zeros((), dtype=dtype, device=edge_mask.device),
+        )
+        coefficients.scatter_add_(2, positions, contributions)
+        valid = face_valid.unsqueeze(2) & edge_mask.unsqueeze(1)
+        return coefficients * valid.to(dtype)
 
     edge_u = edge_index[:, 0].unsqueeze(1)
     edge_v = edge_index[:, 1].unsqueeze(1)
@@ -260,6 +287,8 @@ def face_boundary_aggregate(
     edge_mask: Tensor,
     face_index: Tensor,
     face_valid: Tensor,
+    *,
+    face_boundary: Tensor | None = None,
 ) -> Tensor:
     coefficients = face_boundary_coefficients(
         edge_index,
@@ -267,6 +296,7 @@ def face_boundary_aggregate(
         face_index,
         face_valid,
         dtype=edge_hidden.dtype,
+        face_boundary=face_boundary,
     )
     return torch.einsum("bfe,beh->bfh", coefficients, edge_hidden)
 
@@ -275,7 +305,22 @@ def face_vertex_mean(
     node_hidden: Tensor,
     face_index: Tensor,
     face_valid: Tensor,
+    *,
+    face_vertices: Tensor | None = None,
 ) -> Tensor:
+    if face_vertices is not None:
+        vertex_valid = face_vertices != -1
+        batch_size = face_vertices.shape[0]
+        gathered = safe_gather_nodes(
+            node_hidden, face_vertices.clamp(min=0).reshape(batch_size, -1)
+        ).reshape(*face_vertices.shape, node_hidden.shape[-1])
+        batch, faces = face_vertices.shape[:2]
+        pooled = masked_mean(
+            gathered.reshape(batch * faces, face_vertices.shape[2], node_hidden.shape[-1]),
+            vertex_valid.reshape(batch * faces, face_vertices.shape[2]),
+            dim=1,
+        ).reshape(batch, faces, node_hidden.shape[-1])
+        return apply_mask(pooled, face_valid)
     gathered = [
         safe_gather_nodes(node_hidden, face_index[:, index]) for index in range(3)
     ]
@@ -288,7 +333,30 @@ def scatter_faces_to_nodes(
     face_valid: Tensor,
     *,
     num_nodes: int,
+    face_vertices: Tensor | None = None,
 ) -> Tensor:
+    if face_vertices is not None:
+        source = apply_mask(face_hidden, face_valid)
+        per_vertex_source = source.unsqueeze(2).expand(
+            *face_vertices.shape, face_hidden.shape[-1]
+        )
+        vertex_valid = face_vertices != -1
+        result = face_hidden.new_zeros(
+            (face_hidden.shape[0], num_nodes, face_hidden.shape[-1])
+        )
+        counts = face_hidden.new_zeros((face_hidden.shape[0], num_nodes, 1))
+        indices = face_vertices.clamp(min=0, max=max(num_nodes - 1, 0))
+        contributions = apply_mask(per_vertex_source, vertex_valid)
+        flat_index = indices.reshape(indices.shape[0], -1, 1).expand(
+            -1, -1, face_hidden.shape[-1]
+        )
+        result.scatter_add_(1, flat_index, contributions.reshape(contributions.shape[0], -1, contributions.shape[-1]))
+        counts.scatter_add_(
+            1,
+            indices.reshape(indices.shape[0], -1, 1),
+            vertex_valid.reshape(vertex_valid.shape[0], -1, 1).to(face_hidden.dtype),
+        )
+        return result / counts.clamp_min(1.0)
     result = face_hidden.new_zeros(
         (face_hidden.shape[0], num_nodes, face_hidden.shape[-1])
     )

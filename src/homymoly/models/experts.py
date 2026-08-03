@@ -181,8 +181,14 @@ class CellExpert(nn.Module):
             inputs["edge_mask"],
             inputs["face_index"],
             face_valid,
+            face_boundary=inputs.get("face_boundary"),
         )
-        vertex_hidden = face_vertex_mean(node_hidden, inputs["face_index"], face_valid)
+        vertex_hidden = face_vertex_mean(
+            node_hidden,
+            inputs["face_index"],
+            face_valid,
+            face_vertices=inputs.get("face_vertices"),
+        )
         face_hidden = apply_mask(
             self.face_encoder(torch.cat((vertex_hidden, boundary_hidden), dim=-1)),
             face_valid,
@@ -192,6 +198,7 @@ class CellExpert(nn.Module):
             inputs["face_index"],
             face_valid,
             num_nodes=node_hidden.shape[1],
+            face_vertices=inputs.get("face_vertices"),
         )
         node_hidden = apply_mask(
             self.node_norm(
@@ -393,6 +400,7 @@ class ConnectionSheafExpert(nn.Module):
             inputs["edge_mask"],
             inputs["face_index"],
             face_valid,
+            face_boundary=inputs.get("face_boundary"),
         )
         identity = torch.eye(2, dtype=holonomy.dtype, device=holonomy.device)
         face_features = (holonomy - identity).flatten(-2)
@@ -405,6 +413,7 @@ class ConnectionSheafExpert(nn.Module):
             inputs["face_index"],
             face_valid,
             num_nodes=node_hidden.shape[1],
+            face_vertices=inputs.get("face_vertices"),
         )
         node_hidden = apply_mask(
             self.node_norm(

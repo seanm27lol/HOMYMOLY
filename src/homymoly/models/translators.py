@@ -107,11 +107,13 @@ class GraphToCellTranslator(nn.Module):
             graph["edge_mask"],
             cell["face_index"],
             candidate_mask,
+            face_boundary=cell.get("face_boundary"),
         )
         vertex_latent = face_vertex_mean(
             node_latent,
             cell["face_index"],
             candidate_mask,
+            face_vertices=cell.get("face_vertices"),
         )
         # face_active is observation-level structure in the cell view (the
         # same input the cell expert consumes): the cell label is exactly
@@ -292,6 +294,7 @@ class GraphToSheafTranslator(nn.Module):
             sheaf["edge_mask"],
             sheaf["face_index"],
             face_valid,
+            face_boundary=sheaf.get("face_boundary"),
         )
         identity = torch.eye(2, dtype=holonomy.dtype, device=holonomy.device)
         face_hidden = apply_mask(

@@ -1,5 +1,6 @@
 """Synthetic structured datasets and their typed batch containers."""
 
+from .boundary import cycles_to_boundary_lists, triangles_to_boundary_lists
 from .collate import (
     collate_mixed_structured,
     collate_structured,
@@ -26,5 +27,7 @@ __all__ = [
     "StructuredSample",
     "collate_mixed_structured",
     "collate_structured",
+    "cycles_to_boundary_lists",
     "make_structured_collate",
+    "triangles_to_boundary_lists",
 ]
