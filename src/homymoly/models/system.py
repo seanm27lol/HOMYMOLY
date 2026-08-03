@@ -69,7 +69,17 @@ def _masked_fraction(numerator: Tensor, denominator: Tensor) -> Tensor:
 
 
 def _raw_routing_features(batch: StructuredBatch) -> tuple[Tensor, Tensor]:
-    """Build cheap, label-independent features without invoking any expert."""
+    """Build cheap, label-independent features without invoking any expert.
+
+    The context pairs per-channel means with per-channel max-abs amplitudes
+    and the mean stalk norm.  The confirmatory generator makes route
+    reliability observable through overlapping amplitude ranges (see the
+    experimental protocol: regime selection must be statistically possible
+    from label-independent cues), and the amplitudes live in maxima that
+    mean pooling dilutes away — measured F-statistics across regimes on the
+    shipped diagnostics were ~0 (regime-blind) while the max-abs cues reach
+    9-37.
+    """
 
     graph = batch.model_inputs(SignalRegime.GRAPH)
     cell = batch.model_inputs(SignalRegime.CELL)
@@ -78,6 +88,15 @@ def _raw_routing_features(batch: StructuredBatch) -> tuple[Tensor, Tensor]:
         (
             masked_mean(graph["node_features"], graph["node_mask"]),
             masked_mean(graph["edge_features"], graph["edge_mask"]),
+            apply_mask(graph["node_features"].abs(), graph["node_mask"]).amax(dim=1),
+            apply_mask(graph["edge_features"].abs(), graph["edge_mask"]).amax(dim=1),
+            masked_mean(
+                apply_mask(
+                    graph["node_features"][..., -2:].square().sum(dim=-1).sqrt(),
+                    graph["node_mask"],
+                ),
+                graph["node_mask"],
+            ).unsqueeze(-1),
         ),
         dim=-1,
     )
@@ -147,7 +166,7 @@ class HomologicalRouterSystem(nn.Module):
         self.config = config
         self.fixed_experts = FixedExpertEnsemble(config.expert)
         raw_context_dim = (
-            config.expert.node_feature_dim + config.expert.edge_feature_dim
+            2 * (config.expert.node_feature_dim + config.expert.edge_feature_dim) + 1
         )
         self.router = DiagnosticCostRouter(raw_context_dim, config.router)
         self.graph_to_cell = GraphToCellTranslator(config.expert, config.translator)
