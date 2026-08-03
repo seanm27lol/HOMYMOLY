@@ -1,12 +1,58 @@
 # Gate-2 run handoff (2026-08-03)
 
-**OUTCOME: the first full run finished with status `gate-failed` — see
-"Run outcome" below. This is a recorded Gate-2 result, not a crash.**
+**STATUS: run 3 is in progress** (launched after two design fixes — see
+"Second session" below). Run 1 ended `gate-failed`; run 2 passed the
+fixed-expert gate but hit a latent NaN crash in the translators phase, now
+fixed. Watch `artifacts/gate2/status.json`; final judgment comes from
+`artifacts/gate2/summary.json`, not the process exit code.
 
-This note records exactly what was done in the session that launched the first
-full Gate-2 training run, so any person or tool picking this up has full
-context. It supplements [`12-gate2-training.md`](12-gate2-training.md), which
-describes the stack itself.
+This note records exactly what was done so any person or tool picking this
+up has full context. It supplements
+[`12-gate2-training.md`](12-gate2-training.md), which describes the stack
+itself (note: the sheaf expert description there predates the holonomy
+pathway added in the second session).
+
+## Second session: sheaf-expert fix, translator NaN fix, run 3
+
+Run 1's gate failure was traced to a design defect, not noise:
+
+1. **Root cause of the sheaf failure.** The confirmatory sheaf label is
+   *cycle holonomy*: a defect rotation is composed onto one face edge. The
+   expert's only sheaf-specific input was the per-edge residual between node
+   stalk vectors and transports — but node-field angles and connection frame
+   angles are drawn independently, so that residual is label-independent
+   noise. Verified empirically: per-edge residual range 1.83–2.51 for both
+   labels, while the per-face holonomy defect is exactly 0.0 (label 0) vs
+   2.0 (label 1). No per-edge computation can see the signal.
+2. **The fix** (commit `40fbcbb`). New `ops.face_holonomy` computes every
+   face's transport holonomy exactly (oriented boundary coefficients;
+   complex product, valid because transports are planar rotations and hence
+   commute; FP32; padding-safe; 5e-8 vs brute force). `ConnectionSheafExpert`
+   encodes each face's `H − I`, scatters face messages to nodes, and reads
+   out mean **and max** over faces — the max is essential because the defect
+   is a single-face event and mean pooling dilutes it (0.60 → 1.00 held-out
+   accuracy). The sheaf route view now receives `face_index`/`face_mask`
+   (a cellular sheaf is defined over the complex; faces are observation-level
+   structure, not supervision metadata). The expert remains provably
+   insensitive to `face_active`. Parameter counts stay matched:
+   graph 817k, cell 933k, sheaf 917k.
+3. **Run 2 outcome.** The fixed-expert gate **passed**: sheaf 1.0 and cell
+   ~0.85 on their own regimes (graph route still at chance on its own —
+   see open questions). The run then crashed in translators epoch 1 with a
+   non-finite gradient. Anomaly-mode reproduction named `SqrtBackward0` at
+   the sheaf translator's `residual_norm`: the consistency loss drives
+   residuals toward zero, where `sqrt` has infinite derivative. Latent
+   until now because run 1 never reached the phase and smoke schedules
+   never push residuals near zero.
+4. **The NaN fix** (commit `f1b9554`). `clamp_min(eps)` on the residual
+   norm in both `GraphToSheafTranslator` and `ConnectionSheafExpert`
+   (zero derivative below eps). Stress test: residual driven to exactly
+   0.0 over 300 steps, all gradients finite. Suite 99 passed, ruff clean,
+   four-phase smoke completed.
+5. **Run 3 launched** from a clean slate (old runs archived to
+   `artifacts/gate2-run1-gate-failed/` and `artifacts/gate2-run2-nan-translators/`;
+   the src edits invalidate checkpoint fingerprints by design, so resume
+   from run 2 was impossible anyway).
 
 ## Run outcome (first full run, 2026-08-03)
 
@@ -31,12 +77,14 @@ Full numbers: `artifacts/gate2/summary.json`, `artifacts/gate2/status.json`,
 Checkpoints: `artifacts/gate2/checkpoints/best-fixed_experts.pt` and `last.pt`.
 
 Per the plan's long-run discipline, this null result is recorded as evidence
-about the current mechanism, not relabeled. Open questions for review: why the
-sheaf expert did not learn (capacity? supervision signal? the hardcoded
-"last two node channels = stalk vectors" contract at `models/experts.py:294`
-not matching the confirmatory generator?), and whether the graph expert at
-chance indicates a signal/optimization issue shared by the graph and sheaf
-routes. Do not weaken the gate to make it pass.
+about the current mechanism, not relabeled. The sheaf half of the question is
+now answered (see "Second session" above: the expert had no pathway that
+could observe cycle holonomy). Still open: the **graph expert stays at
+chance on its own regime** in both runs — its label is which signs meet
+across two vertex-disjoint anchor edges with no marker of which vertices are
+anchors, so mean-pooled readout may be unable to locate the signal; that is
+the next design question if a future gate depends on the graph route. Do not
+weaken the gate to make it pass.
 
 ## What was done in this session
 
