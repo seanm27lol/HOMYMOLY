@@ -2,7 +2,7 @@
 
 ## Derived language that is immediately justified
 
-HOLYMOLY may legitimately use:
+HOMYMOLY may legitimately use:
 
 - chain and cochain complexes;
 - chain maps and chain homotopies;
@@ -47,7 +47,7 @@ Primary mathematical references include [Mukai's derived duality](https://www.ca
 
 A Hecke eigensheaf is an eigenobject for a compatible family of Hecke functors associated with representations of a Langlands dual group. Fourier–Mukai theory captures important abelian or torus phenomena but does not generally create Hecke eigensheaves.
 
-Geometric Langlands should enter HOLYMOLY only if a future construction genuinely contains Hecke actions, dual reductive groups, or the appropriate moduli categories. At present it is motivation for functor actions, eigenobjects, duality, and categorical transforms—not an architectural ingredient or novelty claim.
+Geometric Langlands should enter HOMYMOLY only if a future construction genuinely contains Hecke actions, dual reductive groups, or the appropriate moduli categories. At present it is motivation for functor actions, eigenobjects, duality, and categorical transforms—not an architectural ingredient or novelty claim.
 
 Relevant primary sources include [Laumon's generalized Fourier transform](https://arxiv.org/abs/alg-geom/9603004) and Beilinson–Drinfeld's [Quantization of Hitchin's Integrable System and Hecke Eigensheaves](https://math.uchicago.edu/~drinfeld/langlands/QuantizationHitchin.pdf).
 

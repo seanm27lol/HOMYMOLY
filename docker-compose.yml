@@ -1,0 +1,48 @@
+name: homymoly
+
+x-homymoly-base: &homymoly-base
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: homymoly:stage1
+  working_dir: /workspace
+  init: true
+  shm_size: "16gb"
+  user: "${HOMYMOLY_UID:-1000}:${HOMYMOLY_GID:-1000}"
+  volumes:
+    - ./src:/workspace/src:ro
+    - ./configs:/workspace/configs:ro
+    - ./scripts:/workspace/scripts:ro
+    - ./artifacts:/workspace/artifacts
+  environment:
+    HOMYMOLY_CONFIG: /workspace/configs/stage1.yaml
+    HOME: /tmp/homymoly
+    PYTHONPATH: /workspace/src
+    TORCH_HOME: /tmp/homymoly/.cache/torch
+    XDG_CACHE_HOME: /tmp/homymoly/.cache
+
+services:
+  homymoly:
+    <<: *homymoly-base
+    gpus: all
+    command:
+      - check-config
+      - --config
+      - /workspace/configs/stage1.yaml
+      - --create-artifacts
+
+  tensorboard:
+    <<: *homymoly-base
+    profiles: ["dashboard"]
+    entrypoint: ["/workspace/scripts/start_dashboard.sh"]
+    command: []
+    environment:
+      HOMYMOLY_CONFIG: /workspace/configs/stage1.yaml
+      HOMYMOLY_TENSORBOARD_HOST: 0.0.0.0
+      HOMYMOLY_TENSORBOARD_PORT: "6006"
+      HOME: /tmp/homymoly
+      PYTHONPATH: /workspace/src
+      TORCH_HOME: /tmp/homymoly/.cache/torch
+      XDG_CACHE_HOME: /tmp/homymoly/.cache
+    ports:
+      - "127.0.0.1:6006:6006"

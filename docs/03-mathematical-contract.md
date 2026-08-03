@@ -1,6 +1,6 @@
 # Mathematical contract
 
-This document defines the terms that HOLYMOLY may use. Implementations and claims must conform to these definitions.
+This document defines the terms that HOMYMOLY may use. Implementations and claims must conform to these definitions.
 
 ## Chain complexes and exactness
 
@@ -35,7 +35,7 @@ whose components are often called exact, harmonic, and coexact. A learned revers
 
 ## Typed linearizations
 
-Arbitrary spaces, groups, graphs, and sheaves do not belong to one common abelian category. Kernels, images, and quotients therefore cannot be applied to them indiscriminately. HOLYMOLY assigns each supported type a declared linearization:
+Arbitrary spaces, groups, graphs, and sheaves do not belong to one common abelian category. Kernels, images, and quotients therefore cannot be applied to them indiscriminately. HOMYMOLY assigns each supported type a declared linearization:
 
 | Type | Initial complex |
 |---|---|
@@ -47,6 +47,16 @@ Arbitrary spaces, groups, graphs, and sheaves do not belong to one common abelia
 | Small category/logical structure, future | nerve followed by simplicial chains |
 
 Every learned conversion must declare its source, target, degree maps, coefficient field, bases or gauge conventions, and structure-preservation requirement.
+
+### Stage-1 connection-sheaf convention
+
+Every undirected edge is canonically oriented `tail < head`. Its rank-2 transport \(T_e\) maps a vector in the tail stalk into the head frame. With edge-stalk restrictions \(\rho_{t(e)\to e}=T_e\) and \(\rho_{h(e)\to e}=I\), the degree-zero coboundary is
+
+\[
+(\delta x)_e=x_{h(e)}-T_e x_{t(e)}.
+\]
+
+Pure-gauge transports must admit a zero-residual global section and identity holonomy around every cycle. The implementation tests both that sentinel and a deliberately defective cycle. More general, unequal-rank cellular sheaves are outside v0.1.
 
 ## Chain maps
 
@@ -82,7 +92,7 @@ For a chain map \(F:C\to D\), define
 
 with the standard cone differential. The cone is acyclic exactly when \(F\) is a quasi-isomorphism. Its homology combines kernel and cokernel information through the associated long exact sequence.
 
-Mapping-cone homology is therefore the preferred map-aware defect. It differs from RTD: RTD constructs an auxiliary cone-like filtration from two paired distance matrices, whereas HOLYMOLY's direct cone is constructed from the declared transformation \(F\).
+Mapping-cone homology is therefore the preferred map-aware defect. It differs from RTD: RTD constructs an auxiliary cone-like filtration from two paired distance matrices, whereas HOMYMOLY's direct cone is constructed from the declared transformation \(F\).
 
 ## Reverse maps and path coherence
 
