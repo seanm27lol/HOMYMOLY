@@ -1,11 +1,11 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: run 7 is in progress/ (oracle rebuilt as regime-conditional accuracy — see "Run 6 outcome" and "Run 7 hypothesis").
-collapsed to always-cell (graph expert broken). Run 5 fixed the graph
-expert and passed both gates with all three routes specializing, but the
-router stayed regime-blind — traced to regime-blind routing features, now
-extended. See "Run 4 outcome", "Run 5 outcome", and "Run 6 hypothesis"
-below.
+**STATUS: run 7 is in progress** (oracle rebuilt as regime-conditional
+accuracy — see "Run 6 outcome" and "Run 7 hypothesis"). Run 4 passed both
+gates but its router collapsed to always-cell (graph expert broken). Run 5
+fixed the graph expert; run 6 gave the router regime-informative features;
+both still failed the Gate-4 utility bar for reasons traced to the routing
+oracle. See the run sections below.
 
 This note records exactly what was done so any person or tool picking this
 up has full context. It supplements
