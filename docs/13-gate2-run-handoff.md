@@ -1,9 +1,9 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: Gate 2 passed; Gate 3 recorded as a measured null** — structural-loss terms are inert on this benchmark (see docs/15-gate3-record.md). Routing contribution stands.
-fixed route at matched compute with clean provenance. Remaining Gate-2
-items: exact RTD/SRTD port (prototype validated), then Gate 3. See
-"Run 9 outcome".
+**STATUS: Gate 2 passed; Gate 3 recorded as a measured null** —
+structural-loss terms are inert on this benchmark (see
+[`15-gate3-record.md`](15-gate3-record.md)). The routing contribution
+stands.
 see "Run 8 outcome". Earlier history: runs 4–7 below.
 gates but its router collapsed to always-cell (graph expert broken). Run 5
 fixed the graph expert; run 6 gave the router regime-informative features;
