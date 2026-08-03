@@ -65,6 +65,8 @@ class ConfirmatoryConfig:
     nuisance_strength_min: float = 0.80
     nuisance_strength_max: float = 1.20
     holonomy_angle: float = pi / 2
+    stalk_mode: str = "independent"
+    gauge_noise_std: float = 0.3
     dtype: torch.dtype = torch.float32
 
     def __post_init__(self) -> None:
@@ -93,6 +95,10 @@ class ConfirmatoryConfig:
             raise ValueError("reliable and nuisance strength intervals must overlap")
         if not (0 < self.holonomy_angle < 2 * pi):
             raise ValueError("holonomy_angle must lie strictly between zero and 2*pi")
+        if self.stalk_mode not in ("independent", "gauge"):
+            raise ValueError("stalk_mode must be 'independent' or 'gauge'")
+        if self.gauge_noise_std < 0:
+            raise ValueError("gauge_noise_std must be nonnegative")
         if (
             not isinstance(self.dtype, torch.dtype)
             or not torch.empty((), dtype=self.dtype).is_floating_point()
@@ -393,7 +399,20 @@ class ConfirmatoryStructuredSignal(Dataset[StructuredSample]):
         for vertex, sign in zip(graph_vertices, signs, strict=True):
             node_array[vertex, 0] = graph_sign * graph_quality * sign
 
+        # Independent mode (default) preserves the shipped rng stream and
+        # produces a field that is deliberately decoupled from the frames.
+        # Gauge mode negates the connection frame angles for the stalks —
+        # T_e = R(phi_tail - phi_head) transports R(-phi_tail)u to
+        # R(-phi_head)u exactly — and adds per-vertex noise, so clean
+        # samples are approximate global sections (the doc-03 pure-gauge
+        # sentinel) and consistency objectives have a zero noise floor; its
+        # stream differs from independent mode.
         field_angles = pair_rng.uniform(-pi, pi, size=num_vertices)
+        if self.config.stalk_mode == "gauge":
+            frame_angles = field_angles
+            field_angles = pair_rng.normal(
+                0.0, self.config.gauge_noise_std, size=num_vertices
+            ) - frame_angles
         node_array[:, -2] = sheaf_quality * np.cos(field_angles)
         node_array[:, -1] = sheaf_quality * np.sin(field_angles)
 
@@ -416,7 +435,10 @@ class ConfirmatoryStructuredSignal(Dataset[StructuredSample]):
         face_active = torch.zeros(len(faces), dtype=torch.bool)
         face_active[sorted(active_positions)] = True
 
-        frame_angles = pair_rng.uniform(-pi, pi, size=num_vertices)
+        if self.config.stalk_mode == "gauge":
+            pass  # frame_angles already shares the stalk base draw above
+        else:
+            frame_angles = pair_rng.uniform(-pi, pi, size=num_vertices)
         defect_sign = 1.0 if int(pair_rng.integers(0, 2)) else -1.0
         defect = _rotation(
             defect_sign * self.config.holonomy_angle,
