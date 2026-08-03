@@ -1,6 +1,6 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: run 9 is in progress** (confirming run 8's Gate-4 pass at the
+**STATUS: Gate-4 confirmed (run 9)** — learned routing beats the best fixed route at matched compute with clean provenance. Remaining Gate-2 items: exact RTD/SRTD port (prototype validated), then Gate 3. See "Run 9 outcome".
 configured LR). Run 8 was the first run to clear the Gate-4 utility bar —
 see "Run 8 outcome". Earlier history: runs 4–7 below.
 gates but its router collapsed to always-cell (graph expert broken). Run 5
@@ -60,6 +60,37 @@ marginal 0.335), yet the router converged to *exactly* uniform predictions
   scheduling, not architecture.
 
 Artifacts archived at `artifacts/gate2-run7-starved-router-lr/`.
+
+## Run 9 outcome (2026-08-03): Gate-4 confirmed at the configured LR
+
+Status `completed`; both engineering gates passed. **The confirmatory run
+with the corrected per-phase scheduler reproduces the Gate-4 pass with
+clean provenance:**
+
+- hard accuracy **0.743** vs best fixed route 0.667, random 0.669, dense
+  ensemble 0.736 (at ~3× the compute), oracle 0.973;
+- route accuracy 0.503, regime-route MI 0.067, utilization
+  0.26/0.38/0.36 — non-collapsed;
+- expected cost 1.31 vs ~3.9 for always evaluating all three experts.
+
+**Gate-4 criterion met**: learned routing beats the best fixed route at
+matched measured compute and remains non-collapsed for a defensible reason
+(routing is regime-informative). Run 8's stronger 0.788 was obtained at an
+unplanned ~10× LR and is recorded as supporting evidence; run 9 is the
+canonical Gate-2 routing result. The remaining gap to oracle (0.973) is
+bounded by the benchmark's anti-shortcut design: regime identifiability
+from label-independent amplitude cues caps near the measured probe ceiling
+(~0.55–0.58), so route accuracy ~0.5 is the expected operating point, and
+utility — not route identification — is the plan's Gate-4 axis.
+
+**Debugging arc that got here (runs 4–9):** sheaf expert blind to
+holonomy → exact holonomy pathway; graph expert blind to pairwise
+statistics → endpoint-pair pathway; router features regime-blind →
+amplitude cues; routing oracle miscalibrated → regime-conditional accuracy
+table; router LR starved → per-phase schedule restart. Each barrier was
+identified by a targeted measurement, not by sweeping.
+
+Artifacts archived at `artifacts/gate2-run9-gate4-confirmed/`.
 
 ## Run 8 outcome (2026-08-03): Gate-4 utility bar passed, with a caveat
 
