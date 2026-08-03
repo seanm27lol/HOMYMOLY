@@ -63,6 +63,35 @@ marginal 0.335), yet the router converged to *exactly* uniform predictions
 
 Artifacts archived at `artifacts/gate2-run7-starved-router-lr/`.
 
+## Run 10 outcome (2026-08-03): translators competent; Gate-3 needs a corruption dimension
+
+Status `completed`; both engineering gates passed.
+
+- **Routing holds with competent translators**: hard accuracy 0.746 vs
+  best fixed 0.674, random 0.670, dense 0.742, oracle 0.987; route
+  accuracy 0.505, MI 0.068 — statistically identical to run 9, so the
+  Gate-4 result is robust to the translator changes.
+- **Translators now learn in-pipeline**: `translated_ce` 0.683 → 0.62
+  (was flat at ln 2 in every earlier run); graph_to_cell 0.671 and
+  graph_to_sheaf 0.667 — each perfect on its intended regime.
+- **Gate-3 predictive-value analysis (first competent test):** across 918
+  test examples per translator, correlations between structural
+  diagnostics (per-sample consistency, reconstruction) and conversion
+  damage are all ~0 (|ρ| ≤ 0.066).  But this is *uninformative as
+  designed*, not a falsification of the mechanism: damage variance is
+  dominated by intended-vs-non-intended regime (non-intended translation
+  is meaningless by construction → ~0.5 damage), and within intended
+  regimes there is almost no damage to predict (sheaf 0.000, cell 0.186).
+  The plan's Gate-3 criterion is explicit that the test needs *held-out
+  corruptions* — the confirmatory generator currently produces clean
+  samples only.  **Next build item: a corruption-augmented evaluation
+  suite** (gauge rotations / transport noise / edge perturbations at
+  graded intensities) so damage varies continuously and the
+  predictive-value question becomes measurable; then the ablation ladder
+  (task-only → +recon → +chain → +RTD) per the protocol docs.
+
+Artifacts archived at `artifacts/gate2-run10-translators-competent/`.
+
 ## Post-run-9 build items (2026-08-03, in flight)
 
 Two queued items landed after run 9:
