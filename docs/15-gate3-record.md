@@ -106,6 +106,28 @@ constrained to be consistent. A multi-seed pilot is the honest next step
 if this thread is pursued; the project's resources otherwise move to Gate
 5 with the routing contribution.
 
+## Seed-robustness pilot on the gauge signal (2026-08-03, three pairs)
+
+Three task-only/+chain pairs on independent data seeds (s03–s05), each
+followed by the corruption suite:
+
+| pair | task-only consistency | task-only partial ρ | +chain consistency | +chain partial ρ | Δ |
+|---|---|---|---|---|---|
+| s03 | 1.398 | 0.140 | 0.182 | 0.311 | +0.17 |
+| s04 | 1.682 | −0.054 | 0.187 | 0.435 | +0.49 |
+| s05 | 1.974 | 0.275 | 0.182 | 0.127 | −0.15 |
+
+- The chain term holds consistency near the gauge floor (~0.18) in every
+  +chain run and lets it drift (1.4–2.0) in every task-only run — the
+  manipulation is reliable.
+- The utility null is robust: corruption damage is flat across all six
+  runs (0.131–0.177), confirming the Gate-3 verdict on three seeds.
+- The topological signal effect is **real but not robust**: two of three
+  pairs show the lift (mean Δ +0.17 across pairs, +0.29 vs +0.12 pooled
+  means) and one pair reverses it. Recorded as weak evidence consistent
+  with the chain-contract-before-interpretation principle; a larger seed
+  campaign (5–10 pairs) would be required to confirm or kill it.
+
 - **C4 is moot on this benchmark**: with both cone-style and RTD-style
   terms inert, "cone beyond RTD" has no operating regime to distinguish.
 - The translator phase gate stays an *engineering* gate (finite held-out
