@@ -39,6 +39,7 @@ def test_sample_shares_one_observation_bundle_and_isolates_metadata() -> None:
         "edge_features",
         "edge_index",
         "transport",
+        "face_index",
     }
     assert "face_active" not in graph_inputs
     assert "transport" not in graph_inputs

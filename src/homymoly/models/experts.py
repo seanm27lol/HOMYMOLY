@@ -13,8 +13,10 @@ from .ops import (
     GraphMessageLayer,
     apply_mask,
     face_boundary_aggregate,
+    face_holonomy,
     face_vertex_mean,
     masked_feature_energy,
+    masked_max,
     masked_mean,
     safe_gather_nodes,
     scatter_faces_to_nodes,
@@ -258,7 +260,15 @@ class _SheafMessageLayer(nn.Module):
 
 
 class ConnectionSheafExpert(nn.Module):
-    """Rank-2 connection expert using tail-to-head transport residuals."""
+    """Rank-2 connection expert with a per-face transport-holonomy pathway.
+
+    The per-edge tail-to-head residual remains as an input and structural
+    diagnostic, but the confirmatory sheaf label lives in cycle holonomy:
+    node-field angles and connection frame angles are independent draws, so
+    only a product of transports around a face can see the defect.  The
+    expert therefore encodes every face's holonomy and mixes it back into the
+    node states before readout.
+    """
 
     route = SignalRegime.SHEAF
 
@@ -281,8 +291,21 @@ class ConnectionSheafExpert(nn.Module):
             _SheafMessageLayer(config.hidden_dim, dropout=config.dropout)
             for _ in range(config.num_layers)
         )
-        self.readout = MLP(
+        self.face_encoder = MLP(
+            4,
+            config.hidden_dim,
+            config.hidden_dim,
+            dropout=config.dropout,
+        )
+        self.node_face_update = MLP(
             2 * config.hidden_dim,
+            config.hidden_dim,
+            config.hidden_dim,
+            dropout=config.dropout,
+        )
+        self.node_norm = nn.LayerNorm(config.hidden_dim)
+        self.readout = MLP(
+            4 * config.hidden_dim,
             config.hidden_dim,
             config.embedding_dim,
             dropout=config.dropout,
@@ -330,10 +353,41 @@ class ConnectionSheafExpert(nn.Module):
                 inputs["node_mask"],
                 inputs["edge_mask"],
             )
+        face_valid = inputs["face_mask"]
+        holonomy = face_holonomy(
+            inputs["transport"],
+            inputs["edge_index"],
+            inputs["edge_mask"],
+            inputs["face_index"],
+            face_valid,
+        )
+        identity = torch.eye(2, dtype=holonomy.dtype, device=holonomy.device)
+        face_features = (holonomy - identity).flatten(-2)
+        face_hidden = apply_mask(
+            self.face_encoder(face_features.to(node_hidden.dtype)),
+            face_valid,
+        )
+        face_messages = scatter_faces_to_nodes(
+            face_hidden,
+            inputs["face_index"],
+            face_valid,
+            num_nodes=node_hidden.shape[1],
+        )
+        node_hidden = apply_mask(
+            self.node_norm(
+                node_hidden
+                + self.node_face_update(torch.cat((node_hidden, face_messages), dim=-1))
+            ),
+            inputs["node_mask"],
+        )
         pooled = torch.cat(
             (
                 masked_mean(node_hidden, inputs["node_mask"]),
                 masked_mean(edge_hidden, inputs["edge_mask"]),
+                masked_mean(face_hidden, face_valid),
+                # The holonomy defect is a single-face event; mean pooling
+                # dilutes it by the face count, so keep the max as well.
+                masked_max(face_hidden, face_valid),
             ),
             dim=-1,
         )

@@ -39,6 +39,26 @@ def masked_mean(values: Tensor, mask: Tensor, *, dim: int = 1) -> Tensor:
     return (numerator / denominator).to(values.dtype)
 
 
+def masked_max(values: Tensor, mask: Tensor, *, dim: int = 1) -> Tensor:
+    """Masked max with FP32 computation for low-precision neural tensors."""
+
+    if dim != 1:
+        raise ValueError("Gate-2 masked_max currently supports the padded axis dim=1")
+    expanded = mask
+    while expanded.ndim < values.ndim:
+        expanded = expanded.unsqueeze(-1)
+    dtype = _work_dtype(values)
+    filled = torch.where(
+        expanded,
+        values.to(dtype),
+        torch.full((), -1.0e30, dtype=dtype, device=values.device),
+    )
+    result = filled.amax(dim=dim)
+    # Fully masked samples are meaningless; report zero instead of the fill.
+    any_valid = expanded.any(dim=dim)
+    return torch.where(any_valid, result, torch.zeros_like(result)).to(values.dtype)
+
+
 def masked_feature_energy(values: Tensor, mask: Tensor) -> Tensor:
     """Per-sample mean squared feature magnitude in FP32/FP64."""
 
@@ -94,6 +114,49 @@ def scatter_mean_to_nodes(
         mask.unsqueeze(-1).to(dtype=messages.dtype),
     )
     return result / counts.clamp_min(1.0)
+
+
+def face_holonomy(
+    transport: Tensor,
+    edge_index: Tensor,
+    edge_mask: Tensor,
+    face_index: Tensor,
+    face_valid: Tensor,
+) -> Tensor:
+    """Per-face transport holonomy ``[B, F, 2, 2]`` for rank-2 connections.
+
+    The connection matrices produced by the generators are planar rotations,
+    so they commute and the oriented cycle product can be evaluated exactly as
+    a product of unit complex numbers (``cos + i sin`` per transport, with
+    inverse-orientation edges contributing the conjugate).  Padded faces and
+    edges contribute identity.  The computation runs in FP32; callers should
+    cast the result to the surrounding working dtype.
+    """
+
+    coefficients = face_boundary_coefficients(
+        edge_index,
+        edge_mask,
+        face_index,
+        face_valid,
+        dtype=torch.float32,
+    )
+    planar = transport.to(torch.float32)
+    unit = torch.complex(planar[..., 0, 0], planar[..., 1, 0])
+    expanded = unit.unsqueeze(1).expand(coefficients.shape)
+    identity = torch.ones_like(expanded)
+    factor = torch.where(
+        coefficients > 0,
+        expanded,
+        torch.where(coefficients < 0, expanded.conj(), identity),
+    )
+    holonomy = factor.prod(dim=2)
+    return torch.stack(
+        (
+            torch.stack((holonomy.real, -holonomy.imag), dim=-1),
+            torch.stack((holonomy.imag, holonomy.real), dim=-1),
+        ),
+        dim=-2,
+    )
 
 
 class MLP(nn.Module):
@@ -247,8 +310,10 @@ __all__ = [
     "GraphMessageLayer",
     "apply_mask",
     "face_boundary_aggregate",
+    "face_holonomy",
     "face_vertex_mean",
     "masked_feature_energy",
+    "masked_max",
     "masked_mean",
     "masked_mse",
     "safe_gather_nodes",

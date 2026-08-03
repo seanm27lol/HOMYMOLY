@@ -297,7 +297,12 @@ class StructuredSample:
                 }
             )
         elif selected is SignalRegime.SHEAF:
-            inputs["transport"] = self.transport
+            inputs.update(
+                {
+                    "transport": self.transport,
+                    "face_index": self.face_index,
+                }
+            )
         return inputs
 
     def to(
@@ -485,7 +490,13 @@ class StructuredBatch:
                 }
             )
         elif selected is SignalRegime.SHEAF:
-            inputs["transport"] = self.transport
+            inputs.update(
+                {
+                    "transport": self.transport,
+                    "face_index": self.face_index,
+                    "face_mask": self.face_mask,
+                }
+            )
         return inputs
 
     def to(

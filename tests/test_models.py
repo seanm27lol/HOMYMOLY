@@ -194,11 +194,8 @@ def test_route_scoped_experts_and_translators_ignore_privileged_structure(
             changed_faces.face_mask
         ]
         changed_faces.face_index[:] = 0
-    graph_after_faces, _, sheaf_after_faces = model.fixed_experts.forward_all(
-        changed_faces
-    )
+    graph_after_faces, _, _ = model.fixed_experts.forward_all(changed_faces)
     _assert_expert_equal(graph, graph_after_faces)
-    _assert_expert_equal(sheaf, sheaf_after_faces)
     translated_sheaf_after_faces = model.graph_to_sheaf(changed_faces)
     torch.testing.assert_close(
         sheaf_translation.higher_latent,
@@ -206,6 +203,16 @@ def test_route_scoped_experts_and_translators_ignore_privileged_structure(
         rtol=0,
         atol=1e-6,
     )
+    # The sheaf expert consumes face_index (its holonomy pathway is defined on
+    # faces), so only face_active flips — which it never reads — must leave it
+    # unchanged.
+    changed_active_only = copy.deepcopy(padded_batch)
+    with torch.no_grad():
+        changed_active_only.face_active[changed_active_only.face_mask] = (
+            ~changed_active_only.face_active[changed_active_only.face_mask]
+        )
+    _, _, sheaf_after_active = model.fixed_experts.forward_all(changed_active_only)
+    _assert_expert_equal(sheaf, sheaf_after_active)
 
 
 def test_translator_shapes_and_surrogate_losses_are_finite(padded_batch) -> None:  # type: ignore[no-untyped-def]
