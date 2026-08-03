@@ -93,7 +93,7 @@ def collate_structured(samples: Sequence[StructuredSample]) -> StructuredBatch:
         node_features[batch_index, :num_vertices] = sample.node_features
         edge_features[batch_index, :num_edges] = sample.edge_features
         edge_index[batch_index, :, :num_edges] = sample.edge_index
-        face_index[batch_index, :, :num_faces] = sample.face_index
+        face_index[batch_index, :, : sample.face_index.shape[1]] = sample.face_index
         transport[batch_index, :num_edges] = sample.transport
         node_mask[batch_index, :num_vertices] = True
         edge_mask[batch_index, :num_edges] = True

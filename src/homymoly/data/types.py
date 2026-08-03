@@ -225,7 +225,7 @@ class StructuredSample:
         _require_tensor("face_active", self.face_active, ndim=1)
         if self.face_active.dtype != torch.bool:
             raise TypeError("face_active must have dtype torch.bool")
-        if self.face_active.shape[0] != self.face_index.shape[1]:
+        if self.face_active.shape[0] != self.num_faces:
             raise ValueError("face_active and face_index disagree on the number of faces")
 
         _require_tensor("transport", self.transport, ndim=3)
@@ -278,8 +278,10 @@ class StructuredSample:
             raise ValueError("face_boundary must have shape [F, K, 2]")
         if vertices.ndim != 2:
             raise ValueError("face_vertices must have shape [F, K]")
-        num_faces = int(self.face_index.shape[1])
-        if boundary.shape[0] != num_faces or vertices.shape[0] != num_faces:
+        num_faces = int(boundary.shape[0])  # the boundary lists define the face set
+        if int(self.face_index.shape[1]) > num_faces:
+            raise ValueError("face_index cannot exceed the boundary-list face count")
+        if vertices.shape[0] != num_faces:
             raise ValueError("boundary lists and face_index disagree on the face count")
         if boundary.shape[1] != vertices.shape[1]:
             raise ValueError("face_boundary and face_vertices disagree on K")
@@ -324,6 +326,8 @@ class StructuredSample:
 
     @property
     def num_faces(self) -> int:
+        if self.face_boundary is not None:
+            return int(self.face_boundary.shape[0])
         return int(self.face_index.shape[1])
 
     def observations_for(self, route: SignalRegime | str) -> StructuredObservations:
@@ -496,21 +500,25 @@ class StructuredBatch:
         for index in range(batch_size):
             num_vertices = int(self.num_vertices[index])
             num_edges = int(self.num_edges[index])
-            num_faces = int(self.num_faces[index])
             valid_edges = self.edge_index[index, :, :num_edges]
-            valid_faces = self.face_index[index, :, :num_faces]
             if valid_edges.numel() and (
                 torch.any(valid_edges < 0) or torch.any(valid_edges >= num_vertices)
             ):
                 raise ValueError("valid edge indices must reference real vertices")
-            if valid_faces.numel() and (
-                torch.any(valid_faces < 0) or torch.any(valid_faces >= num_vertices)
-            ):
-                raise ValueError("valid face indices must reference real vertices")
             if torch.any(self.edge_index[index, :, num_edges:] != -1):
                 raise ValueError("padded edge indices must use the -1 sentinel")
-            if torch.any(self.face_index[index, :, num_faces:] != -1):
+            # face_index may be a strict triangle subset of the face set
+            # (rings live in face_boundary); its real entries are a prefix.
+            faces_row = self.face_index[index]
+            real_faces = faces_row != -1
+            real_count = int(real_faces.any(dim=0).sum())
+            if torch.any(faces_row[:, real_count:] != -1):
                 raise ValueError("padded face indices must use the -1 sentinel")
+            real = faces_row[:, :real_count]
+            if real.numel() and (
+                torch.any(real < 0) or torch.any(real >= num_vertices)
+            ):
+                raise ValueError("valid face indices must reference real vertices")
             if torch.count_nonzero(self.node_features[index, num_vertices:]):
                 raise ValueError("padded node features must be zero")
             if torch.count_nonzero(self.edge_features[index, num_edges:]):
