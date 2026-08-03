@@ -1,16 +1,46 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: run 4 is in progress.** Run 1 ended `gate-failed`; run 2 passed
-the fixed-expert gate but hit a latent NaN crash in the translators phase;
-run 3 crashed identically because the first NaN fix was itself wrong (see
-below). Watch `artifacts/gate2/status.json`; final judgment comes from
-`artifacts/gate2/summary.json`, not the process exit code.
+**STATUS: run 4 completed end-to-end; next build item is the graph-expert
+readout (see below).** Run 4 passed both engineering gates but its router
+collapsed to always-cell with zero regime-route mutual information. The
+collapse is traced to the graph expert's chance-level performance, which
+leaves the cell expert as the best route for two of three regimes.
 
 This note records exactly what was done so any person or tool picking this
 up has full context. It supplements
 [`12-gate2-training.md`](12-gate2-training.md), which describes the stack
 itself (note: the sheaf expert description there predates the holonomy
 pathway added in the second session).
+
+## Run 4 outcome (2026-08-03, commit `3e464ff` tree)
+
+Status `completed`: 40 epochs / 2720 steps, all four phases.
+
+- **fixed-expert gate: passed** — cell +0.351, sheaf +0.500 over the graph
+  route. Sheaf held 1.000 test accuracy on its regime through the full run.
+- **translator gate: passed** — 14.4% relative improvement in
+  reconstruction+consistency over its own baseline (minimum 2%). The gate
+  carries its own claim boundary: it does not replace the Gate-3
+  predictive-value criterion. Translated task accuracy stayed at chance
+  (~0.50) — recorded for the Gate-3 ablation work.
+- **router: collapsed** — `route_utilization_cell = 1.0`, graph/sheaf 0.0,
+  `regime_route_mutual_information = 0.0`, `route_accuracy` 0.505,
+  `oracle_regret` 0.269. Hard accuracy 0.675 = the cell expert's accuracy;
+  soft accuracy 0.772; utility oracle 0.950.
+- **Root cause of the collapse (diagnosed, not speculative):** the graph
+  expert scores 0.5 on its own regime in every run, so always-cell is
+  near-optimal for 2/3 of regimes. The graph label is sign agreement across
+  two *unmarked* anchor edges — a per-edge statistic that the expert's
+  mean-pooled readout dilutes below the noise floor (identical failure class
+  to the pre-fix sheaf expert: the signal exists but no pathway preserves it
+  through aggregation).
+- **Prescription (same class as the sheaf fix):** add a masked max-pooled
+  edge readout to `GraphExpert` so one informative edge survives pooling,
+  then rerun. Only after all three routes work can Gate-4 routing metrics
+  (utilization, regime-route MI, oracle regret) be interpreted.
+
+Artifacts archived at `artifacts/gate2-run4-completed-router-collapsed/`
+(summary, history, test predictions, checkpoints for all four phases).
 
 ## Second session: sheaf-expert fix, translator NaN fix, run 3
 

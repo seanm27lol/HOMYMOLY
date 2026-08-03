@@ -77,7 +77,15 @@ class _GraphBackbone(nn.Module):
 
 
 class GraphExpert(nn.Module):
-    """Edge-conditioned graph message passing on the graph-scoped view."""
+    """Edge-conditioned graph message passing on the graph-scoped view.
+
+    The graph-regime label is a pairwise statistic (sign agreement between
+    the two endpoints of a few unmarked anchor edges).  Neither the per-node
+    encoder nor mean pooling can form or preserve such a product, so the
+    expert adds a raw endpoint-pair pathway: each edge sees its two
+    endpoints' raw features, and the readout keeps the masked max so a
+    single informative edge survives aggregation.
+    """
 
     route = SignalRegime.GRAPH
 
@@ -85,8 +93,14 @@ class GraphExpert(nn.Module):
         super().__init__()
         self.config = config
         self.backbone = _GraphBackbone(config)
+        self.edge_pair_encoder = MLP(
+            2 * config.node_feature_dim,
+            config.hidden_dim,
+            config.hidden_dim,
+            dropout=config.dropout,
+        )
         self.readout = MLP(
-            2 * config.hidden_dim,
+            3 * config.hidden_dim,
             config.hidden_dim,
             config.embedding_dim,
             dropout=config.dropout,
@@ -96,10 +110,23 @@ class GraphExpert(nn.Module):
     def forward(self, batch: StructuredBatch) -> ExpertOutput:
         inputs = batch.model_inputs(self.route)
         node_hidden, edge_hidden = self.backbone(inputs)
+        tail_features = safe_gather_nodes(
+            inputs["node_features"], inputs["edge_index"][:, 0]
+        )
+        head_features = safe_gather_nodes(
+            inputs["node_features"], inputs["edge_index"][:, 1]
+        )
+        pair_hidden = apply_mask(
+            self.edge_pair_encoder(
+                torch.cat((tail_features, head_features), dim=-1)
+            ),
+            inputs["edge_mask"],
+        )
         pooled = torch.cat(
             (
                 masked_mean(node_hidden, inputs["node_mask"]),
                 masked_mean(edge_hidden, inputs["edge_mask"]),
+                masked_max(pair_hidden, inputs["edge_mask"]),
             ),
             dim=-1,
         )
