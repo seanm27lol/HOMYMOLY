@@ -77,7 +77,34 @@ individually and jointly inert on this benchmark.
 - The topological defect is real and measurable (experiment 1) — the
   current benchmark simply offers it nothing to improve.
 
-## Consequences
+## Addendum: the gauge-tier revision test (2026-08-03)
+
+The mechanistic note above said the cochain surrogate has an irreducible
+noise floor because the generator's node field is not a section of the
+connection. The gauge tier removes that objection: `stalk_mode = "gauge"`
+makes clean samples approximate global sections (sentinel: max per-edge
+residual 1e-7 at zero noise) while preserving the holonomy label signal
+(0.0 vs 2.0). On this tier the consistency surrogate has real dynamic
+range, and the chain term visibly works on its target:
+
+| variant | consistency | hard | sheaf corruption damage | topo partial |
+|---|---|---|---|---|
+| gauge task-only | 1.398 (drifts up unopposed) | 0.757 | 0.164 | 0.140 |
+| gauge +chain | 0.182 (held low) | 0.766 | 0.177 | 0.311 |
+
+Verdict: the structural term controls its target quantity for the first
+time — and it still does not improve task accuracy or corruption
+robustness (damage flat to slightly worse). **The Gate-3 null is therefore
+robust across both data designs: structural regularization of the
+translators does not help even where it is measurable and controllable.**
+
+One weak non-null signal is recorded for the follow-up: with translations
+held structurally consistent, the topological defect's partial correlation
+with damage roughly doubles (0.311 vs 0.140) — consistent with the theory
+that cone/holonomy defects become informative precisely when maps are
+constrained to be consistent. A multi-seed pilot is the honest next step
+if this thread is pursued; the project's resources otherwise move to Gate
+5 with the routing contribution.
 
 - **C4 is moot on this benchmark**: with both cone-style and RTD-style
   terms inert, "cone beyond RTD" has no operating regime to distinguish.
