@@ -1,6 +1,6 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: run 7 is in progress** (oracle rebuilt as regime-conditional
+**STATUS: run 9 is in progress** (confirming run 8's Gate-4 pass at the configured LR). Run 8 was the first run to clear the Gate-4 utility bar — see "Run 8 outcome". Earlier history: runs 4-7 below.
 accuracy — see "Run 6 outcome" and "Run 7 hypothesis"). Run 4 passed both
 gates but its router collapsed to always-cell (graph expert broken). Run 5
 fixed the graph expert; run 6 gave the router regime-informative features;
@@ -42,6 +42,50 @@ Status `completed`: 40 epochs / 2720 steps, all four phases.
 
 Artifacts archived at `artifacts/gate2-run4-completed-router-collapsed/`
 (summary, history, test predictions, checkpoints for all four phases).
+
+## Run 7 outcome (2026-08-03, table oracle shipped)
+
+Status `completed`; both engineering gates passed. The oracle was now
+regime-aligned and the supervision learnable (offline probe 0.556 vs
+marginal 0.335), yet the router converged to *exactly* uniform predictions
+(`oracle_route_ce` → ln 3, route accuracy 1/3, MI ~ 0).
+
+- **Root cause (isolated by offline replication with the actual router
+  module and the engine's exact loss):** the single 40-epoch cosine
+  schedule leaves router warmup at LR ~1e-4 and joint finetune at ~1e-6.
+  At those rates the router learns nothing (0.324); the same setup at
+  3e-4–1e-3 learns readily (0.54–0.59). The entropy/cost/balance loss
+  terms were measured and exonerated. Classification: simple optimization
+  scheduling, not architecture.
+
+Artifacts archived at `artifacts/gate2-run7-starved-router-lr/`.
+
+## Run 8 outcome (2026-08-03): Gate-4 utility bar passed, with a caveat
+
+Status `completed`; both engineering gates passed; **the router cleared
+the Gate-4 criterion for the first time**:
+
+- hard accuracy **0.788** vs best fixed route 0.667, random 0.672, dense
+  ensemble 0.734 (the dense ensemble also runs ~3× the compute);
+  `oracle_accuracy` 0.999, route accuracy 0.574 (at the linear probe
+  ceiling), regime-route MI 0.124 (was ≤0.012), utilization
+  293/312/313 — non-collapsed with per-regime accuracies 0.78–0.79.
+- **Caveat that requires a confirmatory run:** the intended per-phase LR
+  restart never fired (the hook keyed on `phase_index !=
+  state.phase_index`, but `state.phase_index` is advanced at each phase
+  end, making the condition always false). Run 8's router phases ran on
+  the stale first-phase schedule mirror-rising past `T_max`, landing at an
+  unintended ~2–3e-3 effective LR (~10× configured 3e-4). The router
+  learned well at that rate — consistent with the offline LR probe that
+  showed 1e-3 ≫ 3e-4 — but the record must state that the result was
+  obtained at an unplanned LR.
+- **Fix shipped:** restart now keys on `first_epoch == 0` (verified
+  in-engine: one clean cosine per phase). Run 9 repeats the experiment at
+  the configured LR with the corrected mechanism. If run 9 is weaker, the
+  LR sensitivity itself is the finding and a deliberate router-LR change
+  becomes a pilot-campaign decision.
+
+Artifacts archived at `artifacts/gate2-run8-gate4-passed-lr-anomaly/`.
 
 ## Run 6 outcome (2026-08-03, regime-informative router features)
 
