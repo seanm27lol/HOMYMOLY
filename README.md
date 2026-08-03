@@ -43,6 +43,7 @@ RTD compares the Vietoris–Rips filtrations induced by two paired point-cloud r
 - [Gate 2 run handoff](docs/13-gate2-run-handoff.md)
 - [Gate 2 review](docs/14-gate2-review.md)
 - [Gate 3 record](docs/15-gate3-record.md)
+- [Gate 5 record: molecular transfer](docs/16-gate5-record.md)
 - [Bibliography](references.bib)
 
 ## Stage 1 foundation
@@ -85,4 +86,4 @@ The candidate contribution is their disciplined intersection: dynamic, cost-awar
 
 ## Status
 
-Stage 1 foundation, Gate 2 (passed: fixed experts + routing on the confirmatory synthetic benchmark), and Gate 3 (measured null for the structural-loss mechanism) are implemented and recorded; RTD is reproduced as an exact evaluation reference. Remaining gates: benchmark revision for the mechanism, and molecular transfer for the routing contribution. Literature checked through **2026-08-02**. Novelty conclusions are evidence-based research judgments, not a patent search or guarantee of priority.
+Stage 1 foundation, Gate 2 (passed: fixed experts + routing on the confirmatory synthetic benchmark), and Gate 3 (measured null for the structural-loss mechanism) are implemented and recorded; RTD is reproduced as an exact evaluation reference. Gate 5 recorded: ring-lift route loses to the graph route on MOLHIV (docs/16). Open threads: molecularly-informed cell architecture; the gauge-tier consistency-constrained topological signal. Literature checked through **2026-08-02**. Novelty conclusions are evidence-based research judgments, not a patent search or guarantee of priority.
