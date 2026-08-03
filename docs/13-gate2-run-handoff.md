@@ -1,10 +1,11 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: run 4 completed end-to-end; next build item is the graph-expert
-readout (see below).** Run 4 passed both engineering gates but its router
-collapsed to always-cell with zero regime-route mutual information. The
-collapse is traced to the graph expert's chance-level performance, which
-leaves the cell expert as the best route for two of three regimes.
+**STATUS: run 6 is in progress.** Run 4 passed both gates but its router
+collapsed to always-cell (graph expert broken). Run 5 fixed the graph
+expert and passed both gates with all three routes specializing, but the
+router stayed regime-blind — traced to regime-blind routing features, now
+extended. See "Run 4 outcome", "Run 5 outcome", and "Run 6 hypothesis"
+below.
 
 This note records exactly what was done so any person or tool picking this
 up has full context. It supplements
@@ -41,6 +42,50 @@ Status `completed`: 40 epochs / 2720 steps, all four phases.
 
 Artifacts archived at `artifacts/gate2-run4-completed-router-collapsed/`
 (summary, history, test predictions, checkpoints for all four phases).
+
+## Run 5 outcome (2026-08-03, post-graph-fix tree)
+
+Status `completed`; both engineering gates passed again.
+
+- **All three experts specialized**: graph 0.997, cell 0.726, sheaf 1.000 on
+  their own regimes (test). Oracle accuracy jumped 0.748 → 0.907; utility
+  oracle 0.960. The three-route system now works as the benchmark intends.
+- **Router still regime-blind**: mutual information 0.002, route accuracy
+  0.441, hard accuracy 0.672 (random route 0.673, dense 0.741). Utilization
+  split cell/sheaf but not conditionally on regime.
+- **Root cause (measured, not speculative):** the shipped routing
+  diagnostics are regime-blind by construction — one-way F-statistics
+  across regimes are 0.00 (densities, active-face fraction), 0.56–0.70
+  (sheaf residual/deviation), 3.74 (edge energy). The generator exposes
+  route reliability through *overlapping amplitude ranges* (the intended
+  label-independent cue, capped at ~0.80 identifiability by the
+  anti-shortcut design), and every shipped diagnostic is a mean or count
+  that dilutes exactly those amplitude cues — the same dilution failure
+  class as the sheaf and graph experts, one level up.
+- **Gate-3 prep finding:** both translators sit at chance task accuracy
+  (damage rate 0.500), and their structural diagnostics show zero
+  correlation with conversion damage (|ρ| ≤ 0.01). The Gate-3
+  predictive-value criterion is untestable until translators are
+  task-competent. `GraphToSheafTranslator` has the same missing-holonomy
+  defect the sheaf expert had (per-edge residuals only); that is the first
+  translator fix when Gate-3 work begins.
+
+Artifacts archived at `artifacts/gate2-run5-regime-blind-router/`.
+
+## Run 6 hypothesis (in progress)
+
+The router context was extended with label-independent amplitude cues:
+per-channel max-abs for node/edge features plus mean stalk norm (context
+dim 6 → 13). Measured F-statistics: node ch0 max-abs 37.1 (graph), edge
+ch1 max-abs 8.8 (cell), stalk norm 2.3 (sheaf, weak by design). A linear
+regime probe reaches 0.573 held-out (chance 0.333); the router MLP has
+more capacity. Success looks like: regime-route MI substantially above
+zero, utilization tracking regime frequencies, hard accuracy approaching
+oracle (0.907) rather than the best fixed route, and route accuracy toward
+the ~0.80 identifiability ceiling. If MI stays near zero, the next suspect
+is the router training dynamics (entropy/load-balance terms vs
+supervision), not the features — the probe already shows the information
+is present.
 
 ## Second session: sheaf-expert fix, translator NaN fix, run 3
 
