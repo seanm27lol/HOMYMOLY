@@ -1,7 +1,8 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: run 9 is in progress** (confirming run 8's Gate-4 pass at the configured LR). Run 8 was the first run to clear the Gate-4 utility bar — see "Run 8 outcome". Earlier history: runs 4-7 below.
-accuracy — see "Run 6 outcome" and "Run 7 hypothesis"). Run 4 passed both
+**STATUS: run 9 is in progress** (confirming run 8's Gate-4 pass at the
+configured LR). Run 8 was the first run to clear the Gate-4 utility bar —
+see "Run 8 outcome". Earlier history: runs 4–7 below.
 gates but its router collapsed to always-cell (graph expert broken). Run 5
 fixed the graph expert; run 6 gave the router regime-informative features;
 both still failed the Gate-4 utility bar for reasons traced to the routing
