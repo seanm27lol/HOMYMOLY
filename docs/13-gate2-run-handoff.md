@@ -63,6 +63,27 @@ marginal 0.335), yet the router converged to *exactly* uniform predictions
 
 Artifacts archived at `artifacts/gate2-run7-starved-router-lr/`.
 
+## Gate-3 corruption-suite result (2026-08-03)
+
+The suite (`src/homymoly/data/corruptions.py`,
+`scripts/eval_corruption.py`, report at
+`artifacts/gate3/corruption_report_full.json`) corrupts the held-out split
+at graded severities along three channels (transport rotations, edge
+cochain noise, node-anchor noise; 60 batches per kind, 1530 examples) and
+compares conversion damage against diagnostics:
+
+- Exact SRTD between clean and corrupted expert embeddings tracks damage
+  strongly: Spearman ρ = 0.918 (sheaf), 0.823 (cell), 0.807 (graph).
+- **But** plain embedding displacement (reconstruction error) tracks
+  damage equally well (ρ 0.812–0.960), and the topological defect's
+  partial correlation controlling for it is ≈ 0 (−0.156 / +0.159 /
+  +0.238).  Per-example expert diagnostics are uninformative (|ρ| ≤ 0.16).
+- Recorded per the falsification discipline: **C1 (structural defects
+  predict damage beyond reconstruction) is not supported on this suite.**
+  The remaining mechanism test is the intervention question — does
+  structural regularization improve matched-compute downstream results —
+  which is the C2 ablation ladder, not a correlation study.
+
 ## Run 10 outcome (2026-08-03): translators competent; Gate-3 needs a corruption dimension
 
 Status `completed`; both engineering gates passed.
