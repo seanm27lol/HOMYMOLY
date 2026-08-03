@@ -1,6 +1,6 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: Gate-4 confirmed (run 9)** — learned routing beats the best
+**STATUS: Gate 2 passed; Gate 3 recorded as a measured null** — structural-loss terms are inert on this benchmark (see docs/15-gate3-record.md). Routing contribution stands.
 fixed route at matched compute with clean provenance. Remaining Gate-2
 items: exact RTD/SRTD port (prototype validated), then Gate 3. See
 "Run 9 outcome".
