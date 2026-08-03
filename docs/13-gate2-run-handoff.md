@@ -63,6 +63,18 @@ marginal 0.335), yet the router converged to *exactly* uniform predictions
 
 Artifacts archived at `artifacts/gate2-run7-starved-router-lr/`.
 
+## Gate-5 environment (2026-08-03)
+
+The project venv now includes Gate-5 evaluation dependencies: `ogb 1.3.6`
+and `rdkit 2026.3.5` (plus `scipy 1.18.0`, `scikit-learn 1.9.0` required
+for numpy-2 compatibility), with `numpy 2.5.1` preserved. OGBG-MOLHIV is
+downloaded at `artifacts/molecular/` (41,127 molecules; official scaffold
+split 32901/4113/4113). These are evaluation dependencies for the
+molecular gate; the synthetic pipeline does not use them. Per the plan's
+Gate-5 prerequisite, the batch face format migrates from triangle-only
+`face_index` to padded oriented boundary-edge lists before any molecular
+ring is represented as a cell.
+
 ## Gate-3 corruption-suite result (2026-08-03)
 
 The suite (`src/homymoly/data/corruptions.py`,
