@@ -128,6 +128,32 @@ followed by the corruption suite:
   with the chain-contract-before-interpretation principle; a larger seed
   campaign (5–10 pairs) would be required to confirm or kill it.
 
+## Final seed campaign (2026-08-03, eight pairs total)
+
+The pilot was extended to eight independent task-only/+chain pairs
+(s03–s10). Per-pair partial-correlation deltas:
+
+`+0.171, +0.489, −0.148, +0.576, +0.302, −0.182, +0.059, −0.500`
+— **5/8 positive, mean +0.096 ± 0.364**.
+
+- Manipulation reliability held in all 16 runs (consistency 0.182–0.187
+  with the chain term, 1.40–1.99 drifting without).
+- Pooled partial correlations: +chain mean 0.191 vs task-only mean 0.095
+  — a small positive shift well within seed noise; the early two-pair
+  "doubling" was a small-sample artifact.
+- Corruption damage flat across all 16 runs (0.127–0.177): the utility
+  null is rock solid.
+
+**Final verdict on the thread:** with eight independent pairs and a
+reliable manipulation, there is no robust evidence that the topological
+defect carries independent information about conversion damage beyond
+reconstruction displacement, with or without the chain-map contract
+enforced. The structural-mechanism thread is comprehensively answered
+for this project: the machinery is correct and measurable (the exact
+cone barcode is a validated evaluation reference, and the consistency
+surrogate demonstrably controls its target), but it shows no task value
+at these scales.
+
 - **C4 is moot on this benchmark**: with both cone-style and RTD-style
   terms inert, "cone beyond RTD" has no operating regime to distinguish.
 - The translator phase gate stays an *engineering* gate (finite held-out
