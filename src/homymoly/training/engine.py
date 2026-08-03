@@ -1094,10 +1094,10 @@ def _run_training_unlocked(
         lr=config.training.learning_rate,
         weight_decay=config.training.weight_decay,
     )
-    total_epochs = max(1, sum(_epoch_counts(config, smoke=smoke)))
+    epoch_counts = _epoch_counts(config, smoke=smoke)
     scheduler = CosineAnnealingLR(
         optimizer,
-        T_max=total_epochs,
+        T_max=max(1, epoch_counts[0]),
         eta_min=config.training.min_learning_rate,
     )
     scaler = torch.amp.GradScaler(
@@ -1121,7 +1121,6 @@ def _run_training_unlocked(
             smoke=smoke,
         )
 
-    epoch_counts = _epoch_counts(config, smoke=smoke)
     max_steps = 2 if smoke else config.training.max_steps_per_epoch
     final_validation: dict[str, float] = {}
     failed_gate = next(
@@ -1151,6 +1150,18 @@ def _run_training_unlocked(
                 if phase_index != state.phase_index:
                     state.best_score = float("-inf")
                     state.bad_epochs = 0
+                    # Restart the LR schedule per phase: a single cosine over
+                    # all phases starves late phases (the router trained at
+                    # ~1e-4 falling to 1e-6 and never learned; measured route
+                    # accuracy 0.32 in-engine vs 0.54 with a per-phase
+                    # restart at the same configured LR).
+                    for group in optimizer.param_groups:
+                        group["lr"] = config.training.learning_rate
+                    scheduler = CosineAnnealingLR(
+                        optimizer,
+                        T_max=max(1, phase_epochs),
+                        eta_min=config.training.min_learning_rate,
+                    )
                 if phase == "translators" and state.translator_baseline is None:
                     baseline_metrics = _evaluate(
                         model,
