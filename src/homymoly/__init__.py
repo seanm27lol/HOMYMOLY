@@ -1,4 +1,4 @@
-"""HOMYMOLY runtime foundations."""
+"""HOMYMOLY homological routing experiments."""
 
 from homymoly.config import (
     ArtifactConfig,
@@ -34,4 +34,4 @@ __all__ = [
     "seed_worker",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

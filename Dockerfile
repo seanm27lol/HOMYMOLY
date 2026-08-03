@@ -22,8 +22,11 @@ COPY scripts ./scripts
 COPY docs ./docs
 RUN chmod +x \
     /workspace/scripts/audit_shortcuts.py \
+    /workspace/scripts/gpu_idle_train.py \
+    /workspace/scripts/install_training_cron.py \
     /workspace/scripts/profile_gb10.py \
-    /workspace/scripts/start_dashboard.sh
+    /workspace/scripts/start_dashboard.sh \
+    /workspace/scripts/train_gate2.sh
 
 ENTRYPOINT ["python", "-m", "homymoly"]
 CMD ["check-config", "--config", "/workspace/configs/stage1.yaml", "--create-artifacts"]

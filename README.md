@@ -37,6 +37,7 @@ RTD compares the Vietoris–Rips filtrations induced by two paired point-cloud r
 - [Stage 1 runtime build](docs/09-stage1-build.md)
 - [GB10 experimental plan](docs/10-gb10-experimental-plan.md)
 - [Stage 1 validation record](docs/11-stage1-validation.md)
+- [Gate 2 training and automatic GB10 launch](docs/12-gate2-training.md)
 - [Bibliography](references.bib)
 
 ## Stage 1 foundation

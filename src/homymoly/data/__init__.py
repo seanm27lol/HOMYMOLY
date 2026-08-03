@@ -5,6 +5,7 @@ from .collate import (
     collate_structured,
     make_structured_collate,
 )
+from .confirmatory import ConfirmatoryConfig, ConfirmatoryStructuredSignal
 from .mixed_structured import MixedStructuredSignal
 from .types import (
     SignalRegime,
@@ -15,6 +16,8 @@ from .types import (
 )
 
 __all__ = [
+    "ConfirmatoryConfig",
+    "ConfirmatoryStructuredSignal",
     "MixedStructuredSignal",
     "SignalRegime",
     "StructuredBatch",
