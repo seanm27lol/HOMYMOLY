@@ -1,6 +1,6 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: run 6 is in progress.** Run 4 passed both gates but its router
+**STATUS: run 7 is in progress/ (oracle rebuilt as regime-conditional accuracy — see "Run 6 outcome" and "Run 7 hypothesis").
 collapsed to always-cell (graph expert broken). Run 5 fixed the graph
 expert and passed both gates with all three routes specializing, but the
 router stayed regime-blind — traced to regime-blind routing features, now
@@ -42,6 +42,48 @@ Status `completed`: 40 epochs / 2720 steps, all four phases.
 
 Artifacts archived at `artifacts/gate2-run4-completed-router-collapsed/`
 (summary, history, test predictions, checkpoints for all four phases).
+
+## Run 6 outcome (2026-08-03, regime-informative router features)
+
+Status `completed`; both engineering gates passed. Experts: graph 0.997,
+cell 0.726, sheaf 1.000 on their regimes; oracle accuracy 0.914.
+
+- Router improved but still failed the Gate-4 utility bar: hard accuracy
+  0.672 vs best fixed route 0.682 (random 0.675, dense 0.741, oracle
+  0.914); route accuracy 0.47, MI 0.012, and the graph route was never
+  selected despite having the strongest amplitude cue (F=37).
+- **Root cause, chased through four measured estimators.** The routing
+  supervision (oracle route) was the bottleneck, not the features:
+  - *raw logP utility (shipped)*: the graph expert is 0.997 accurate but
+    underconfident (logP ~ -0.3) next to a confidently correct cell expert
+    (logP ~ -0.05), so cell won the graph regime 62% of the time;
+    supervision probe ceiling 0.536 vs marginal 0.484.
+  - *per-route temperature scaling*: rejected — miscalibration is
+    regime-conditional, not global (fitted T ≈ [0.98, 1.22, 1.22];
+    picks-own 42%, probe 0.529).
+  - *correctness-first utility*: rejected — lucky cross-regime guesses
+    dominate (marginal 0.693 vs probe 0.712).
+  - *regime-conditional accuracy table (shipped in run 7)*: oracle becomes
+    perfectly regime-aligned, probe 0.556 vs marginal 0.335 — learnable
+    well beyond chance, matching the benchmark's design intent.
+- The table is fitted on the validation split at router-warmup entry,
+  persisted in checkpoint buffers, and is used only as a supervision
+  target. **Comparability note:** route-accuracy/oracle metrics in runs 7+
+  use the table oracle; runs 4-6 used the logP oracle. A side effect of the
+  table oracle: route accuracy and regime-route accuracy now measure the
+  same thing.
+
+Artifacts archived at `artifacts/gate2-run6-biased-oracle/`.
+
+## Run 7 hypothesis (in progress)
+
+With regime-aligned, learnable supervision, the router should show:
+utilization tracking regime frequencies (~1/3 each), route accuracy toward
+the probe ceiling (≥0.55 linear, more for the MLP), hard accuracy clearly
+above the best fixed route (0.682) and toward regime-routing utility
+(0.914), and nonzero regime-route MI. If utilization still collapses, the
+remaining suspects are router optimization dynamics (entropy/load-balance
+weights, straight-through temperature), not supervision or features.
 
 ## Run 5 outcome (2026-08-03, post-graph-fix tree)
 
