@@ -1150,11 +1150,16 @@ def _run_training_unlocked(
                 if phase_index != state.phase_index:
                     state.best_score = float("-inf")
                     state.bad_epochs = 0
+                if first_epoch == 0 and phase_index > 0:
                     # Restart the LR schedule per phase: a single cosine over
                     # all phases starves late phases (the router trained at
                     # ~1e-4 falling to 1e-6 and never learned; measured route
                     # accuracy 0.32 in-engine vs 0.54 with a per-phase
-                    # restart at the same configured LR).
+                    # restart at the same configured LR).  This must key on
+                    # first_epoch, not phase_index: state.phase_index is
+                    # advanced at each phase end, so a phase-index check
+                    # never fires.  A mid-phase resume (first_epoch > 0)
+                    # keeps the restored phase scheduler.
                     for group in optimizer.param_groups:
                         group["lr"] = config.training.learning_rate
                     scheduler = CosineAnnealingLR(
