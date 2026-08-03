@@ -1,9 +1,9 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: run 3 is in progress** (launched after two design fixes — see
-"Second session" below). Run 1 ended `gate-failed`; run 2 passed the
-fixed-expert gate but hit a latent NaN crash in the translators phase, now
-fixed. Watch `artifacts/gate2/status.json`; final judgment comes from
+**STATUS: run 4 is in progress.** Run 1 ended `gate-failed`; run 2 passed
+the fixed-expert gate but hit a latent NaN crash in the translators phase;
+run 3 crashed identically because the first NaN fix was itself wrong (see
+below). Watch `artifacts/gate2/status.json`; final judgment comes from
 `artifacts/gate2/summary.json`, not the process exit code.
 
 This note records exactly what was done so any person or tool picking this
@@ -44,15 +44,22 @@ Run 1's gate failure was traced to a design defect, not noise:
    residuals toward zero, where `sqrt` has infinite derivative. Latent
    until now because run 1 never reached the phase and smoke schedules
    never push residuals near zero.
-4. **The NaN fix** (commit `f1b9554`). `clamp_min(eps)` on the residual
-   norm in both `GraphToSheafTranslator` and `ConnectionSheafExpert`
-   (zero derivative below eps). Stress test: residual driven to exactly
-   0.0 over 300 steps, all gradients finite. Suite 99 passed, ruff clean,
-   four-phase smoke completed.
-5. **Run 3 launched** from a clean slate (old runs archived to
-   `artifacts/gate2-run1-gate-failed/` and `artifacts/gate2-run2-nan-translators/`;
-   the src edits invalidate checkpoint fingerprints by design, so resume
-   from run 2 was impossible anyway).
+4. **The NaN fix, take one — wrong** (commit `f1b9554`). `clamp_min(eps)` on
+   the residual norm. Stress test passed and run 3 was launched, but it
+   crashed in translators epoch 1 identically: clamping *after* the sqrt
+   still chains `0 * inf = NaN` in backward (the clamp gate contributes 0,
+   the sqrt derivative contributes inf). Take one contained the padded-edge
+   case only.
+5. **The NaN fix, take two** (current HEAD). Eps moved *inside* the sqrt
+   (`.sum(-1).add(eps).sqrt()`) in both `GraphToSheafTranslator` and
+   `ConnectionSheafExpert`, so the derivative at zero residual is finite
+   (`0.5/sqrt(eps)`). Verified in the exact crash regime — node stalks
+   forced to exact zero at every valid edge with all loss terms active,
+   gradients finite — and locked in by a permanent regression test
+   (`test_sheaf_translator_backward_is_finite_at_zero_residual`; suite now
+   100 passed). **Run 4 launched** from a clean slate (runs archived to
+   `artifacts/gate2-run1-gate-failed/`, `artifacts/gate2-run2-nan-translators/`,
+   `artifacts/gate2-run3-nan-translators/`).
 
 ## Run outcome (first full run, 2026-08-03)
 
