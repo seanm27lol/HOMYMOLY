@@ -230,8 +230,14 @@ class GraphToSheafTranslator(nn.Module):
             graph["node_mask"],
         )
         residual = self._residual(node_latent, sheaf)
+        # The consistency loss drives residuals toward zero; an unclamped
+        # sqrt has infinite derivative there and produces NaN gradients.
         residual_norm = (
-            residual.to(torch.float32).square().sum(dim=-1, keepdim=True).sqrt()
+            residual.to(torch.float32)
+            .square()
+            .sum(dim=-1, keepdim=True)
+            .sqrt()
+            .clamp_min(self.eps)
         )
         edge_inputs = torch.cat(
             (
