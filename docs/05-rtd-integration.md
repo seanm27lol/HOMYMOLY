@@ -2,7 +2,7 @@
 
 ## Decision
 
-HOLYMOLY will use Representation Topology Divergence. RTD is a validated comparison tool, an auxiliary loss for paired metric views, and a baseline for the proposed map-aware cone loss. It is not renamed or presented as a HOLYMOLY contribution.
+HOMYMOLY will use Representation Topology Divergence. RTD is a validated comparison tool, an auxiliary loss for paired metric views, and a baseline for the proposed map-aware cone loss. It is not renamed or presented as a HOMYMOLY contribution.
 
 ## Why RTD belongs in the project
 
@@ -12,7 +12,7 @@ RTD already captures three properties central to the original idea:
 - it respects the one-to-one identity of underlying samples;
 - its cross-barcode has an exact-sequence/mapping-cone interpretation.
 
-Discarding RTD would remove the closest established operationalization of structural representation mismatch. The correct move is to reproduce it faithfully and identify exactly where HOLYMOLY goes beyond it.
+Discarding RTD would remove the closest established operationalization of structural representation mismatch. The correct move is to reproduce it faithfully and identify exactly where HOMYMOLY goes beyond it.
 
 ## Input contract
 
@@ -42,7 +42,7 @@ Initial evaluations should report:
 - SRTD or SRTD-lite;
 - Normalized Topological Similarity for comparisons across sample sizes or conditions.
 
-Directional RTD remains valuable because HOLYMOLY cares about asymmetric source-to-target behavior. SRTD is preferable when a single symmetric optimization signal is desired.
+Directional RTD remains valuable because HOMYMOLY cares about asymmetric source-to-target behavior. SRTD is preferable when a single symmetric optimization signal is desired.
 
 ## What is reused
 
@@ -55,7 +55,7 @@ Directional RTD remains valuable because HOLYMOLY cares about asymmetric source-
 
 The public RTD-AE implementation must not be copied into this repository until its licensing is explicitly verified. An independent implementation from the published algorithm is the safe default.
 
-## What HOLYMOLY adds
+## What HOMYMOLY adds
 
 ### Representation adapters
 
@@ -63,7 +63,7 @@ Vector, graph, cell, and sheaf experts expose invariant within-batch dissimilari
 
 ### Map-aware cone defects
 
-For a declared transition \(F:C\to D\), HOLYMOLY first measures
+For a declared transition \(F:C\to D\), HOMYMOLY first measures
 
 \[
 \sum_n\|d^D_nF_n-F_{n-1}d^C_n\|^2
@@ -100,7 +100,7 @@ Architectural comparisons:
 - chain residual without cone loss;
 - cone loss without RTD;
 - RTD without direct cone loss;
-- the full HOLYMOLY objective.
+- the full HOMYMOLY objective.
 
 ## Validation tests
 

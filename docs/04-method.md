@@ -2,7 +2,7 @@
 
 ## System view
 
-HOLYMOLY is a small typed computation graph rather than a collection of arbitrary interchangeable structures.
+HOMYMOLY is a small typed computation graph rather than a collection of arbitrary interchangeable structures.
 
 ```text
                         +------------------+
@@ -70,6 +70,10 @@ The initial objective is
 
 RTD is evaluated only for representations with paired entities and valid within-representation dissimilarities. Cone loss is evaluated only for declared chain maps. Neither term is applied universally merely because it is available.
 
+Here, \(\mathcal L_{\mathrm{cone}}\) is route-conditioned; it is not the sum of all cone Betti numbers. A graph-to-cell inclusion that intentionally fills a cycle has a legitimate degree-two cone class, so forcing every cone to be acyclic would erase the feature the cell route was introduced to represent. Acyclicity is an objective only for a conversion declared to seek a quasi-isomorphism. Other routes use preregistered expected cone signatures, predictive diagnostics, or task-conditioned comparisons.
+
+Exact cone homology is evaluation-only unless the translator is parameterized as an exact chain map. For an approximate learned map, train on the chain residual or a declared differentiable proxy and do not interpret its mapping-cone homology until the chain-map tolerance is met.
+
 ## Concrete v0.1 graph-hub design
 
 Every sample begins as an attributed graph with candidate 2-cells and optional local-frame information. Three legal routes produce a common graph-level embedding:
@@ -82,7 +86,7 @@ G -> SheafLift -> SheafExpert -> SheafProject -> pool
 
 The graph hub avoids six underidentified pairwise translators. Direct cell-to-sheaf conversion and arbitrary multihop routing are deferred until the three primary routes work.
 
-For the cell route, enumerate triangles and short chordless cycles as candidate faces and learn soft inclusion gates. Candidate face columns must be oriented cycles so that \(B_1B_2=0\) remains exact. The projection back to edge space can be tested against the Hodge projection
+For the Stage-1/2 cell route, enumerate triangles as candidate faces and learn soft inclusion gates. The topology core accepts arbitrary simple-cycle faces, but the current batched data contract is explicitly triangle-only. Before molecular rings or short chordless cycles are enabled, replace the `[3, F]` interface with sparse \(B_2\) or padded oriented boundary-edge indices and coefficients. Every candidate face column must be an oriented cycle so that \(B_1B_2=0\) remains exact. The projection back to edge space can be tested against the Hodge projection
 
 \[
 P_1=I-B_2(B_2^\top B_2)^+B_2^\top,

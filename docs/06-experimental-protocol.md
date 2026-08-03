@@ -2,12 +2,13 @@
 
 ## Experimental order
 
-1. Reproduce RTD/SRTD behavior independently.
-2. Validate one graph-to-cell or graph-to-sheaf translator without routing.
-3. Test whether chain and cone statistics predict conversion-induced degradation.
-4. Test whether those losses improve training beyond reconstruction and cycle consistency.
-5. Introduce a two-expert router.
-6. Expand to the three-expert graph/cell/sheaf system.
+The numbered gates in [the GB10 experimental plan](10-gb10-experimental-plan.md) are the canonical execution plan. In compact form:
+
+1. Validate the mathematical, data, runtime, and shortcut-audit foundation.
+2. Reproduce RTD/SRTD on reference paired-metric examples, then validate fixed graph, cell, and connection-sheaf experts without routing.
+3. Validate graph-to-cell and graph-to-sheaf translators and test whether structural statistics predict or improve conversion behavior.
+4. Introduce the router only after fixed-route specialization and translator ablations pass.
+5. Transfer to a molecular benchmark only after the synthetic gates pass.
 
 This order prevents router complexity from hiding a nonfunctional structural loss.
 
@@ -20,6 +21,8 @@ Construct examples from at least three regimes:
 - **local-consistency regime:** labels depend on transport or compatibility rules that vary across nodes and edges.
 
 Mix regimes within the same training and evaluation splits so that no fixed representation is uniformly optimal. Include controlled perturbations that preserve labels while changing geometry, topology, correspondence quality, or representation cost.
+
+`MixedStructuredSignal` v0.1 is an easy bring-up benchmark: the active regime has a deliberately strong, label-independent reliability-amplitude cue. It may verify mechanics but cannot support a routing-novelty claim. A confirmatory benchmark must overlap those amplitude distributions or replace them with route-specific structural corruptions, and must report amplitude-only, graph-only, local-residual, edge-pooling, and structure-shuffle baselines.
 
 A concrete generator, provisionally named `MixedStructuredSignal`, should use oriented complexes with approximately 24–96 vertices and balance the latent regimes. Shape, class, and nuisance distributions must be matched so that padding, size, or density does not trivially reveal the route:
 

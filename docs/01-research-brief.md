@@ -4,7 +4,7 @@
 
 Most neural architectures commit to one representation family: tensors, graphs, simplicial complexes, cellular sheaves, or another fixed domain. Even systems that learn topology usually learn one lifting into one target class. This may be inefficient for heterogeneous data: pairwise structure can favor a graph, higher-order interactions can favor a cell complex, and locally varying compatibility can favor a sheaf.
 
-HOLYMOLY asks whether representation type can become a routed computational choice while conversions remain mathematically inspectable.
+HOMYMOLY asks whether representation type can become a routed computational choice while conversions remain mathematically inspectable.
 
 ## Core hypothesis
 
