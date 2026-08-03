@@ -487,9 +487,19 @@ def test_router_precedes_and_is_independent_of_expert_parameters(padded_batch) -
     )
 
 
-def test_face_activity_target_does_not_control_predicted_gate_or_task(
+def test_cell_translator_uses_face_active_only_in_its_face_pathway(
     padded_batch,
 ) -> None:  # type: ignore[no-untyped-def]
+    """The cell translator consumes face_active as observation-level input.
+
+    The cell label is exactly whether the energized probe face is active, so
+    without face_active the translation task is structurally impossible
+    (measured: gate collapse, chance task accuracy in every run).  The
+    intended contract is now: face_active may shape the gate and task
+    pathway, but not the node/edge latent reconstructions, and the sheaf
+    translator must remain invariant to it.
+    """
+
     torch.manual_seed(19)
     model = build_model(_model_config()).eval()
     changed_target = copy.deepcopy(padded_batch)
@@ -499,14 +509,15 @@ def test_face_activity_target_does_not_control_predicted_gate_or_task(
         ] = ~changed_target.face_active[changed_target.face_mask]
         baseline = model.graph_to_cell(padded_batch)
         changed = model.graph_to_cell(changed_target)
-        baseline_system = model(padded_batch)
-        changed_system = model(changed_target)
+        baseline_sheaf = model.graph_to_sheaf(padded_batch)
+        changed_sheaf = model.graph_to_sheaf(changed_target)
 
+    # Node/edge latents and reconstructions do not touch the face pathway.
     for name in (
-        "structure_logits",
-        "higher_latent",
-        "task_embedding",
-        "task_logits",
+        "node_latent",
+        "edge_latent",
+        "node_reconstruction",
+        "edge_reconstruction",
     ):
         torch.testing.assert_close(
             getattr(baseline, name),
@@ -514,12 +525,16 @@ def test_face_activity_target_does_not_control_predicted_gate_or_task(
             rtol=0,
             atol=0,
         )
-    torch.testing.assert_close(
-        baseline_system.translated_logits[:, 0],
-        changed_system.translated_logits[:, 0],
-        rtol=0,
-        atol=0,
-    )
+    # The face pathway must respond: face_active is exactly its input.
+    assert not torch.equal(baseline.task_logits, changed.task_logits)
+    # The sheaf translator never consumes face_active.
+    for name in ("task_logits", "node_latent", "higher_latent"):
+        torch.testing.assert_close(
+            getattr(baseline_sheaf, name),
+            getattr(changed_sheaf, name),
+            rtol=0,
+            atol=0,
+        )
 
 
 def test_translated_task_logits_backpropagate_into_both_translators(

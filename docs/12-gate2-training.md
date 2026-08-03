@@ -13,7 +13,7 @@ The executable stack contains:
 5. directional and symmetric differentiable **H0 RTD-style surrogates** plus exact small-sample H0 reference diagnostics;
 6. phased optimization, evaluation, atomic checkpoints, deterministic resume, JSONL metrics, and TensorBoard output.
 
-The H0 surrogate is not the complete published RTD/SRTD cross-barcode construction. Reproducing the reference implementation remains a separate comparison gate and must be reported separately.
+The H0 surrogate is not the complete published RTD/SRTD cross-barcode construction. The exact reference now lives in `src/homymoly/metrics/exact_rtd.py` (directional, half-sum, and symmetric cone cross-barcodes with the acceptance tests in `tests/test_exact_rtd.py`); it is an evaluation oracle, not a loss. The surrogate remains the training signal and the two must not be reported interchangeably — measured on identical inputs they can disagree in directional ordering.
 
 ## Configuration and smoke test
 

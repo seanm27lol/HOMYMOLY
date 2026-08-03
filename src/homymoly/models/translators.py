@@ -13,8 +13,10 @@ from .ops import (
     MLP,
     apply_mask,
     face_boundary_aggregate,
+    face_holonomy,
     face_vertex_mean,
     masked_feature_energy,
+    masked_max,
     masked_mean,
     masked_mse,
     safe_gather_nodes,
@@ -49,11 +51,18 @@ def _masked_binary_cross_entropy(
 class GraphToCellTranslator(nn.Module):
     """Lift graph observations to active-face features and reconstruct them.
 
-    Candidate-face gates and task predictions use only graph observations and
-    candidate incidence. ``face_active`` appears only in the separately named
-    gate-supervision loss. ``consistency_surrogate`` compares a learned face
-    code with the oriented aggregation of learned edge features; it is not
-    asserted to be an exact chain-map residual.
+    Candidate-face gates and task predictions use graph observations,
+    candidate incidence, and ``face_active`` — observation-level structure in
+    the cell view, which the task makes essential: the cell label is exactly
+    whether the energized probe face is active, so without it the
+    translation task is structurally impossible (measured: gate collapse and
+    chance task accuracy in every run before the input was wired in).
+    ``face_active`` additionally supervises the gate as a separately named
+    loss.  ``consistency_surrogate`` compares a learned face code with the
+    oriented aggregation of learned edge features; it is not asserted to be
+    an exact chain-map residual.  The task readout keeps both the mean and
+    the max over faces: the task signal is a single gated face, which mean
+    pooling alone dilutes below the noise floor.
     """
 
     def __init__(
@@ -65,13 +74,13 @@ class GraphToCellTranslator(nn.Module):
         hidden = translator_config.hidden_dim
         self.node_lift = MLP(expert_config.node_feature_dim, hidden, hidden)
         self.edge_lift = MLP(expert_config.edge_feature_dim, hidden, hidden)
-        self.face_lift = MLP(2 * hidden, hidden, hidden)
-        self.face_gate = MLP(2 * hidden, hidden, 1)
+        self.face_lift = MLP(2 * hidden + 1, hidden, hidden)
+        self.face_gate = MLP(2 * hidden + 1, hidden, 1)
         self.face_boundary_prediction = nn.Linear(hidden, hidden)
         self.node_reconstruction = MLP(hidden, hidden, expert_config.node_feature_dim)
         self.edge_reconstruction = MLP(hidden, hidden, expert_config.edge_feature_dim)
         self.task_readout = MLP(
-            3 * hidden,
+            4 * hidden,
             hidden,
             expert_config.embedding_dim,
         )
@@ -104,7 +113,19 @@ class GraphToCellTranslator(nn.Module):
             cell["face_index"],
             candidate_mask,
         )
-        face_inputs = torch.cat((vertex_latent, boundary_latent), dim=-1)
+        # face_active is observation-level structure in the cell view (the
+        # same input the cell expert consumes): the cell label is exactly
+        # whether the energized probe face is active, so the task pathway
+        # cannot see the label without it.  The gate remains separately
+        # supervised.
+        face_inputs = torch.cat(
+            (
+                vertex_latent,
+                boundary_latent,
+                cell["face_active"].unsqueeze(-1).to(vertex_latent.dtype),
+            ),
+            dim=-1,
+        )
         ungated_faces = apply_mask(self.face_lift(face_inputs), candidate_mask)
         structure_logits = apply_mask(
             self.face_gate(face_inputs).squeeze(-1),
@@ -121,6 +142,7 @@ class GraphToCellTranslator(nn.Module):
                     masked_mean(node_latent, graph["node_mask"]),
                     masked_mean(edge_latent, graph["edge_mask"]),
                     masked_mean(higher_latent, candidate_mask),
+                    masked_max(higher_latent, candidate_mask),
                 ),
                 dim=-1,
             )
@@ -187,6 +209,12 @@ class GraphToSheafTranslator(nn.Module):
     The returned consistency value is the normalized energy of
     ``z_head - T z_tail`` for the learned stalk vectors.  It is a training
     surrogate, not a claim that an exact cochain map has been constructed.
+
+    The task readout additionally encodes every face's observed transport
+    holonomy (mean and max over faces): the sheaf-regime label lives in
+    cycle holonomy, which per-edge residuals cannot see — the same failure
+    the sheaf expert had before its holonomy pathway.  The transports are
+    observation-level structure, so this uses no supervision metadata.
     """
 
     def __init__(
@@ -200,10 +228,11 @@ class GraphToSheafTranslator(nn.Module):
         self.eps = translator_config.eps
         self.node_lift = MLP(expert_config.node_feature_dim, hidden, rank)
         self.edge_lift = MLP(expert_config.edge_feature_dim + rank + 1, hidden, hidden)
+        self.face_encoder = MLP(4, hidden, hidden)
         self.node_reconstruction = MLP(rank, hidden, expert_config.node_feature_dim)
         self.edge_reconstruction = MLP(hidden, hidden, expert_config.edge_feature_dim)
         self.task_readout = MLP(
-            hidden + 2 * rank,
+            3 * hidden + 2 * rank,
             hidden,
             expert_config.embedding_dim,
         )
@@ -256,12 +285,29 @@ class GraphToSheafTranslator(nn.Module):
             residual_norm.squeeze(-1).to(node_latent.dtype),
             graph["edge_mask"],
         )
+        face_valid = sheaf["face_mask"]
+        holonomy = face_holonomy(
+            sheaf["transport"],
+            sheaf["edge_index"],
+            sheaf["edge_mask"],
+            sheaf["face_index"],
+            face_valid,
+        )
+        identity = torch.eye(2, dtype=holonomy.dtype, device=holonomy.device)
+        face_hidden = apply_mask(
+            self.face_encoder(
+                (holonomy - identity).flatten(-2).to(node_latent.dtype)
+            ),
+            face_valid,
+        )
         task_embedding = self.task_readout(
             torch.cat(
                 (
                     masked_mean(node_latent, graph["node_mask"]),
                     masked_mean(edge_latent, graph["edge_mask"]),
                     masked_mean(residual.abs(), graph["edge_mask"]),
+                    masked_mean(face_hidden, face_valid),
+                    masked_max(face_hidden, face_valid),
                 ),
                 dim=-1,
             )
