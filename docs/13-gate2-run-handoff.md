@@ -1,9 +1,42 @@
 # Gate-2 run handoff (2026-08-03)
 
+**OUTCOME: the first full run finished with status `gate-failed` — see
+"Run outcome" below. This is a recorded Gate-2 result, not a crash.**
+
 This note records exactly what was done in the session that launched the first
 full Gate-2 training run, so any person or tool picking this up has full
 context. It supplements [`12-gate2-training.md`](12-gate2-training.md), which
 describes the stack itself.
+
+## Run outcome (first full run, 2026-08-03)
+
+The run completed 8 epochs / 544 steps of the `fixed_experts` phase and then
+stopped at the enforced phase gate `fixed_expert_specialization`:
+
+- **cell route: PASSED** — improvement 0.4968 over the graph route;
+  `expert_cell_on_cell_accuracy` = 1.0 on test (all cross-regime accuracies
+  0.5, as intended).
+- **sheaf route: FAILED to specialize** — improvement 0.0; every sheaf-expert
+  accuracy stayed at chance (0.5) including on its own regime.
+- Gate requires ≥2 routes improving over the graph route → `passed: false`,
+  so translator/router phases never ran (by design; see the Gate-2 criterion
+  in [`10-gb10-experimental-plan.md`](10-gb10-experimental-plan.md): the
+  benchmark/model design is revised before routing work begins).
+- Also notable: the **graph expert itself stayed at chance on its own regime**
+  (0.5), so "improvement over graph" was measured against a non-learning
+  baseline.
+
+Full numbers: `artifacts/gate2/summary.json`, `artifacts/gate2/status.json`,
+`artifacts/gate2/metrics/history.jsonl`, `artifacts/gate2/metrics/test_predictions.json`.
+Checkpoints: `artifacts/gate2/checkpoints/best-fixed_experts.pt` and `last.pt`.
+
+Per the plan's long-run discipline, this null result is recorded as evidence
+about the current mechanism, not relabeled. Open questions for review: why the
+sheaf expert did not learn (capacity? supervision signal? the hardcoded
+"last two node channels = stalk vectors" contract at `models/experts.py:294`
+not matching the confirmatory generator?), and whether the graph expert at
+chance indicates a signal/optimization issue shared by the graph and sheaf
+routes. Do not weaken the gate to make it pass.
 
 ## What was done in this session
 
@@ -37,7 +70,7 @@ describes the stack itself.
 
 - `cat artifacts/gate2/status.json` — phase, epoch, status, latest validation
   metrics (updated every epoch).
-- `tail artifacts/gate2/metrics/metrics.jsonl` — per-epoch train/validation
+- `tail artifacts/gate2/metrics/history.jsonl` — per-epoch train/validation
   metrics.
 - `tail artifacts/gate2/training.log` — stdout/stderr of the process.
 - `pgrep -af "homymoly train"` — process liveness; `nvidia-smi` shows it under
@@ -63,14 +96,6 @@ describes the stack itself.
   is expected.
 - Do not run the pytest suite concurrently with training (one transient CUDA
   OOM was observed when the suite overlapped GPU work).
-
-## Early run state (epoch 3, phase `fixed_experts`)
-
-Everything finite and logging correctly. Notable: the cell expert already
-shows intended-regime specialization (`expert_cell_on_cell_accuracy ≈ 0.997`
-with all other routes at chance 0.5). Most other metrics are still at chance —
-expected this early; the four phases (fixed experts → router warmup →
-translators → router joint) run sequentially per `configs/gate2.yaml`.
 
 ## Known non-blocking issues found by the audit (for later review)
 
