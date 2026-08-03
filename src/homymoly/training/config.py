@@ -51,6 +51,8 @@ class Gate2DataConfig:
     node_feature_dim: int = 4
     edge_feature_dim: int = 2
     seed: int = 20260803
+    stalk_mode: str = "independent"
+    gauge_noise_std: float = 0.3
 
     def __post_init__(self) -> None:
         _positive_int("data.num_samples", self.num_samples)
@@ -67,6 +69,10 @@ class Gate2DataConfig:
         if self.node_feature_dim < 4 or self.edge_feature_dim < 2:
             raise ConfigError("data requires at least four node and two edge features")
         _nonnegative_int("data.seed", self.seed)
+        if self.stalk_mode not in ("independent", "gauge"):
+            raise ConfigError("data.stalk_mode must be 'independent' or 'gauge'")
+        if self.gauge_noise_std < 0:
+            raise ConfigError("data.gauge_noise_std must be nonnegative")
 
 
 @dataclass(frozen=True, slots=True)

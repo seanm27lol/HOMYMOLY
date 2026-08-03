@@ -135,6 +135,8 @@ def _build_dataset(config: Gate2Config, *, smoke: bool) -> ConfirmatoryStructure
         max_vertices=selected_max_vertices,
         node_feature_dim=data.node_feature_dim,
         edge_feature_dim=data.edge_feature_dim,
+        stalk_mode=data.stalk_mode,
+        gauge_noise_std=data.gauge_noise_std,
     )
     return ConfirmatoryStructuredSignal(dataset_config)
 
