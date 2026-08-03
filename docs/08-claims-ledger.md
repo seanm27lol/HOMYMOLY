@@ -4,11 +4,11 @@ Every proposed claim must identify its closest prior art, supporting experiment,
 
 | ID | Proposed claim | Closest prior art | Required evidence | Falsifier | Status |
 |---|---|---|---|---|---|
-| C1 | Structural defects predict task damage during typed conversions | RTD, RTD-AE, SRTD | Held-out correlation and intervention tests beyond reconstruction baselines | No incremental predictive value | Proposed |
-| C2 | Map-aware cone loss improves a learned graph/cell/sheaf translator | RTD-AE, differentiable liftings | Matched-compute ablations across synthetic regimes and a real task | Task/cycle-only model matches it | Proposed |
-| C3 | A cost-aware router specializes by structural regime | MoE routing, learned topological liftings | Regime-conditioned route analysis and fixed/random/oracle comparisons | Route collapse or shortcut behavior | Proposed |
-| C4 | Direct cone loss supplies information not contained in RTD | RTD/SRTD | Cone-only, RTD-only, and combined ablations on identical paired data | Metrics are redundant in prediction and intervention | Proposed |
-| C5 | Sheaf routes are selected only when local compatibility matters | Neural Sheaf Diffusion, Knowledge Sheaves | Controlled local-consistency benchmark | Sheaf selection unrelated to regime or utility | Proposed |
+| C1 | Structural defects predict task damage during typed conversions | RTD, RTD-AE, SRTD | Held-out correlation and intervention tests beyond reconstruction baselines | No incremental predictive value | Proposed — first competent-translator test pending (run 10) |
+| C2 | Map-aware cone loss improves a learned graph/cell/sheaf translator | RTD-AE, differentiable liftings | Matched-compute ablations across synthetic regimes and a real task | Task/cycle-only model matches it | Proposed — exact cone reference now exists (`metrics/exact_rtd.py`); ablation pending |
+| C3 | A cost-aware router specializes by structural regime | MoE routing, learned topological liftings | Regime-conditioned route analysis and fixed/random/oracle comparisons | Route collapse or shortcut behavior | **Supported (synthetic, run 9)** — MI 0.067, route acc 0.503 vs 0.335 marginal, native selection 0.46–0.54 per regime, hard 0.743 > best fixed 0.667, non-collapsed; capped by the benchmark's anti-shortcut identifiability ceiling |
+| C4 | Direct cone loss supplies information not contained in RTD | RTD/SRTD | Cone-only, RTD-only, and combined ablations on identical paired data | Metrics are redundant in prediction and intervention | Proposed — ablation pending |
+| C5 | Sheaf routes are selected only when local compatibility matters | Neural Sheaf Diffusion, Knowledge Sheaves | Controlled local-consistency benchmark | Sheaf selection unrelated to regime or utility | **Partially supported (run 9)** — sheaf selected on 51% of sheaf-regime vs 17–26% elsewhere; informative but not exclusive, matching the design's overlapping-reliability ceiling |
 
 ## Claim discipline
 
