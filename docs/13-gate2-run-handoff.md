@@ -63,6 +63,38 @@ marginal 0.335), yet the router converged to *exactly* uniform predictions
 
 Artifacts archived at `artifacts/gate2-run7-starved-router-lr/`.
 
+## Post-run-9 build items (2026-08-03, in flight)
+
+Two queued items landed after run 9:
+
+1. **Exact RTD/SRTD reference** (`src/homymoly/metrics/exact_rtd.py`,
+   tests in `tests/test_exact_rtd.py`): ordinary persistent homology of the
+   filtered mapping cone over GF(2) in float64 — directional
+   R-Cross-Barcode semantics both ways, the published half-sum, and the
+   symmetric union/intersection cone. Acceptance coverage per the
+   RTD-integration doc: identity zeros, isometry/rescaling zero after
+   normalization, permutation invariance, directional asymmetry with exact
+   swap consistency and half-sum symmetry, structured collapse, localized
+   detection, per-interval stability bound, SRTD degree-1 = sum of
+   directionals. Measured reconciliation: the differentiable H0 surrogate
+   and the exact reference can disagree even in directional *ordering* —
+   the surrogate stays a training signal; the exact module is the
+   evaluation oracle. ~0.2 s per comparison at 24 points.
+2. **Task-competent translators** (`src/homymoly/models/translators.py`):
+   every prior run had `translated_ce` flat at ln 2. `GraphToSheafTranslator`
+   gained the observed-transport face-holonomy pathway (same defect the
+   sheaf expert had); `GraphToCellTranslator` gained `face_active` as an
+   input to its face pathway (without it the cell translation task is
+   structurally impossible — measured gate collapse with precision/recall
+   0.0) plus a masked-max readout. Standalone: each translator reaches
+   1.000 on its own regime, chance elsewhere, as designed. The old
+   face_active-invariance test encoded the broken contract and was
+   replaced.
+
+**Run 10** is the first full pipeline with working translators; its
+translated-path metrics make the Gate-3 ablation questions (structural
+defects vs conversion damage) measurable.
+
 ## Run 9 outcome (2026-08-03): Gate-4 confirmed at the configured LR
 
 Status `completed`; both engineering gates passed. **The confirmatory run
