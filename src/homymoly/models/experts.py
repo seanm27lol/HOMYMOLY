@@ -325,14 +325,14 @@ class ConnectionSheafExpert(nn.Module):
         inputs = batch.model_inputs(self.route)
         vectors = inputs["node_features"][..., -2:]
         residual = self._connection_residual(inputs)
-        # Clamp for the same reason as the translator: sqrt has infinite
-        # derivative at zero (padding already zeroes residuals exactly).
+        # Eps inside the sqrt keeps the derivative finite at zero residual
+        # (clamping after the sqrt would still chain 0 * inf = NaN).
         residual_norm = (
             residual.to(torch.float32)
             .square()
             .sum(dim=-1, keepdim=True)
+            .add(1e-12)
             .sqrt()
-            .clamp_min(1e-6)
         )
         edge_inputs = torch.cat(
             (

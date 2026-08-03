@@ -268,6 +268,37 @@ def test_translator_shapes_and_surrogate_losses_are_finite(padded_batch) -> None
             assert torch.all(value >= 0)
 
 
+def test_sheaf_translator_backward_is_finite_at_zero_residual() -> None:
+    """Regression: sqrt of a exactly-zero residual must not yield NaN grads.
+
+    The translators phase minimizes the consistency surrogate, which drives
+    stalk residuals toward zero; an unclamped (or post-clamped) sqrt has an
+    infinite derivative there and killed the first full runs.
+    """
+
+    torch.manual_seed(3)
+    config = _model_config()
+    model = build_model(config)
+    batch = collate_structured(
+        tuple(MixedStructuredSignal(6, seed=105, num_vertices=24))
+    )
+    with torch.no_grad():
+        for parameter in model.graph_to_sheaf.node_lift.parameters():
+            parameter.zero_()
+    output = model.graph_to_sheaf(batch)
+    assert torch.all(output.higher_latent == 0)
+    loss = (
+        output.task_logits.float().square().mean()
+        + output.reconstruction_loss
+        + output.consistency_surrogate
+        + output.structure_logits.float().mean()
+    )
+    loss.backward()
+    for name, parameter in model.graph_to_sheaf.named_parameters():
+        if parameter.grad is not None:
+            assert torch.isfinite(parameter.grad).all(), name
+
+
 def test_router_uses_diagnostics_and_declared_costs() -> None:
     router = DiagnosticCostRouter(
         embedding_dim=4,
