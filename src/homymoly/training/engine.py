@@ -265,23 +265,41 @@ def _oracle_logits(output: ModelOutput, regime_targets: Tensor) -> Tensor:
 
 def _oracle_route_targets(
     output: ModelOutput,
-    labels: Tensor,
+    batch: StructuredBatch,
     config: Gate2Config,
+    conditional_accuracy: Tensor | None = None,
 ) -> Tensor:
-    """Select the best correct-label utility, with declared compute tie-breaking."""
+    """Select the best per-example route utility with declared compute tie-breaking.
 
-    log_probabilities = output.expert_logits.float().log_softmax(dim=-1)
-    label_index = labels[:, None, None].expand(-1, len(ROUTES), 1)
-    correct_label_utility = log_probabilities.gather(-1, label_index).squeeze(-1)
+    The utility of a route is the probability that it predicts the true
+    label for this example.  The fitted path uses the regime-conditional
+    expert accuracies measured on the validation split (the low-variance
+    estimate of that quantity for this benchmark); the unfitted fallback
+    uses the per-example correct-label log-probability.  Three plug-in
+    estimators were measured and rejected before this design: the raw
+    log-probability utility (the accurate but underconfident graph expert
+    lost its own regime 62% of the time, probe ceiling 0.536), per-route
+    temperature scaling (miscalibration is regime-conditional, so a global
+    temperature changes nothing: picks-own 42%, probe 0.529), and
+    correctness-first utilities (lucky cross-regime guesses dominate:
+    marginal 0.693 vs probe 0.712).  The regime labels are used only as a
+    supervision target, never as a model input.
+    """
+
+    if conditional_accuracy is not None:
+        regimes = _regime_targets(batch)
+        utility = conditional_accuracy.to(batch.labels.device)[regimes]
+    else:
+        log_probabilities = output.expert_logits.float().log_softmax(dim=-1)
+        label_index = batch.labels[:, None, None].expand(-1, len(ROUTES), 1)
+        utility = log_probabilities.gather(-1, label_index).squeeze(-1)
     costs = torch.tensor(
         config.loss.route_costs,
-        dtype=correct_label_utility.dtype,
-        device=correct_label_utility.device,
+        dtype=utility.dtype,
+        device=utility.device,
     )
     normalized_costs = costs / costs.mean()
-    return (
-        correct_label_utility - config.loss.oracle_cost_weight * normalized_costs
-    ).argmax(dim=-1)
+    return (utility - config.loss.oracle_cost_weight * normalized_costs).argmax(dim=-1)
 
 
 def _sum_auxiliary(output: ModelOutput, names: Iterable[str]) -> Tensor:
@@ -306,11 +324,22 @@ def _topology_surrogate(output: ModelOutput, max_points: int) -> Tensor:
     )
 
 
+def _oracle_table(model: nn.Module) -> Tensor | None:
+    """Return the fitted regime-conditional accuracy table, if available."""
+
+    table = getattr(model, "oracle_conditional_accuracy", None)
+    ready = getattr(model, "oracle_table_ready", None)
+    if table is None or ready is None or not bool(ready):
+        return None
+    return table
+
+
 def _loss_terms(
     output: ModelOutput,
     batch: StructuredBatch,
     config: Gate2Config,
     phase: str,
+    conditional_accuracy: Tensor | None = None,
 ) -> dict[str, Tensor]:
     regimes = _regime_targets(batch)
     repeated_labels = batch.labels[:, None].expand(-1, len(ROUTES)).reshape(-1)
@@ -329,7 +358,9 @@ def _loss_terms(
         batch.labels,
         label_smoothing=config.training.label_smoothing,
     )
-    oracle_routes = _oracle_route_targets(output, batch.labels, config)
+    oracle_routes = _oracle_route_targets(
+        output, batch, config, conditional_accuracy=conditional_accuracy
+    )
     oracle_route_ce = F.cross_entropy(output.route_logits.float(), oracle_routes)
     repeated_translator_labels = batch.labels[:, None].expand(-1, 2).reshape(-1)
     translated_ce = F.cross_entropy(
@@ -473,7 +504,13 @@ def _train_epoch(
         optimizer.zero_grad(set_to_none=True)
         with _autocast(runtime):
             output = model(batch, hard=phase == "joint_finetune")
-            terms = _loss_terms(output, batch, config, phase)
+            terms = _loss_terms(
+                output,
+                batch,
+                config,
+                phase,
+                conditional_accuracy=_oracle_table(model),
+            )
         if not torch.isfinite(terms["loss"]):
             raise FloatingPointError(f"non-finite training loss in {phase}")
         scaler.scale(terms["loss"]).backward()
@@ -497,6 +534,50 @@ def _train_epoch(
     if examples == 0:
         raise RuntimeError("training loader produced no examples")
     return {name: value / examples for name, value in totals.items()}
+
+
+@torch.no_grad()
+def _fit_oracle_conditional_accuracy(
+    model: nn.Module,
+    loader: DataLoader[StructuredBatch],
+    runtime: RuntimeState,
+    *,
+    max_steps: int,
+) -> Tensor:
+    """Measure the regime-conditional expert accuracies on the validation split.
+
+    The table ``C[regime, route]`` is the routing oracle's utility: the
+    estimated probability that each route predicts the true label for
+    examples of each regime.  Fitted once when the router-warmup phase
+    begins, while the experts are frozen, so refitting on resume reproduces
+    identical values; stored in model buffers so checkpoints persist it.
+    """
+
+    was_training = model.training
+    model.eval()
+    correct = torch.zeros((len(ROUTES), len(ROUTES)), dtype=torch.long)
+    counts = torch.zeros(len(ROUTES), dtype=torch.long)
+    for batch_index, batch in enumerate(loader):
+        if max_steps and batch_index >= max_steps:
+            break
+        batch = batch.to(runtime.device, non_blocking=True)
+        with _autocast(runtime):
+            output = model(batch)
+        predictions = output.expert_logits.float().argmax(dim=-1)
+        regimes = _regime_targets(batch).cpu()
+        hits = (predictions.cpu() == batch.labels.cpu().unsqueeze(1)).long()
+        for regime_index in range(len(ROUTES)):
+            selected = regimes == regime_index
+            counts[regime_index] += int(selected.sum())
+            correct[regime_index] += hits[selected].sum(dim=0)
+    if int(counts.sum()) == 0:
+        raise RuntimeError("oracle table fitting received no validation examples")
+    table = (correct.double() / counts.double().clamp_min(1).unsqueeze(1)).float()
+    model.oracle_conditional_accuracy.copy_(table.to(model.oracle_conditional_accuracy.device))
+    model.oracle_table_ready.fill_(1)
+    if was_training:
+        model.train()
+    return table
 
 
 @torch.no_grad()
@@ -530,7 +611,13 @@ def _evaluate(
         batch = batch.to(runtime.device, non_blocking=True)
         with _autocast(runtime):
             output = model(batch)
-            terms = _loss_terms(output, batch, config, phase)
+            terms = _loss_terms(
+                output,
+                batch,
+                config,
+                phase,
+                conditional_accuracy=_oracle_table(model),
+            )
         if runtime.device.type == "cuda":
             torch.cuda.synchronize(runtime.device)
         hard_started = time.perf_counter()
@@ -541,7 +628,12 @@ def _evaluate(
         hard_elapsed_seconds += time.perf_counter() - hard_started
 
         regimes = _regime_targets(batch)
-        oracle_routes = _oracle_route_targets(output, batch.labels, config)
+        oracle_routes = _oracle_route_targets(
+            output,
+            batch,
+            config,
+            conditional_accuracy=_oracle_table(model),
+        )
         oracle_predictions = _oracle_logits(output, regimes).argmax(dim=-1)
         soft_predictions = output.mixed_logits.argmax(dim=-1)
         hard_predictions = hard_output.mixed_logits.argmax(dim=-1)
@@ -1071,6 +1163,13 @@ def _run_training_unlocked(
                     state.translator_baseline = (
                         baseline_metrics["reconstruction"]
                         + baseline_metrics["consistency"]
+                    )
+                if phase == "router_warmup":
+                    _fit_oracle_conditional_accuracy(
+                        model,
+                        loaders["validation"],
+                        runtime,
+                        max_steps=max_steps,
                     )
                 for epoch in range(first_epoch, phase_epochs):
                     train_metrics = _train_epoch(

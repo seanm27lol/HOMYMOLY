@@ -171,6 +171,19 @@ class HomologicalRouterSystem(nn.Module):
         self.router = DiagnosticCostRouter(raw_context_dim, config.router)
         self.graph_to_cell = GraphToCellTranslator(config.expert, config.translator)
         self.graph_to_sheaf = GraphToSheafTranslator(config.expert, config.translator)
+        # Regime-conditional expert accuracies used as the routing-oracle
+        # utility, fitted on validation when the router-warmup phase begins
+        # (see engine); persisted so resume restores the fitted table.
+        self.register_buffer(
+            "oracle_conditional_accuracy",
+            torch.zeros(len(ROUTE_ORDER), len(ROUTE_ORDER), dtype=torch.float32),
+            persistent=True,
+        )
+        self.register_buffer(
+            "oracle_table_ready",
+            torch.zeros((), dtype=torch.uint8),
+            persistent=True,
+        )
 
     def _run_experts(
         self,
