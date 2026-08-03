@@ -1,7 +1,9 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: Gate-4 confirmed (run 9)** — learned routing beats the best fixed route at matched compute with clean provenance. Remaining Gate-2 items: exact RTD/SRTD port (prototype validated), then Gate 3. See "Run 9 outcome".
-configured LR). Run 8 was the first run to clear the Gate-4 utility bar —
+**STATUS: Gate-4 confirmed (run 9)** — learned routing beats the best
+fixed route at matched compute with clean provenance. Remaining Gate-2
+items: exact RTD/SRTD port (prototype validated), then Gate 3. See
+"Run 9 outcome".
 see "Run 8 outcome". Earlier history: runs 4–7 below.
 gates but its router collapsed to always-cell (graph expert broken). Run 5
 fixed the graph expert; run 6 gave the router regime-informative features;
