@@ -70,3 +70,30 @@ built to win, and it still loses.
   topological defects carry more independent damage signal when
   translations are consistency-constrained (partial ρ 0.31 vs 0.14) —
   a multi-seed pilot is the cheap next measurement if pursued.
+
+## The molecularly-informed redesign (2026-08-04, v2 evaluation)
+
+The redesign directions above were implemented as an optional
+`molecular_mode` on the cell expert: the face encoder additionally
+receives a per-face masked max over boundary edge features (the
+strongest bond in the ring, which the oriented boundary sum can cancel)
+and the ring size as a normalized scalar. Evaluated on the identical
+protocol (3 seeds, official split/evaluator,
+`artifacts/gate5/molhiv_results_v2.json`):
+
+| route | test AUROC mean ± std | valid mean |
+|---|---|---|
+| graph | 0.771 ± 0.014 | 0.794 |
+| cell (v1) | 0.723 ± 0.017 | 0.782 |
+| **cell_molecular (v2)** | **0.757 ± 0.002** | 0.771 |
+
+- The redesign recovers **+0.034** of the v1 cell route's −0.048
+  deficit (~70%), and it is the most consistent route of the three
+  (test std 0.002 vs 0.014–0.017).
+- It still trails the graph route by 0.014 on average, so C6's strict
+  form (beat the graph route) remains unsupported — but the direction
+  is validated: ring-aware features, not the mere presence of 2-cells,
+  carry the molecular signal. Next iteration if pursued: bond-type and
+  stereo-conditioned face aggregation (the one-hot bond channels are
+  currently pooled indiscriminately) and a second face message round
+  rather than deeper readout.
