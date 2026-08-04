@@ -13,6 +13,7 @@ from .ops import (
     GraphMessageLayer,
     apply_mask,
     face_boundary_aggregate,
+    face_boundary_coefficients,
     face_holonomy,
     face_vertex_mean,
     masked_feature_energy,
@@ -142,7 +143,14 @@ class GraphExpert(nn.Module):
 
 
 class CellExpert(nn.Module):
-    """Graph processing augmented by active oriented triangular 2-cells."""
+    """Graph processing augmented by active oriented triangular 2-cells.
+
+    ``molecular_mode`` adds two ring-motivated inputs to the face encoder:
+    a per-face masked max over boundary edge features (the strongest bond in
+    the ring, which the oriented sum can cancel away) and the ring size as a
+    normalized scalar.  It changes only the face encoder's input width; the
+    synthetic path is unchanged when the flag is off.
+    """
 
     route = SignalRegime.CELL
 
@@ -151,7 +159,8 @@ class CellExpert(nn.Module):
         self.config = config
         self.backbone = _GraphBackbone(config)
         self.face_encoder = MLP(
-            2 * config.hidden_dim,
+            (3 if config.molecular_mode else 2) * config.hidden_dim
+            + (1 if config.molecular_mode else 0),
             config.hidden_dim,
             config.hidden_dim,
             dropout=config.dropout,
@@ -189,8 +198,47 @@ class CellExpert(nn.Module):
             face_valid,
             face_vertices=inputs.get("face_vertices"),
         )
+        face_inputs = torch.cat((vertex_hidden, boundary_hidden), dim=-1)
+        if self.config.molecular_mode:
+            coefficients = face_boundary_coefficients(
+                inputs["edge_index"],
+                inputs["edge_mask"],
+                inputs["face_index"],
+                face_valid,
+                dtype=edge_hidden.dtype,
+                face_boundary=inputs.get("face_boundary"),
+            )
+            edge_presence = coefficients.abs() > 0
+            negative_fill = torch.full(
+                (),
+                -1.0e30,
+                dtype=edge_hidden.dtype,
+                device=edge_hidden.device,
+            )
+            boundary_max = torch.where(
+                edge_presence.unsqueeze(-1), edge_hidden.unsqueeze(1), negative_fill
+            ).amax(dim=2)
+            # Every valid face has boundary edges; padded faces are zeroed.
+            boundary_max = apply_mask(boundary_max, face_valid)
+            if inputs.get("face_boundary") is not None:
+                ring_size = (
+                    (inputs["face_boundary"][..., 1] != 0)
+                    .sum(dim=-1, keepdim=True)
+                    .to(boundary_hidden.dtype)
+                    / 12.0
+                )
+            else:
+                ring_size = torch.full(
+                    (*face_valid.shape, 1),
+                    0.25,
+                    dtype=boundary_hidden.dtype,
+                    device=boundary_hidden.device,
+                )
+            face_inputs = torch.cat(
+                (face_inputs, boundary_max, ring_size), dim=-1
+            )
         face_hidden = apply_mask(
-            self.face_encoder(torch.cat((vertex_hidden, boundary_hidden), dim=-1)),
+            self.face_encoder(face_inputs),
             face_valid,
         )
         face_messages = scatter_faces_to_nodes(

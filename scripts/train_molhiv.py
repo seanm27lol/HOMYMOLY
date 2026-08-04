@@ -12,6 +12,7 @@ Ring 2-cells enter only through the boundary-list representation.  Usage:
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import time
 from pathlib import Path
@@ -175,9 +176,18 @@ def main() -> None:
     )
     results = []
     for seed in args.seeds:
-        for route_name, cls in (("graph", GraphExpert), ("cell", CellExpert)):
+        for route_name, cls, molecular in (
+            ("graph", GraphExpert, False),
+            ("cell", CellExpert, False),
+            ("cell_molecular", CellExpert, True),
+        ):
+            route_config = (
+                config
+                if not molecular
+                else dataclasses.replace(config, molecular_mode=True)
+            )
             torch.manual_seed(seed)
-            model = cls(config).to(runtime.device)
+            model = cls(route_config).to(runtime.device)
             params = sum(p.numel() for p in model.parameters())
             record = _train_route(route_name, model, dataset, splits, runtime, args, evaluator, seed)
             record["parameters"] = params
