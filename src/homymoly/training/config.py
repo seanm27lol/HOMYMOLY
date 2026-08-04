@@ -99,6 +99,7 @@ class Gate2TrainingConfig:
     router_warmup_epochs: int = 6
     joint_finetune_epochs: int = 10
     learning_rate: float = 3e-4
+    router_learning_rate: float = 0.0
     min_learning_rate: float = 1e-6
     weight_decay: float = 1e-4
     grad_clip_norm: float = 1.0
@@ -142,6 +143,8 @@ class Gate2TrainingConfig:
                 raise ConfigError(f"training.{name} must be nonnegative")
         if self.learning_rate <= 0 or self.min_learning_rate > self.learning_rate:
             raise ConfigError("training learning-rate bounds are inconsistent")
+        if not isfinite(self.router_learning_rate) or self.router_learning_rate < 0:
+            raise ConfigError("training.router_learning_rate must be nonnegative")
         if not isfinite(self.grad_clip_norm) or self.grad_clip_norm <= 0:
             raise ConfigError("training.grad_clip_norm must be positive")
         _bounded_float("training.label_smoothing", self.label_smoothing, 0.0, 0.5)

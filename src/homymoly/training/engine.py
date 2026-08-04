@@ -1162,8 +1162,18 @@ def _run_training_unlocked(
                     # advanced at each phase end, so a phase-index check
                     # never fires.  A mid-phase resume (first_epoch > 0)
                     # keeps the restored phase scheduler.
+                    phase_lr = config.training.learning_rate
+                    if (
+                        phase in ("router_warmup", "joint_finetune")
+                        and config.training.router_learning_rate > 0
+                    ):
+                        # The router trains briefly at the end of a long run
+                        # and can stall at uniform output on bad draws
+                        # (measured: warmup stuck at route accuracy 1/3 on
+                        # seed s2); it gets its own rate when configured.
+                        phase_lr = config.training.router_learning_rate
                     for group in optimizer.param_groups:
-                        group["lr"] = config.training.learning_rate
+                        group["lr"] = phase_lr
                     scheduler = CosineAnnealingLR(
                         optimizer,
                         T_max=max(1, phase_epochs),
