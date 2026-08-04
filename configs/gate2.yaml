@@ -34,9 +34,10 @@ training:
   batch_size: 64
   fixed_expert_epochs: 16
   translator_epochs: 8
-  router_warmup_epochs: 6
+  router_warmup_epochs: 12
   joint_finetune_epochs: 10
   learning_rate: 0.0003
+  router_learning_rate: 0.001
   min_learning_rate: 0.000001
   weight_decay: 0.0001
   grad_clip_norm: 1.0

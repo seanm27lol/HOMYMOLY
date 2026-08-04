@@ -71,6 +71,30 @@ on the two weak seeds and one strong seed against their own baselines:
 
 The weak-seed uniform-output mode disappears entirely: both weak seeds
 now beat the best fixed route by wide margins and exceed the strong
-baseline, while the strong seed is unchanged. The remaining seeds (s3,
-s4) are running with the same configuration to complete the
-five-seed stabilized campaign; updated statistics follow.
+baseline, while the strong seed is unchanged. ## Stabilized five-seed campaign (2026-08-04): the canonical routing result
+
+With the stabilization applied to all five seeds (`configs/stabilized-s{1..5}.yaml`):
+
+| seed | hard | best fixed | dense | oracle | route acc | MI | utilization (g/c/s) |
+|---|---|---|---|---|---|---|---|
+| s1 | 0.767 | 0.667 | 0.766 | 0.999 | 0.536 | 0.091 | .41/.25/.34 |
+| s2 | 0.789 | 0.669 | 0.749 | 0.998 | 0.583 | 0.136 | .40/.32/.28 |
+| s3 | 0.766 | 0.667 | 0.748 | 0.999 | 0.534 | 0.093 | .38/.34/.27 |
+| s4 | 0.782 | 0.678 | 0.736 | 0.976 | 0.576 | 0.126 | .36/.34/.30 |
+| s5 | 0.781 | 0.667 | 0.764 | 0.999 | 0.564 | 0.118 | .28/.42/.29 |
+
+- **Margin over best fixed: mean +0.108, 95% CI [+0.096, +0.119]** (t(4))
+  — against +0.036 [−0.018, +0.090] unstabilized. All five seeds beat
+  the best fixed route *and* the dense ensemble.
+- **Variance collapsed 4×**: hard accuracy 0.777 ± 0.010 (was
+  0.723 ± 0.043); no seed exhibits the uniform-output or
+  collapse-to-cell mode; utilization is balanced on every seed.
+- Routing is strongly regime-informative: MI mean 0.113 (was 0.052),
+  route accuracy mean 0.559 — at the measured ~0.55–0.58 identifiability
+  ceiling of the anti-shortcut design. With oracle accuracy ~0.999, the
+  remaining hard-accuracy gap to 0.777 is the design's intentional
+  route-reliability overlap, not router error.
+- **Config change**: `router_learning_rate: 0.001` and
+  `router_warmup_epochs: 12` are now the canonical settings in
+  `configs/gate2.yaml` (measured better on every axis: same-or-better
+  accuracy on every seed, no failed seeds, tighter interval).
