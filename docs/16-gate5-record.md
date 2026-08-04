@@ -97,3 +97,24 @@ protocol (3 seeds, official split/evaluator,
   stereo-conditioned face aggregation (the one-hot bond channels are
   currently pooled indiscriminately) and a second face message round
   rather than deeper readout.
+
+## v3 ablation: bond-type ring histograms are a negative result
+
+Iteration two added per-face bond-type histograms (the five one-hot bond
+channels weighted by boundary coefficients — the aromatic-bond share of
+each ring) to the v2 face encoder. Evaluated on the identical protocol
+(`artifacts/gate5/molhiv_results_v3.json`):
+
+| variant | test AUROC mean ± std | valid mean |
+|---|---|---|
+| v2 (strongest-bond max + ring size) | **0.757 ± 0.002** | 0.771 |
+| v3 (+ bond-type histograms) | 0.729 ± 0.025 | 0.761 |
+
+v3 is worse on mean, variance, and validation — a clean negative
+ablation, with a mechanical explanation: bond-type distributions are
+scaffold-specific, so histogram features inject exactly the variance the
+scaffold test split shifts. The shipped molecular default reverts to the
+v2 configuration (`bond_feature_dim` remains available as an opt-in for
+future variants). Design lesson recorded for the next iteration: enrich
+*within-ring* relational structure (stereo/position along the ring)
+rather than distributional bond statistics.
