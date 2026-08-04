@@ -44,6 +44,7 @@ RTD compares the Vietoris–Rips filtrations induced by two paired point-cloud r
 - [Gate 2 review](docs/14-gate2-review.md)
 - [Gate 3 record](docs/15-gate3-record.md)
 - [Gate 5 record: molecular transfer](docs/16-gate5-record.md)
+- [Gate 2 confirmatory campaign](docs/17-gate2-confirmatory.md)
 - [Bibliography](references.bib)
 
 ## Stage 1 foundation
