@@ -52,3 +52,25 @@ improvement) passed on every seed; no run crashed.
   routing (longer warmup, lower entropy weight, or oracle-target
   smoothing to reduce collapse-to-cell draws); (b) the
   molecularly-informed cell architecture (Gate-5 redesign direction).
+
+## Stabilization pilot (2026-08-04): the collapse mode is fixed
+
+Diagnosis first: the s2 collapse is an optimization basin failure, not
+supervision — its oracle table and experts are statistically identical
+to the strong seeds', but its warmup never escaped uniform predictions
+(route accuracy exactly 1/3, oracle CE 1.71 → 1.11 flat). The
+stabilization (`router_learning_rate: 0.001` for router phases plus a
+doubled 12-epoch warmup, `configs/stabilized-s{1,2,5}.yaml`) was piloted
+on the two weak seeds and one strong seed against their own baselines:
+
+| seed | baseline hard | stabilized hard | baseline route acc | stabilized route acc | baseline MI | stabilized MI | baseline graph util | stabilized graph util |
+|---|---|---|---|---|---|---|---|---|
+| s1 (strong) | 0.767 | 0.767 | 0.546 | 0.536 | 0.097 | 0.091 | 0.33 | 0.41 |
+| s2 (weak) | 0.693 | **0.789** | 0.378 | **0.583** | 0.029 | **0.136** | 0.08 | 0.40 |
+| s5 (weak) | 0.687 | **0.781** | 0.388 | **0.564** | 0.031 | **0.118** | 0.11 | 0.28 |
+
+The weak-seed uniform-output mode disappears entirely: both weak seeds
+now beat the best fixed route by wide margins and exceed the strong
+baseline, while the strong seed is unchanged. The remaining seeds (s3,
+s4) are running with the same configuration to complete the
+five-seed stabilized campaign; updated statistics follow.
