@@ -160,7 +160,8 @@ class CellExpert(nn.Module):
         self.backbone = _GraphBackbone(config)
         self.face_encoder = MLP(
             (3 if config.molecular_mode else 2) * config.hidden_dim
-            + (1 if config.molecular_mode else 0),
+            + (1 if config.molecular_mode else 0)
+            + (config.bond_feature_dim if config.molecular_mode else 0),
             config.hidden_dim,
             config.hidden_dim,
             dropout=config.dropout,
@@ -237,6 +238,15 @@ class CellExpert(nn.Module):
             face_inputs = torch.cat(
                 (face_inputs, boundary_max, ring_size), dim=-1
             )
+            if self.config.bond_feature_dim > 0:
+                # Bond-type histogram of each ring (the aromatic-bond share
+                # is the chemically meaningful ring signal); the first
+                # bond_feature_dim one-hot channels are the type block.
+                type_block = inputs["edge_features"][..., : self.config.bond_feature_dim]
+                type_counts = torch.einsum(
+                    "bfe,beh->bfh", coefficients.abs(), type_block
+                )
+                face_inputs = torch.cat((face_inputs, type_counts), dim=-1)
         face_hidden = apply_mask(
             self.face_encoder(face_inputs),
             face_valid,

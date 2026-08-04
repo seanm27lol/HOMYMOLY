@@ -22,6 +22,7 @@ class ExpertConfig:
     num_layers: int = 2
     dropout: float = 0.0
     molecular_mode: bool = False
+    bond_feature_dim: int = 0
 
     def __post_init__(self) -> None:
         for name in (
@@ -45,6 +46,10 @@ class ExpertConfig:
             raise ValueError("dropout must lie in [0, 1)")
         if not isinstance(self.molecular_mode, bool):
             raise TypeError("molecular_mode must be boolean")
+        if self.bond_feature_dim < 0:
+            raise ValueError("bond_feature_dim must be nonnegative")
+        if self.bond_feature_dim > self.edge_feature_dim:
+            raise ValueError("bond_feature_dim cannot exceed edge_feature_dim")
 
 
 @dataclass(frozen=True, slots=True)

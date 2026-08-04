@@ -184,7 +184,7 @@ def main() -> None:
             route_config = (
                 config
                 if not molecular
-                else dataclasses.replace(config, molecular_mode=True)
+                else dataclasses.replace(config, molecular_mode=True, bond_feature_dim=5)
             )
             torch.manual_seed(seed)
             model = cls(route_config).to(runtime.device)
