@@ -45,6 +45,7 @@ RTD compares the Vietoris–Rips filtrations induced by two paired point-cloud r
 - [Gate 3 record](docs/15-gate3-record.md)
 - [Gate 5 record: molecular transfer](docs/16-gate5-record.md)
 - [Gate 2 confirmatory campaign](docs/17-gate2-confirmatory.md)
+- [Paper: Typed Representation Routing with Homological Structure](docs/18-paper.md)
 - [Bibliography](references.bib)
 
 ## Stage 1 foundation
