@@ -8,7 +8,9 @@ The working thesis is:
 
 > A task- and compute-aware mixture of structured experts can learn typed representation changes, constrain those changes to behave like chain maps, and use mapping-cone defects to quantify topology lost or introduced during routing.
 
-This repository contains the research specification and the executable Stage 1 foundation: deterministic graph/cell/sheaf-regime data, oriented incidences, finite chain complexes and maps, mapping-cone oracles, Hodge projection, a rank-2 connection-sheaf convention, a GB10 runtime profile, and a machine-readable integration gate. It does not yet claim a trained or experimentally validated routing method.
+This repository contains the research specification, the executable Stage 1 foundation (deterministic graph/cell/sheaf-regime data, oriented incidences, finite chain complexes and maps, mapping-cone oracles, Hodge projection, a rank-2 connection-sheaf convention, a GB10 runtime profile), and the Gate-2/Gate-3 experiment stack: a confirmatory anti-shortcut benchmark, three specializing fixed experts, graph-hub translators, a cost-aware router, exact RTD/SRTD evaluation references, a corruption suite, and phased resumable training on the local GB10.
+
+Current experimental status (2026-08-03, `docs/14` and `docs/15`): **Gate 2 passed** — learned routing beats the best fixed expert and the dense ensemble at matched measured compute on the confirmatory synthetic benchmark, with all three experts specializing in their intended regimes. **Gate 3 recorded as a measured null** — structural-loss terms (reconstruction, chain consistency, RTD surrogate) are inert on this benchmark, and the topological defect tracks conversion damage but not beyond reconstruction displacement; recorded as evidence per the falsification discipline. The routing contribution stands independently of the inert terms.
 
 ## Should HOMYMOLY use RTD?
 
@@ -37,6 +39,12 @@ RTD compares the Vietoris–Rips filtrations induced by two paired point-cloud r
 - [Stage 1 runtime build](docs/09-stage1-build.md)
 - [GB10 experimental plan](docs/10-gb10-experimental-plan.md)
 - [Stage 1 validation record](docs/11-stage1-validation.md)
+- [Gate 2 training and automatic GB10 launch](docs/12-gate2-training.md)
+- [Gate 2 run handoff](docs/13-gate2-run-handoff.md)
+- [Gate 2 review](docs/14-gate2-review.md)
+- [Gate 3 record](docs/15-gate3-record.md)
+- [Gate 5 record: molecular transfer](docs/16-gate5-record.md)
+- [Gate 2 confirmatory campaign](docs/17-gate2-confirmatory.md)
 - [Bibliography](references.bib)
 
 ## Stage 1 foundation
@@ -79,4 +87,4 @@ The candidate contribution is their disciplined intersection: dynamic, cost-awar
 
 ## Status
 
-Stage 1 mathematical/data/runtime foundation implemented and tested; learned experts, RTD reproduction, training ablations, and routing remain future gates. Literature checked through **2026-08-02**. Novelty conclusions are evidence-based research judgments, not a patent search or guarantee of priority.
+Stage 1 foundation, Gate 2 (passed: fixed experts + routing on the confirmatory synthetic benchmark), and Gate 3 (measured null for the structural-loss mechanism) are implemented and recorded; RTD is reproduced as an exact evaluation reference. Gate 5 recorded: ring-lift route loses to the graph route on MOLHIV (docs/16). Open threads: molecularly-informed cell architecture; the gauge-tier consistency-constrained topological signal. Literature checked through **2026-08-02**. Novelty conclusions are evidence-based research judgments, not a patent search or guarantee of priority.

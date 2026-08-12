@@ -1,10 +1,12 @@
 """Synthetic structured datasets and their typed batch containers."""
 
+from .boundary import cycles_to_boundary_lists, triangles_to_boundary_lists
 from .collate import (
     collate_mixed_structured,
     collate_structured,
     make_structured_collate,
 )
+from .confirmatory import ConfirmatoryConfig, ConfirmatoryStructuredSignal
 from .mixed_structured import MixedStructuredSignal
 from .types import (
     SignalRegime,
@@ -15,6 +17,8 @@ from .types import (
 )
 
 __all__ = [
+    "ConfirmatoryConfig",
+    "ConfirmatoryStructuredSignal",
     "MixedStructuredSignal",
     "SignalRegime",
     "StructuredBatch",
@@ -23,5 +27,7 @@ __all__ = [
     "StructuredSample",
     "collate_mixed_structured",
     "collate_structured",
+    "cycles_to_boundary_lists",
     "make_structured_collate",
+    "triangles_to_boundary_lists",
 ]

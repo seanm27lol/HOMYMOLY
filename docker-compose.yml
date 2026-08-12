@@ -4,7 +4,7 @@ x-homymoly-base: &homymoly-base
   build:
     context: .
     dockerfile: Dockerfile
-  image: homymoly:stage1
+  image: homymoly:gate2
   working_dir: /workspace
   init: true
   shm_size: "16gb"
@@ -15,6 +15,7 @@ x-homymoly-base: &homymoly-base
     - ./scripts:/workspace/scripts:ro
     - ./artifacts:/workspace/artifacts
   environment:
+    CUDA_VISIBLE_DEVICES: "${CUDA_VISIBLE_DEVICES:-0}"
     HOMYMOLY_CONFIG: /workspace/configs/stage1.yaml
     HOME: /tmp/homymoly
     PYTHONPATH: /workspace/src
@@ -31,6 +32,16 @@ services:
       - /workspace/configs/stage1.yaml
       - --create-artifacts
 
+  trainer:
+    <<: *homymoly-base
+    profiles: ["training"]
+    gpus: all
+    command:
+      - train
+      - --config
+      - /workspace/configs/gate2.yaml
+      - --resume
+
   tensorboard:
     <<: *homymoly-base
     profiles: ["dashboard"]
@@ -38,6 +49,7 @@ services:
     command: []
     environment:
       HOMYMOLY_CONFIG: /workspace/configs/stage1.yaml
+      HOMYMOLY_TENSORBOARD_LOGDIR: /workspace/artifacts/gate2/tensorboard
       HOMYMOLY_TENSORBOARD_HOST: 0.0.0.0
       HOMYMOLY_TENSORBOARD_PORT: "6006"
       HOME: /tmp/homymoly

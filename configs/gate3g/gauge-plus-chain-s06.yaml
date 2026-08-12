@@ -1,0 +1,76 @@
+schema_version: 2
+
+experiment:
+  name: gauge-plus-chain-s06
+  seed: 20260806
+
+data:
+  stalk_mode: gauge
+  gauge_noise_std: 0.3
+  num_samples: 6144
+  train_fraction: 0.70
+  validation_fraction: 0.15
+  min_vertices: 24
+  max_vertices: 64
+  node_feature_dim: 4
+  edge_feature_dim: 2
+  seed: 20260806
+
+runtime:
+  device: cuda
+  precision: bfloat16
+  deterministic: true
+  allow_tf32: true
+  compile: false
+  num_workers: 4
+
+model:
+  hidden_dim: 128
+  embedding_dim: 64
+  num_layers: 3
+  dropout: 0.10
+  router_hidden_dim: 96
+  router_temperature: 1.0
+
+training:
+  batch_size: 64
+  fixed_expert_epochs: 16
+  translator_epochs: 8
+  router_warmup_epochs: 6
+  joint_finetune_epochs: 10
+  learning_rate: 0.0003
+  min_learning_rate: 0.000001
+  weight_decay: 0.0001
+  grad_clip_norm: 1.0
+  label_smoothing: 0.05
+  early_stopping_patience: 6
+  checkpoint_every: 1
+  max_steps_per_epoch: 0
+  pin_memory: true
+
+loss:
+  expert_weight: 1.0
+  router_supervision_weight: 0.25
+  translator_task_weight: 0.50
+  translator_weight: 0.1
+  chain_weight: 0.05
+  rtd_weight: 0.0
+  compute_cost_weight: 0.01
+  entropy_weight: 0.005
+  route_costs: [1.0, 1.35, 1.60]
+  rtd_max_points: 24
+  oracle_cost_weight: 0.02
+
+gates:
+  enforce: false
+  minimum_specialized_routes: 2
+  specialization_margin: 0.0
+  translator_relative_improvement: 0.02
+
+artifacts:
+  root: artifacts/gate3g
+  run_name: gauge-plus-chain-s06
+  checkpoints_dir: checkpoints
+  tensorboard_dir: tensorboard
+  profiles_dir: profiles
+  metrics_dir: metrics

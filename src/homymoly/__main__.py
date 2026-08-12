@@ -32,12 +32,16 @@ def _add_config_argument(parser: argparse.ArgumentParser) -> None:
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="homymoly",
-        description="HOMYMOLY Stage-1 runtime utilities",
+        description="HOMYMOLY structured-representation experiments",
     )
-    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
+    )
     subparsers = parser.add_subparsers(dest="command")
 
-    check = subparsers.add_parser("check-config", help="validate and print the active config")
+    check = subparsers.add_parser(
+        "check-config", help="validate and print the active config"
+    )
     _add_config_argument(check)
     check.add_argument(
         "--create-artifacts",
@@ -80,6 +84,29 @@ def _build_parser() -> argparse.ArgumentParser:
         default=1e-10,
         help="absolute tolerance for exact structural checks",
     )
+
+    gate2 = subparsers.add_parser(
+        "check-gate2-config", help="validate and print the Gate-2 experiment config"
+    )
+    gate2.add_argument("--config", default="configs/gate2.yaml")
+
+    train = subparsers.add_parser(
+        "train", help="train the Gate-2 experts, translators, and router"
+    )
+    train.add_argument("--config", default="configs/gate2.yaml")
+    train.add_argument(
+        "--resume", action="store_true", help="resume from the last durable checkpoint"
+    )
+    train.add_argument(
+        "--smoke",
+        action="store_true",
+        help="run one bounded epoch per phase on a small deterministic subset",
+    )
+    train.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="build one batch and model forward pass without optimization",
+    )
     return parser
 
 
@@ -97,6 +124,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.print_help()
         return 0
     try:
+        if args.command in {"check-gate2-config", "train"}:
+            from homymoly.training.config import load_gate2_config
+
+            gate2_config = load_gate2_config(args.config)
+            if args.command == "check-gate2-config":
+                print(json.dumps(gate2_config.as_dict(), indent=2, sort_keys=True))
+                return 0
+            from homymoly.training.engine import run_training
+
+            report = run_training(
+                gate2_config,
+                resume=args.resume,
+                smoke=args.smoke,
+                dry_run=args.dry_run,
+            )
+            print(json.dumps(report, indent=2, sort_keys=True))
+            return 0
+
         config = _load(args)
         paths = config.artifact_paths()
         if args.command == "check-config":
@@ -133,9 +178,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             configured_dataset, splits = build_stage1_dataset(config.data)
             report["configured_dataset"] = {
                 "num_samples": len(configured_dataset),
-                "split_sizes": {
-                    name: len(indices) for name, indices in splits.items()
-                },
+                "split_sizes": {name: len(indices) for name, indices in splits.items()},
             }
             print(json.dumps(report, indent=2, sort_keys=True))
             return 0

@@ -183,6 +183,14 @@ class StructuredSample:
     ``transport[e]`` maps the rank-2 stalk vector at the canonical edge tail
     into the head frame. The corresponding connection residual is
     ``x_head - transport[e] @ x_tail``.
+
+    ``face_boundary`` and ``face_vertices`` are the padded oriented
+    boundary-edge representation required for non-triangular cells (e.g.
+    molecular rings): ``face_boundary[f, k] = (edge_position, coefficient)``
+    with coefficients in {-1, 0, +1} and trailing zero padding, and
+    ``face_vertices[f, k]`` lists the same cycle's vertices with -1 padding.
+    Triangular synthetic data may leave both as ``None`` and rely on
+    ``face_index``; consumers must handle either representation.
     """
 
     observations: StructuredObservations
@@ -194,6 +202,8 @@ class StructuredSample:
     regime: SignalRegime
     sample_id: str
     metadata: Mapping[str, Any]
+    face_boundary: Tensor | None = None
+    face_vertices: Tensor | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.observations, StructuredObservations):
@@ -210,11 +220,12 @@ class StructuredSample:
         _validate_canonical_faces(self.face_index, self.edge_index)
         if self.edge_index.shape[1] != num_edges:
             raise ValueError("edge_features and edge_index disagree on the number of edges")
+        self._validate_boundary_lists(num_vertices, num_edges)
 
         _require_tensor("face_active", self.face_active, ndim=1)
         if self.face_active.dtype != torch.bool:
             raise TypeError("face_active must have dtype torch.bool")
-        if self.face_active.shape[0] != self.face_index.shape[1]:
+        if self.face_active.shape[0] != self.num_faces:
             raise ValueError("face_active and face_index disagree on the number of faces")
 
         _require_tensor("transport", self.transport, ndim=3)
@@ -254,6 +265,49 @@ class StructuredSample:
             raise ValueError(f"metadata contains reserved supervision/observation keys: {names}")
         object.__setattr__(self, "metadata", _freeze_metadata(dict(self.metadata)))
 
+    def _validate_boundary_lists(self, num_vertices: int, num_edges: int) -> None:
+        if (self.face_boundary is None) != (self.face_vertices is None):
+            raise ValueError("face_boundary and face_vertices must be provided together")
+        if self.face_boundary is None:
+            return
+        boundary = self.face_boundary
+        vertices = self.face_vertices
+        if boundary.dtype != torch.long or vertices.dtype != torch.long:
+            raise TypeError("boundary lists must have dtype torch.long")
+        if boundary.ndim != 3 or boundary.shape[2] != 2:
+            raise ValueError("face_boundary must have shape [F, K, 2]")
+        if vertices.ndim != 2:
+            raise ValueError("face_vertices must have shape [F, K]")
+        num_faces = int(boundary.shape[0])  # the boundary lists define the face set
+        if int(self.face_index.shape[1]) > num_faces:
+            raise ValueError("face_index cannot exceed the boundary-list face count")
+        if vertices.shape[0] != num_faces:
+            raise ValueError("boundary lists and face_index disagree on the face count")
+        if boundary.shape[1] != vertices.shape[1]:
+            raise ValueError("face_boundary and face_vertices disagree on K")
+        coefficients = boundary[..., 1]
+        if coefficients.numel() and not set(torch.unique(coefficients).tolist()) <= {-1, 0, 1}:
+            raise ValueError("boundary coefficients must lie in {-1, 0, +1}")
+        for face in range(num_faces):
+            row = coefficients[face]
+            nonzero = torch.nonzero(row).flatten()
+            if len(nonzero) and int(nonzero[-1]) != len(nonzero) - 1:
+                raise ValueError("boundary entries must be a contiguous non-padded prefix")
+            positions = boundary[face, : len(nonzero), 0]
+            if len(positions) and (int(positions.min()) < 0 or int(positions.max()) >= num_edges):
+                raise ValueError("boundary references an edge outside the sample")
+            vertex_row = vertices[face]
+            real = vertex_row != -1
+            if real.numel():
+                first_pad = int((~real).long().argmax()) if bool((~real).any()) else len(vertex_row)
+                if bool(real[first_pad:].any()):
+                    raise ValueError("face_vertices padding must be a contiguous suffix")
+            real_vertices = vertex_row[real]
+            if real_vertices.numel() and (
+                int(real_vertices.min()) < 0 or int(real_vertices.max()) >= num_vertices
+            ):
+                raise ValueError("face_vertices references a vertex outside the sample")
+
     @property
     def node_features(self) -> Tensor:
         return self.observations.node_features
@@ -272,6 +326,8 @@ class StructuredSample:
 
     @property
     def num_faces(self) -> int:
+        if self.face_boundary is not None:
+            return int(self.face_boundary.shape[0])
         return int(self.face_index.shape[1])
 
     def observations_for(self, route: SignalRegime | str) -> StructuredObservations:
@@ -297,7 +353,15 @@ class StructuredSample:
                 }
             )
         elif selected is SignalRegime.SHEAF:
-            inputs["transport"] = self.transport
+            inputs.update(
+                {
+                    "transport": self.transport,
+                    "face_index": self.face_index,
+                }
+            )
+        if selected is not SignalRegime.GRAPH and self.face_boundary is not None:
+            inputs["face_boundary"] = self.face_boundary
+            inputs["face_vertices"] = self.face_vertices
         return inputs
 
     def to(
@@ -316,6 +380,16 @@ class StructuredSample:
             regime=self.regime,
             sample_id=self.sample_id,
             metadata=self.metadata,
+            face_boundary=(
+                None
+                if self.face_boundary is None
+                else self.face_boundary.to(device=device, non_blocking=non_blocking)
+            ),
+            face_vertices=(
+                None
+                if self.face_vertices is None
+                else self.face_vertices.to(device=device, non_blocking=non_blocking)
+            ),
         )
 
 
@@ -338,6 +412,8 @@ class StructuredBatch:
     num_vertices: Tensor
     num_edges: Tensor
     num_faces: Tensor
+    face_boundary: Tensor | None = None
+    face_vertices: Tensor | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.observations, StructuredObservations):
@@ -424,21 +500,25 @@ class StructuredBatch:
         for index in range(batch_size):
             num_vertices = int(self.num_vertices[index])
             num_edges = int(self.num_edges[index])
-            num_faces = int(self.num_faces[index])
             valid_edges = self.edge_index[index, :, :num_edges]
-            valid_faces = self.face_index[index, :, :num_faces]
             if valid_edges.numel() and (
                 torch.any(valid_edges < 0) or torch.any(valid_edges >= num_vertices)
             ):
                 raise ValueError("valid edge indices must reference real vertices")
-            if valid_faces.numel() and (
-                torch.any(valid_faces < 0) or torch.any(valid_faces >= num_vertices)
-            ):
-                raise ValueError("valid face indices must reference real vertices")
             if torch.any(self.edge_index[index, :, num_edges:] != -1):
                 raise ValueError("padded edge indices must use the -1 sentinel")
-            if torch.any(self.face_index[index, :, num_faces:] != -1):
+            # face_index may be a strict triangle subset of the face set
+            # (rings live in face_boundary); its real entries are a prefix.
+            faces_row = self.face_index[index]
+            real_faces = faces_row != -1
+            real_count = int(real_faces.any(dim=0).sum())
+            if torch.any(faces_row[:, real_count:] != -1):
                 raise ValueError("padded face indices must use the -1 sentinel")
+            real = faces_row[:, :real_count]
+            if real.numel() and (
+                torch.any(real < 0) or torch.any(real >= num_vertices)
+            ):
+                raise ValueError("valid face indices must reference real vertices")
             if torch.count_nonzero(self.node_features[index, num_vertices:]):
                 raise ValueError("padded node features must be zero")
             if torch.count_nonzero(self.edge_features[index, num_edges:]):
@@ -449,6 +529,29 @@ class StructuredBatch:
         object.__setattr__(self, "regimes", tuple(SignalRegime.coerce(r) for r in self.regimes))
         object.__setattr__(self, "sample_ids", tuple(self.sample_ids))
         object.__setattr__(self, "metadata", tuple(self.metadata))
+        self._validate_boundary_lists(batch_size)
+
+    def _validate_boundary_lists(self, batch_size: int) -> None:
+        if (self.face_boundary is None) != (self.face_vertices is None):
+            raise ValueError("face_boundary and face_vertices must be provided together")
+        if self.face_boundary is None:
+            return
+        num_faces = int(self.face_mask.shape[1])
+        if tuple(self.face_boundary.shape) != (batch_size, num_faces, self.face_boundary.shape[2], 2):
+            raise ValueError("face_boundary must have shape [B, F, K, 2]")
+        if tuple(self.face_vertices.shape) != (batch_size, num_faces, self.face_boundary.shape[2]):
+            raise ValueError("face_vertices must have shape [B, F, K]")
+        if self.face_boundary.dtype != torch.long or self.face_vertices.dtype != torch.long:
+            raise TypeError("boundary lists must have dtype torch.long")
+        device = self.node_features.device
+        if self.face_boundary.device != device or self.face_vertices.device != device:
+            raise ValueError("all batch tensors must share the observation device")
+        for index in range(batch_size):
+            padded = slice(int(self.num_faces[index]), num_faces)
+            if torch.any(self.face_boundary[index, padded] != 0):
+                raise ValueError("padded faces must have zero boundary entries")
+            if torch.any(self.face_vertices[index, padded] != -1):
+                raise ValueError("padded faces must use the -1 vertex sentinel")
 
     def __len__(self) -> int:
         return int(self.labels.shape[0])
@@ -485,7 +588,16 @@ class StructuredBatch:
                 }
             )
         elif selected is SignalRegime.SHEAF:
-            inputs["transport"] = self.transport
+            inputs.update(
+                {
+                    "transport": self.transport,
+                    "face_index": self.face_index,
+                    "face_mask": self.face_mask,
+                }
+            )
+        if selected is not SignalRegime.GRAPH and self.face_boundary is not None:
+            inputs["face_boundary"] = self.face_boundary
+            inputs["face_vertices"] = self.face_vertices
         return inputs
 
     def to(
@@ -510,6 +622,16 @@ class StructuredBatch:
             num_vertices=self.num_vertices.to(device=device, non_blocking=non_blocking),
             num_edges=self.num_edges.to(device=device, non_blocking=non_blocking),
             num_faces=self.num_faces.to(device=device, non_blocking=non_blocking),
+            face_boundary=(
+                None
+                if self.face_boundary is None
+                else self.face_boundary.to(device=device, non_blocking=non_blocking)
+            ),
+            face_vertices=(
+                None
+                if self.face_vertices is None
+                else self.face_vertices.to(device=device, non_blocking=non_blocking)
+            ),
         )
 
 

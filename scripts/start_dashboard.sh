@@ -13,13 +13,18 @@ if ! command -v tensorboard >/dev/null 2>&1; then
   exit 2
 fi
 
-TENSORBOARD_DIR="$(
-  PYTHONPATH="${PROJECT_ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}" \
-    python -m homymoly paths \
-      --config "${CONFIG_PATH}" \
-      --kind tensorboard \
-      --create
-)"
+if [[ -n "${HOMYMOLY_TENSORBOARD_LOGDIR:-}" ]]; then
+  TENSORBOARD_DIR="${HOMYMOLY_TENSORBOARD_LOGDIR}"
+  mkdir -p "${TENSORBOARD_DIR}"
+else
+  TENSORBOARD_DIR="$(
+    PYTHONPATH="${PROJECT_ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}" \
+      python -m homymoly paths \
+        --config "${CONFIG_PATH}" \
+        --kind tensorboard \
+        --create
+  )"
+fi
 
 echo "Starting HOMYMOLY TensorBoard at http://${TENSORBOARD_HOST}:${TENSORBOARD_PORT}"
 echo "Log directory: ${TENSORBOARD_DIR}"
