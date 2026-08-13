@@ -1,5 +1,12 @@
 """Gate-2 PyTorch experts, translators, ensemble, and router."""
 
+from .chain_map import (
+    ChainMapMatrices,
+    ExactChainMapLayer,
+    cone_soft_betti,
+    cycle_consistency_loss,
+    mapping_cone_boundaries,
+)
 from .config import ExpertConfig, ModelConfig, RouterConfig, TranslatorConfig
 from .experts import (
     ROUTE_ORDER,
@@ -29,9 +36,11 @@ __all__ = [
     "ROUTE_ORDER",
     "TRANSLATOR_ORDER",
     "CellExpert",
+    "ChainMapMatrices",
     "ConnectionSheafExpert",
     "DiagnosticCostRouter",
     "EnsembleOutput",
+    "ExactChainMapLayer",
     "ExpertConfig",
     "ExpertOutput",
     "FixedExpertEnsemble",
@@ -46,4 +55,7 @@ __all__ = [
     "TranslationOutput",
     "TranslatorConfig",
     "build_model",
+    "cone_soft_betti",
+    "cycle_consistency_loss",
+    "mapping_cone_boundaries",
 ]

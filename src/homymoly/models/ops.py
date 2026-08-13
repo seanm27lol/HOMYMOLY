@@ -257,7 +257,9 @@ def face_boundary_coefficients(
             device=edge_mask.device,
         )
         valid_entries = face_boundary[..., 1] != 0
-        positions = face_boundary[..., 0].clamp(min=0, max=max(edge_mask.shape[1] - 1, 0))
+        positions = face_boundary[..., 0].clamp(
+            min=0, max=max(edge_mask.shape[1] - 1, 0)
+        )
         contributions = torch.where(
             valid_entries,
             face_boundary[..., 1].to(dtype),
@@ -316,7 +318,9 @@ def face_vertex_mean(
         ).reshape(*face_vertices.shape, node_hidden.shape[-1])
         batch, faces = face_vertices.shape[:2]
         pooled = masked_mean(
-            gathered.reshape(batch * faces, face_vertices.shape[2], node_hidden.shape[-1]),
+            gathered.reshape(
+                batch * faces, face_vertices.shape[2], node_hidden.shape[-1]
+            ),
             vertex_valid.reshape(batch * faces, face_vertices.shape[2]),
             dim=1,
         ).reshape(batch, faces, node_hidden.shape[-1])
@@ -350,7 +354,11 @@ def scatter_faces_to_nodes(
         flat_index = indices.reshape(indices.shape[0], -1, 1).expand(
             -1, -1, face_hidden.shape[-1]
         )
-        result.scatter_add_(1, flat_index, contributions.reshape(contributions.shape[0], -1, contributions.shape[-1]))
+        result.scatter_add_(
+            1,
+            flat_index,
+            contributions.reshape(contributions.shape[0], -1, contributions.shape[-1]),
+        )
         counts.scatter_add_(
             1,
             indices.reshape(indices.shape[0], -1, 1),

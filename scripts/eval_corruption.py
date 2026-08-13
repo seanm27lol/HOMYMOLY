@@ -23,11 +23,16 @@ reconstruction error?  Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
+import random
 import statistics
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
+import numpy as np
 import torch
 from torch.nn import functional as F
 
@@ -38,6 +43,7 @@ from homymoly.models import build_model
 from homymoly.runtime import initialize_runtime
 from homymoly.training import engine
 from homymoly.training.config import load_gate2_config
+from homymoly.training.io import atomic_json
 
 ROUTE_FOR_KIND = {
     "transport_rotation": "sheaf",
@@ -50,9 +56,15 @@ TRANSLATOR_FOR_KIND = {
     "node_anchor_noise": None,
 }
 SEVERITIES = (0.05, 0.1, 0.2, 0.4, 0.8)
+_DRAW_PROTOCOL = "sha256-block-and-sample-v1"
+_ANALYSIS_METHOD = "rank-residual-partial-spearman-v1"
 
 
-def _rankdata(values):
+def _rankdata(values: Sequence[float]) -> list[float]:
+    if len(values) == 0:
+        raise ValueError("rank data must be nonempty")
+    if not all(math.isfinite(float(value)) for value in values):
+        raise ValueError("rank data must be finite")
     order = sorted(range(len(values)), key=lambda i: values[i])
     ranks = [0.0] * len(values)
     i = 0
@@ -66,25 +78,227 @@ def _rankdata(values):
     return ranks
 
 
-def _spearman(x, y):
-    rx, ry = _rankdata(x), _rankdata(y)
-    mx, my = statistics.mean(rx), statistics.mean(ry)
-    num = sum((a - mx) * (b - my) for a, b in zip(rx, ry))
-    den = math.sqrt(sum((a - mx) ** 2 for a in rx) * sum((b - my) ** 2 for b in ry))
-    return num / den if den else 0.0
+def _pearson(x: Sequence[float], y: Sequence[float]) -> float:
+    if len(x) != len(y) or len(x) < 2:
+        raise ValueError("correlation inputs must have equal length of at least two")
+    mx, my = statistics.mean(x), statistics.mean(y)
+    centered_x = [float(value) - mx for value in x]
+    centered_y = [float(value) - my for value in y]
+    numerator = sum(
+        left * right for left, right in zip(centered_x, centered_y, strict=True)
+    )
+    denominator = math.sqrt(
+        sum(value * value for value in centered_x)
+        * sum(value * value for value in centered_y)
+    )
+    return numerator / denominator if denominator else 0.0
 
 
-def _partial_spearman(x, y, control):
-    rx, ry, rc = _rankdata(x), _rankdata(y), _rankdata(control)
-    mc = statistics.mean(rc)
+def _spearman(x: Sequence[float], y: Sequence[float]) -> float:
+    if len(x) != len(y):
+        raise ValueError("Spearman inputs must have equal length")
+    return _pearson(_rankdata(x), _rankdata(y))
 
-    def residualize(r):
-        mr = statistics.mean(r)
-        denom = sum((c - mc) ** 2 for c in rc) or 1.0
-        slope = sum((c - mc) * (v - mr) for c, v in zip(rc, r)) / denom
-        return [v - slope * (c - mc) for v, c in zip(r, rc)]
 
-    return _spearman(residualize(rx), residualize(ry))
+def _rank_residuals(
+    values: Sequence[float],
+    controls: Sequence[Sequence[float]],
+    *,
+    blocks: Sequence[str | int] | None = None,
+) -> list[float]:
+    count = len(values)
+    if count < 2:
+        raise ValueError("partial correlation requires at least two observations")
+    if any(len(control) != count for control in controls):
+        raise ValueError("controls must match the data length")
+    if blocks is not None and len(blocks) != count:
+        raise ValueError("block labels must match the data length")
+    columns: list[np.ndarray] = [np.ones(count, dtype=np.float64)]
+    columns.extend(
+        np.asarray(_rankdata(control), dtype=np.float64) for control in controls
+    )
+    if blocks is not None:
+        levels = sorted(set(blocks), key=str)
+        for level in levels[1:]:
+            columns.append(
+                np.asarray([item == level for item in blocks], dtype=np.float64)
+            )
+    design = np.column_stack(columns)
+    ranked = np.asarray(_rankdata(values), dtype=np.float64)
+    fitted = design @ np.linalg.lstsq(design, ranked, rcond=None)[0]
+    return (ranked - fitted).tolist()
+
+
+def _partial_spearman(
+    x: Sequence[float],
+    y: Sequence[float],
+    *controls: Sequence[float],
+    blocks: Sequence[str | int] | None = None,
+) -> float:
+    """Pearson correlation of rank residuals (standard partial Spearman)."""
+    if len(x) != len(y):
+        raise ValueError("partial-Spearman inputs must have equal length")
+    residual_x = _rank_residuals(x, controls, blocks=blocks)
+    residual_y = _rank_residuals(y, controls, blocks=blocks)
+    return _pearson(residual_x, residual_y)
+
+
+def _stable_hash_seed(*parts: object) -> int:
+    encoded = json.dumps(parts, ensure_ascii=True, separators=(",", ":")).encode()
+    return (
+        int.from_bytes(hashlib.sha256(encoded).digest()[:8], "big")
+        & 0x7FFF_FFFF_FFFF_FFFF
+    )
+
+
+def _corruption_sigmas(
+    sample_ids: Sequence[str],
+    *,
+    data_seed: int,
+    experiment_seed: int,
+    kind: str,
+    severity: float,
+    block_id: int,
+    batch_start: int,
+) -> tuple[int, list[float]]:
+    """Stable paired draws independent of Python's process-salted hash."""
+    if severity < 0 or not math.isfinite(severity):
+        raise ValueError("severity must be finite and nonnegative")
+    block_seed = _stable_hash_seed(
+        _DRAW_PROTOCOL,
+        data_seed,
+        experiment_seed,
+        kind,
+        float(severity).hex(),
+        block_id,
+        batch_start,
+    )
+    sigmas = []
+    for position, sample_id in enumerate(sample_ids):
+        value = _stable_hash_seed(block_seed, position, sample_id)
+        sigmas.append(((value + 0.5) / float(1 << 63)) * severity)
+    return block_seed, sigmas
+
+
+def _residual_permutation_pvalue(
+    x: Sequence[float],
+    y: Sequence[float],
+    controls: Sequence[Sequence[float]],
+    blocks: Sequence[str | int],
+    *,
+    seed: int,
+    replicates: int,
+) -> float:
+    residual_x = _rank_residuals(x, controls, blocks=blocks)
+    residual_y = _rank_residuals(y, controls, blocks=blocks)
+    observed = abs(_pearson(residual_x, residual_y))
+    grouped = {
+        block: [index for index, value in enumerate(blocks) if value == block]
+        for block in sorted(set(blocks), key=str)
+    }
+    rng = random.Random(seed)
+    exceedances = 0
+    for _ in range(replicates):
+        permuted = list(residual_y)
+        for indices in grouped.values():
+            values = [permuted[index] for index in indices]
+            rng.shuffle(values)
+            for index, value in zip(indices, values, strict=True):
+                permuted[index] = value
+        if abs(_pearson(residual_x, permuted)) >= observed - 1e-15:
+            exceedances += 1
+    return (exceedances + 1) / (replicates + 1)
+
+
+def _block_bootstrap_interval(
+    x: Sequence[float],
+    y: Sequence[float],
+    controls: Sequence[Sequence[float]],
+    blocks: Sequence[str | int],
+    *,
+    seed: int,
+    replicates: int,
+) -> list[float]:
+    levels = sorted(set(blocks), key=str)
+    grouped = {
+        block: [index for index, value in enumerate(blocks) if value == block]
+        for block in levels
+    }
+    rng = random.Random(seed)
+    estimates = []
+    for _ in range(replicates):
+        selected = [levels[rng.randrange(len(levels))] for _ in levels]
+        indices: list[int] = []
+        sampled_blocks: list[str] = []
+        for draw, block in enumerate(selected):
+            block_indices = grouped[block]
+            indices.extend(block_indices)
+            sampled_blocks.extend([f"{draw}:{block}"] * len(block_indices))
+        sampled_controls = [
+            [control[index] for index in indices] for control in controls
+        ]
+        estimates.append(
+            _partial_spearman(
+                [x[index] for index in indices],
+                [y[index] for index in indices],
+                *sampled_controls,
+                blocks=sampled_blocks,
+            )
+        )
+    lower, upper = np.quantile(np.asarray(estimates), (0.025, 0.975))
+    return [float(lower), float(upper)]
+
+
+def _repeated_measure_inference(
+    x: Sequence[float],
+    y: Sequence[float],
+    controls: Sequence[Sequence[float]],
+    blocks: Sequence[str | int],
+    *,
+    seed: int,
+    bootstrap_replicates: int,
+    permutation_replicates: int,
+) -> dict[str, Any]:
+    return {
+        "estimate": _partial_spearman(x, y, *controls, blocks=blocks),
+        "block_bootstrap_95_ci": _block_bootstrap_interval(
+            x,
+            y,
+            controls,
+            blocks,
+            seed=_stable_hash_seed(seed, "bootstrap"),
+            replicates=bootstrap_replicates,
+        ),
+        "within_block_permutation_pvalue_two_sided": _residual_permutation_pvalue(
+            x,
+            y,
+            controls,
+            blocks,
+            seed=_stable_hash_seed(seed, "permutation"),
+            replicates=permutation_replicates,
+        ),
+        "bootstrap_replicates": bootstrap_replicates,
+        "permutation_replicates": permutation_replicates,
+        "seed": seed,
+        "method": (
+            "Pearson correlation of rank residuals after ranked numeric controls "
+            "and block fixed effects; complete-block bootstrap; within-block "
+            "residual permutation"
+        ),
+    }
+
+
+def _load_model_state_compatibly(model: torch.nn.Module, state: dict[str, Any]) -> None:
+    incompatible = model.load_state_dict(state, strict=False)
+    allowed_prefix = "graph_to_sheaf.transport_angle."
+    missing = [
+        key for key in incompatible.missing_keys if not key.startswith(allowed_prefix)
+    ]
+    unexpected = list(incompatible.unexpected_keys)
+    if missing or unexpected:
+        raise RuntimeError(
+            f"incompatible checkpoint: missing={missing}, unexpected={unexpected}"
+        )
 
 
 def main() -> None:
@@ -94,7 +308,11 @@ def main() -> None:
     parser.add_argument("--output", default="artifacts/gate3/corruption_report.json")
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--max-batches", type=int, default=12)
+    parser.add_argument("--bootstrap-replicates", type=int, default=2000)
+    parser.add_argument("--permutation-replicates", type=int, default=10000)
     args = parser.parse_args()
+    if args.bootstrap_replicates <= 0 or args.permutation_replicates <= 0:
+        parser.error("inference replicate counts must be positive")
 
     config = load_gate2_config(args.config)
     runtime = initialize_runtime(config.runtime, seed=config.experiment.seed)
@@ -105,8 +323,10 @@ def main() -> None:
     )
     test_indices = splits["test"]
     model = build_model(engine._build_model_config(config)).to(runtime.device).eval()
-    checkpoint = torch.load(args.checkpoint, map_location=runtime.device, weights_only=False)
-    model.load_state_dict(checkpoint["model"])
+    checkpoint = torch.load(
+        args.checkpoint, map_location=runtime.device, weights_only=False
+    )
+    _load_model_state_compatibly(model, checkpoint["model"])
 
     per_example_rows: list[dict] = []
     per_batch_rows: list[dict] = []
@@ -114,9 +334,7 @@ def main() -> None:
     for kind in corruption_kinds():
         route = ROUTE_FOR_KIND[kind]
         regime_examples = [
-            index
-            for index in test_indices
-            if dataset.regimes[index].value == route
+            index for index in test_indices if dataset.regimes[index].value == route
         ]
         for severity in SEVERITIES:
             for batch_start in range(0, len(regime_examples), args.batch_size):
@@ -129,28 +347,36 @@ def main() -> None:
                 if batch_number >= args.max_batches:
                     break
                 clean = collate_structured([dataset[i] for i in batch_indices])
-                rng = torch.Generator().manual_seed(
-                    hash((kind, severity, batch_start)) & 0x7FFFFFFF
+                block_id = f"{kind}:{batch_number:04d}"
+                block_seed, sigmas = _corruption_sigmas(
+                    clean.sample_ids,
+                    data_seed=config.data.seed,
+                    experiment_seed=config.experiment.seed,
+                    kind=kind,
+                    severity=severity,
+                    block_id=batch_number,
+                    batch_start=batch_start,
                 )
                 corrupted = collate_structured(
                     [
                         apply_corruption(
                             dataset[i],
                             kind=kind,
-                            sigma=float(
-                                torch.rand((), generator=rng).item() * severity
-                            ),
+                            sigma=sigma,
                             seed=config.data.seed,
                         )
-                        for i in batch_indices
+                        for i, sigma in zip(batch_indices, sigmas, strict=True)
                     ]
                 )
                 clean = clean.to(runtime.device)
                 corrupted = corrupted.to(runtime.device)
-                with torch.no_grad(), torch.autocast(
-                    device_type=runtime.device.type,
-                    dtype=runtime.neural_dtype,
-                    enabled=runtime.device.type == "cuda",
+                with (
+                    torch.no_grad(),
+                    torch.autocast(
+                        device_type=runtime.device.type,
+                        dtype=runtime.neural_dtype,
+                        enabled=runtime.device.type == "cuda",
+                    ),
                 ):
                     clean_out = model.fixed_experts.experts[route](clean)
                     corrupted_out = model.fixed_experts.experts[route](corrupted)
@@ -198,6 +424,14 @@ def main() -> None:
                     {
                         "kind": kind,
                         "severity": severity,
+                        "block_id": block_id,
+                        "block_number": batch_number,
+                        "batch_start": batch_start,
+                        "block_seed": block_seed,
+                        "num_examples": len(batch_indices),
+                        "sigma_min": min(sigmas),
+                        "sigma_mean": statistics.mean(sigmas),
+                        "sigma_max": max(sigmas),
                         "damage_rate": float(damage.mean()),
                         "mean_ce_increase": float(ce_increase.mean()),
                         "topological_defect": float(topological_defect),
@@ -210,6 +444,10 @@ def main() -> None:
                         {
                             "kind": kind,
                             "severity": severity,
+                            "sample_id": clean.sample_ids[k],
+                            "block_id": block_id,
+                            "block_seed": block_seed,
+                            "sigma": sigmas[k],
                             "damage": float(damage[k]),
                             "ce_increase": float(ce_increase[k]),
                             "reconstruction": float(reconstruction[k]),
@@ -221,8 +459,35 @@ def main() -> None:
     for kind in corruption_kinds():
         rows = [row for row in per_example_rows if row["kind"] == kind]
         batch_rows = [row for row in per_batch_rows if row["kind"] == kind]
+        topology = [row["topological_defect"] for row in batch_rows]
+        damage_rates = [row["damage_rate"] for row in batch_rows]
+        reconstruction = [row["mean_reconstruction"] for row in batch_rows]
+        severities = [row["severity"] for row in batch_rows]
+        blocks = [row["block_id"] for row in batch_rows]
+        inference_seed = _stable_hash_seed(
+            _ANALYSIS_METHOD,
+            config.data.seed,
+            config.experiment.seed,
+            kind,
+        )
+        repeated = _repeated_measure_inference(
+            topology,
+            damage_rates,
+            (reconstruction, severities),
+            blocks,
+            seed=inference_seed,
+            bootstrap_replicates=args.bootstrap_replicates,
+            permutation_replicates=args.permutation_replicates,
+        )
         analysis[kind] = {
+            # Backwards-readable: this remains the number of repeated
+            # example-severity observations, not the number of unique samples.
             "examples": len(rows),
+            "example_observations": len(rows),
+            "unique_examples": len({row["sample_id"] for row in rows}),
+            "batch_observations": len(batch_rows),
+            "unique_blocks": len(set(blocks)),
+            "severity_levels": len(set(severities)),
             "damage_rate": statistics.mean(row["damage"] for row in rows),
             "spearman(diagnostic, damage)": _spearman(
                 [row["diagnostic"] for row in rows],
@@ -234,16 +499,16 @@ def main() -> None:
                 [row["reconstruction"] for row in rows],
             ),
             "batch_spearman(topological_defect, damage_rate)": _spearman(
-                [row["topological_defect"] for row in batch_rows],
-                [row["damage_rate"] for row in batch_rows],
+                topology,
+                damage_rates,
             ),
             "batch_partial(topological_defect, damage_rate | reconstruction)": (
-                _partial_spearman(
-                    [row["topological_defect"] for row in batch_rows],
-                    [row["damage_rate"] for row in batch_rows],
-                    [row["mean_reconstruction"] for row in batch_rows],
-                )
+                _partial_spearman(topology, damage_rates, reconstruction)
             ),
+            "batch_partial(topological_defect, damage_rate | reconstruction, severity, block)": repeated[
+                "estimate"
+            ],
+            "repeated_measures_inference": repeated,
             "batch_spearman(reconstruction, damage_rate)": _spearman(
                 [row["mean_reconstruction"] for row in batch_rows],
                 [row["damage_rate"] for row in batch_rows],
@@ -251,14 +516,29 @@ def main() -> None:
         }
 
     report = {
+        "schema_version": 2,
         "checkpoint": args.checkpoint,
         "severities": list(SEVERITIES),
+        "sampling": {
+            "protocol": _DRAW_PROTOCOL,
+            "data_seed": config.data.seed,
+            "experiment_seed": config.experiment.seed,
+            "pairing_contract": (
+                "Runs with equal data_seed, experiment_seed, split, batch size, "
+                "kind, severity, block, and sample IDs receive identical draws."
+            ),
+        },
+        "analysis_protocol": {
+            "method": _ANALYSIS_METHOD,
+            "numeric_controls": ["mean_reconstruction", "severity"],
+            "repeated_measure_block": "batch block across severity levels",
+        },
         "analysis": analysis,
         "per_batch": per_batch_rows,
+        "per_example": per_example_rows,
     }
     output = Path(args.output)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, indent=2))
+    atomic_json(output, report)
     for kind, result in analysis.items():
         print(kind, json.dumps(result, indent=2))
     print(f"report written to {output}")

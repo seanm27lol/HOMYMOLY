@@ -34,3 +34,8 @@ def test_managed_block_is_replaced_without_touching_other_jobs() -> None:
 def test_malformed_managed_blocks_are_rejected(document: str) -> None:
     with pytest.raises(ValueError):
         MODULE._without_managed_block(document)
+
+
+def test_main_rejects_negative_background_threshold() -> None:
+    with pytest.raises(SystemExit):
+        MODULE.main(["--max-background-processes", "-1", "--print-only"])

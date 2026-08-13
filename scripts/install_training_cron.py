@@ -62,19 +62,25 @@ def _write_crontab(document: str, *, original: str, root: Path) -> None:
     subprocess.run(["crontab", "-"], input=document, text=True, check=True)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     default_root = Path(__file__).resolve().parent.parent
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", type=Path, default=default_root)
     parser.add_argument("--interval-minutes", type=int, default=5)
     parser.add_argument("--max-utilization", type=int, default=10)
+    parser.add_argument("--max-background-processes", type=int, default=1)
+    parser.add_argument("--max-background-memory-mib", type=int, default=512)
     parser.add_argument("--print-only", action="store_true")
     parser.add_argument("--remove", action="store_true")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if not 1 <= args.interval_minutes <= 59:
         parser.error("--interval-minutes must lie between 1 and 59")
     if not 0 <= args.max_utilization <= 100:
         parser.error("--max-utilization must lie between 0 and 100")
+    if args.max_background_processes < 0:
+        parser.error("--max-background-processes must be nonnegative")
+    if args.max_background_memory_mib < 0:
+        parser.error("--max-background-memory-mib must be nonnegative")
 
     root = args.project_root.expanduser().resolve()
     lock_path = Path("/tmp/homymoly-gate2-crontab.lock")
@@ -117,6 +123,10 @@ def main() -> int:
                 shlex.quote(str(root / "configs" / "gate2.yaml")),
                 "--max-utilization",
                 str(args.max_utilization),
+                "--max-background-processes",
+                str(args.max_background_processes),
+                "--max-background-memory-mib",
+                str(args.max_background_memory_mib),
             )
         )
         managed = [BEGIN, f"{schedule} {command}", END]

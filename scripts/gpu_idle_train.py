@@ -14,7 +14,15 @@ import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
+
+
+class ComputeProcess(NamedTuple):
+    """One NVIDIA compute context reported by ``nvidia-smi``."""
+
+    pid: int
+    name: str
+    used_memory_mib: int | None
 
 
 def _timestamp() -> str:
@@ -26,15 +34,27 @@ def _append_event(path: Path, event: str, **fields: Any) -> None:
     payload = {"created_at": _timestamp(), "event": event, **fields}
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(payload, sort_keys=True) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
 
 
 def _atomic_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + f".{os.getpid()}.tmp")
-    temporary.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-    temporary.replace(path)
+    try:
+        with temporary.open("w", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        temporary.replace(path)
+        descriptor = os.open(path.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
 def _launch_fingerprint(project_root: Path, config_path: Path) -> str:
@@ -76,24 +96,66 @@ def _run_nvidia_smi(arguments: list[str]) -> str:
     return result.stdout
 
 
-def _compute_processes(gpu_index: int) -> tuple[tuple[int, str], ...]:
+def _compute_processes(gpu_index: int) -> tuple[ComputeProcess, ...]:
     output = _run_nvidia_smi(
         [
             f"--id={gpu_index}",
-            "--query-compute-apps=pid,process_name",
+            "--query-compute-apps=pid,process_name,used_gpu_memory",
             "--format=csv,noheader,nounits",
         ]
     )
-    processes: list[tuple[int, str]] = []
+    processes: list[ComputeProcess] = []
     for line in output.splitlines():
         line = line.strip()
         if not line or line.lower().startswith("no running"):
             continue
-        pid_text, separator, process_name = line.partition(",")
-        if not separator:
+        fields = [field.strip() for field in line.split(",", maxsplit=2)]
+        if len(fields) != 3:
             raise RuntimeError(f"unexpected nvidia-smi process row: {line!r}")
-        processes.append((int(pid_text.strip()), process_name.strip()))
+        memory_text = fields[2]
+        memory_mib = (
+            None
+            if memory_text.lower()
+            in {"n/a", "[n/a]", "not supported", "[not supported]"}
+            else int(memory_text)
+        )
+        processes.append(ComputeProcess(int(fields[0]), fields[1], memory_mib))
     return tuple(processes)
+
+
+def _processes_block_training(
+    processes: tuple[ComputeProcess, ...],
+    *,
+    max_background_processes: int,
+    max_background_memory_mib: int,
+) -> bool:
+    """Conservatively classify existing CUDA contexts.
+
+    A small, bounded context (for example a persistent desktop/UI process) may
+    coexist with training. Unknown memory is always blocking, as are excess
+    process count or aggregate memory. GPU utilization is checked separately
+    across multiple samples and immediately before launch.
+    """
+
+    if not processes:
+        return False
+    if len(processes) > max_background_processes:
+        return True
+    memories = [process.used_memory_mib for process in processes]
+    if any(memory is None for memory in memories):
+        return True
+    return (
+        sum(memory for memory in memories if memory is not None)
+        > max_background_memory_mib
+    )
+
+
+def _process_payload(process: ComputeProcess) -> dict[str, int | str | None]:
+    return {
+        "pid": process.pid,
+        "name": process.name,
+        "used_memory_mib": process.used_memory_mib,
+    }
 
 
 def _gpu_utilization(gpu_index: int) -> int:
@@ -148,9 +210,15 @@ def _idle_samples(
     max_utilization: int,
     samples: int,
     interval_seconds: float,
-) -> tuple[bool, list[int], tuple[tuple[int, str], ...]]:
+    max_background_processes: int = 0,
+    max_background_memory_mib: int = 0,
+) -> tuple[bool, list[int], tuple[ComputeProcess, ...]]:
     processes = _compute_processes(gpu_index)
-    if processes:
+    if _processes_block_training(
+        processes,
+        max_background_processes=max_background_processes,
+        max_background_memory_mib=max_background_memory_mib,
+    ):
         return False, [], processes
     utilizations: list[int] = []
     for sample_index in range(samples):
@@ -171,6 +239,18 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--config", type=Path)
     parser.add_argument("--gpu-index", type=int, default=0)
     parser.add_argument("--max-utilization", type=int, default=10)
+    parser.add_argument(
+        "--max-background-processes",
+        type=int,
+        default=1,
+        help="maximum existing low-memory CUDA contexts allowed (default: 1)",
+    )
+    parser.add_argument(
+        "--max-background-memory-mib",
+        type=int,
+        default=512,
+        help="maximum aggregate memory for allowed CUDA contexts (default: 512 MiB)",
+    )
     parser.add_argument("--samples", type=int, default=3)
     parser.add_argument("--interval-seconds", type=float, default=2.0)
     parser.add_argument("--dry-run", action="store_true")
@@ -187,6 +267,10 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("--gpu-index must be nonnegative")
     if not 0 <= args.max_utilization <= 100:
         raise SystemExit("--max-utilization must lie between 0 and 100")
+    if args.max_background_processes < 0:
+        raise SystemExit("--max-background-processes must be nonnegative")
+    if args.max_background_memory_mib < 0:
+        raise SystemExit("--max-background-memory-mib must be nonnegative")
     if args.samples <= 0 or args.interval_seconds < 0:
         raise SystemExit(
             "--samples must be positive and --interval-seconds nonnegative"
@@ -251,6 +335,8 @@ def main(argv: list[str] | None = None) -> int:
                 max_utilization=args.max_utilization,
                 samples=args.samples,
                 interval_seconds=args.interval_seconds,
+                max_background_processes=args.max_background_processes,
+                max_background_memory_mib=args.max_background_memory_mib,
             )
         except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
             _append_event(events_path, "telemetry_error", error=str(exc))
@@ -263,7 +349,7 @@ def main(argv: list[str] | None = None) -> int:
                 "gpu_busy",
                 gpu_index=args.gpu_index,
                 utilizations=utilizations,
-                processes=[{"pid": pid, "name": name} for pid, name in processes],
+                processes=[_process_payload(process) for process in processes],
             )
             return 0
 
@@ -271,17 +357,27 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 final_processes = _compute_processes(args.gpu_index)
                 final_utilization = _gpu_utilization(args.gpu_index)
-            except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
+            except (
+                OSError,
+                RuntimeError,
+                subprocess.SubprocessError,
+                ValueError,
+            ) as exc:
                 _append_event(events_path, "telemetry_recheck_error", error=str(exc))
                 return 2
-            if final_processes or final_utilization > args.max_utilization:
+            processes_block = _processes_block_training(
+                final_processes,
+                max_background_processes=args.max_background_processes,
+                max_background_memory_mib=args.max_background_memory_mib,
+            )
+            if processes_block or final_utilization > args.max_utilization:
                 _append_event(
                     events_path,
                     "gpu_became_busy",
                     gpu_index=args.gpu_index,
                     utilization=final_utilization,
                     processes=[
-                        {"pid": pid, "name": name} for pid, name in final_processes
+                        _process_payload(process) for process in final_processes
                     ],
                 )
                 return 0
@@ -324,7 +420,11 @@ def main(argv: list[str] | None = None) -> int:
                 "launched_at": _timestamp(),
                 "gpu_index": args.gpu_index,
                 "utilizations": utilizations,
+                "background_processes": [
+                    _process_payload(process) for process in processes
+                ],
                 "launcher": str(launcher),
+                "launch_fingerprint": launch_fingerprint,
             },
         )
         _append_event(
@@ -333,6 +433,7 @@ def main(argv: list[str] | None = None) -> int:
             pid=process.pid,
             gpu_index=args.gpu_index,
             utilizations=utilizations,
+            background_processes=[_process_payload(process) for process in processes],
         )
         print(f"launched Gate-2 training as PID {process.pid}")
         return 0

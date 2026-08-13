@@ -247,6 +247,7 @@ def _build_model_config(config: Gate2Config) -> ModelConfig:
         translator=TranslatorConfig(
             hidden_dim=config.model.hidden_dim,
             stalk_rank=2,
+            target_structure_access=config.model.translator_target_structure_access,
         ),
     )
 
@@ -288,7 +289,10 @@ def _oracle_route_targets(
     supervision target, never as a model input.
     """
 
-    if conditional_accuracy is not None:
+    if (
+        config.loss.routing_supervision == "regime_conditional"
+        and conditional_accuracy is not None
+    ):
         regimes = _regime_targets(batch)
         utility = conditional_accuracy.to(batch.labels.device)[regimes]
     else:
@@ -366,7 +370,9 @@ def _loss_terms(
     oracle_route_ce = F.cross_entropy(output.route_logits.float(), oracle_routes)
     repeated_translator_labels = batch.labels[:, None].expand(-1, 2).reshape(-1)
     translated_ce = F.cross_entropy(
-        output.translated_logits.float().reshape(-1, output.translated_logits.shape[-1]),
+        output.translated_logits.float().reshape(
+            -1, output.translated_logits.shape[-1]
+        ),
         repeated_translator_labels,
         label_smoothing=config.training.label_smoothing,
     )
@@ -377,6 +383,14 @@ def _loss_terms(
     consistency = _sum_auxiliary(
         output,
         ("cell_chain_consistency_surrogate", "sheaf_cochain_consistency_surrogate"),
+    )
+    typed_map_reconstruction = _sum_auxiliary(
+        output,
+        (
+            "cell_boundary_map_reconstruction",
+            "cell_face_gate_supervision",
+            "sheaf_transport_map_reconstruction",
+        ),
     )
     topology = _topology_surrogate(output, config.loss.rtd_max_points)
     expected_cost = output.auxiliary_losses["route_expected_cost"].float()
@@ -390,6 +404,7 @@ def _loss_terms(
             config.loss.translator_task_weight * translated_ce
             + config.loss.translator_weight * reconstruction
             + config.loss.chain_weight * consistency
+            + config.loss.typed_map_weight * typed_map_reconstruction
             + config.loss.rtd_weight * topology
         )
     elif phase == "router_warmup":
@@ -407,6 +422,7 @@ def _loss_terms(
             + config.loss.translator_task_weight * translated_ce
             + config.loss.translator_weight * reconstruction
             + config.loss.chain_weight * consistency
+            + config.loss.typed_map_weight * typed_map_reconstruction
             + config.loss.rtd_weight * topology
             + config.loss.compute_cost_weight * expected_cost
             - config.loss.entropy_weight * entropy
@@ -423,6 +439,7 @@ def _loss_terms(
         "translated_ce": translated_ce,
         "reconstruction": reconstruction,
         "consistency": consistency,
+        "typed_map_reconstruction": typed_map_reconstruction,
         "h0_rtd_style": topology,
         "expected_cost": expected_cost,
         "route_entropy": entropy,
@@ -477,7 +494,10 @@ def _set_phase_trainability(model: nn.Module, phase: str) -> None:
         "cheap_router",
     ):
         component = getattr(root, component_name, None)
-        if isinstance(component, nn.Module) and component_name not in enabled_components:
+        if (
+            isinstance(component, nn.Module)
+            and component_name not in enabled_components
+        ):
             component.eval()
     if matched == 0:
         raise RuntimeError(f"phase {phase} did not select any trainable parameters")
@@ -575,7 +595,9 @@ def _fit_oracle_conditional_accuracy(
     if int(counts.sum()) == 0:
         raise RuntimeError("oracle table fitting received no validation examples")
     table = (correct.double() / counts.double().clamp_min(1).unsqueeze(1)).float()
-    model.oracle_conditional_accuracy.copy_(table.to(model.oracle_conditional_accuracy.device))
+    model.oracle_conditional_accuracy.copy_(
+        table.to(model.oracle_conditional_accuracy.device)
+    )
     model.oracle_table_ready.fill_(1)
     if was_training:
         model.train()
@@ -640,9 +662,9 @@ def _evaluate(
         soft_predictions = output.mixed_logits.argmax(dim=-1)
         hard_predictions = hard_output.mixed_logits.argmax(dim=-1)
         route_predictions = output.route_logits.argmax(dim=-1)
-        utility_oracle_predictions = _oracle_logits(
-            output, oracle_routes
-        ).argmax(dim=-1)
+        utility_oracle_predictions = _oracle_logits(output, oracle_routes).argmax(
+            dim=-1
+        )
         dense_predictions = output.expert_logits.mean(dim=1).argmax(dim=-1)
         random_routes = torch.tensor(
             [
@@ -658,9 +680,9 @@ def _evaluate(
         random_predictions = _oracle_logits(output, random_routes).argmax(dim=-1)
         correct_log_probabilities = output.expert_logits.float().log_softmax(dim=-1)
         label_index = batch.labels[:, None, None].expand(-1, len(ROUTES), 1)
-        correct_utilities = correct_log_probabilities.gather(
-            -1, label_index
-        ).squeeze(-1)
+        correct_utilities = correct_log_probabilities.gather(-1, label_index).squeeze(
+            -1
+        )
         route_costs = torch.tensor(
             config.loss.route_costs,
             device=batch.labels.device,
@@ -687,14 +709,12 @@ def _evaluate(
         totals["hard_correct"] = totals.get("hard_correct", 0.0) + int(
             (hard_predictions == batch.labels).sum()
         )
-        totals["regime_route_correct"] = totals.get(
-            "regime_route_correct", 0.0
-        ) + int(
+        totals["regime_route_correct"] = totals.get("regime_route_correct", 0.0) + int(
             (route_predictions == regimes).sum()
         )
-        totals["oracle_route_correct"] = totals.get(
-            "oracle_route_correct", 0.0
-        ) + int((route_predictions == oracle_routes).sum())
+        totals["oracle_route_correct"] = totals.get("oracle_route_correct", 0.0) + int(
+            (route_predictions == oracle_routes).sum()
+        )
         totals["utility_oracle_correct"] = totals.get(
             "utility_oracle_correct", 0.0
         ) + int((utility_oracle_predictions == batch.labels).sum())
@@ -728,9 +748,9 @@ def _evaluate(
         for regime_index in range(3):
             regime_total[regime_index] += int((regimes == regime_index).sum())
         for translator_index, intended_regime in enumerate((1, 2)):
-            translated_predictions = output.translated_logits[:, translator_index].argmax(
-                dim=-1
-            )
+            translated_predictions = output.translated_logits[
+                :, translator_index
+            ].argmax(dim=-1)
             translated_overall_correct[translator_index] += int(
                 (translated_predictions == batch.labels).sum()
             )
@@ -750,7 +770,9 @@ def _evaluate(
                         "sample_id": sample_id,
                         "label": int(batch.labels[item_index]),
                         "regime": batch.regimes[item_index].value,
-                        "selected_route": ROUTES[int(route_predictions[item_index])].value,
+                        "selected_route": ROUTES[
+                            int(route_predictions[item_index])
+                        ].value,
                         "oracle_route": ROUTES[int(oracle_routes[item_index])].value,
                         "soft_prediction": int(soft_predictions[item_index]),
                         "hard_prediction": int(hard_predictions[item_index]),
@@ -807,9 +829,7 @@ def _evaluate(
             "random_accuracy": totals["random_correct"] / examples,
             "oracle_regret": totals["oracle_regret_sum"] / examples,
             "hard_evaluated_experts_per_example": evaluated_expert_count / examples,
-            "hard_milliseconds_per_example": 1000.0
-            * hard_elapsed_seconds
-            / examples,
+            "hard_milliseconds_per_example": 1000.0 * hard_elapsed_seconds / examples,
         }
     )
     for expert_index, expert_route in enumerate(ROUTES):
@@ -818,9 +838,9 @@ def _evaluate(
         )
         for regime_index, regime in enumerate(ROUTES):
             denominator = max(1, int(regime_total[regime_index]))
-            metrics[
-                f"expert_{expert_route.value}_on_{regime.value}_accuracy"
-            ] = int(expert_by_regime_correct[regime_index, expert_index]) / denominator
+            metrics[f"expert_{expert_route.value}_on_{regime.value}_accuracy"] = (
+                int(expert_by_regime_correct[regime_index, expert_index]) / denominator
+            )
     for translator_index, name in enumerate(("graph_to_cell", "graph_to_sheaf")):
         metrics[f"{name}_accuracy"] = (
             int(translated_overall_correct[translator_index]) / examples
@@ -901,8 +921,7 @@ def _translator_gate(
     relative_improvement = (baseline - final_value) / max(abs(baseline), 1e-12)
     return {
         "name": "translator_engineering",
-        "passed": relative_improvement
-        >= config.gates.translator_relative_improvement,
+        "passed": relative_improvement >= config.gates.translator_relative_improvement,
         "baseline_reconstruction_plus_consistency": baseline,
         "final_reconstruction_plus_consistency": final_value,
         "relative_improvement": relative_improvement,
@@ -1193,12 +1212,15 @@ def _run_training_unlocked(
                         + baseline_metrics["consistency"]
                     )
                 if phase == "router_warmup":
-                    _fit_oracle_conditional_accuracy(
-                        model,
-                        loaders["validation"],
-                        runtime,
-                        max_steps=max_steps,
-                    )
+                    if config.loss.routing_supervision == "regime_conditional":
+                        _fit_oracle_conditional_accuracy(
+                            model,
+                            loaders["validation"],
+                            runtime,
+                            max_steps=max_steps,
+                        )
+                    else:
+                        model.oracle_table_ready.zero_()
                 for epoch in range(first_epoch, phase_epochs):
                     train_metrics = _train_epoch(
                         model,
@@ -1391,9 +1413,7 @@ def run_training(
     """Execute one run while holding an exclusive run-directory lock."""
 
     if dry_run:
-        return _run_training_unlocked(
-            config, resume=resume, smoke=smoke, dry_run=True
-        )
+        return _run_training_unlocked(config, resume=resume, smoke=smoke, dry_run=True)
     run_dir = (
         config.run_dir.with_name(
             config.run_dir.name + f"-smoke-{_config_fingerprint(config)[:10]}"
@@ -1402,9 +1422,7 @@ def run_training(
         else config.run_dir
     )
     with _exclusive_run_lock(run_dir):
-        return _run_training_unlocked(
-            config, resume=resume, smoke=smoke, dry_run=False
-        )
+        return _run_training_unlocked(config, resume=resume, smoke=smoke, dry_run=False)
 
 
 __all__ = ["run_training"]

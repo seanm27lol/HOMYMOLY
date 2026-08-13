@@ -19,6 +19,11 @@ dependencies = [
 dashboard = [
   "tensorboard>=2.18,<3",
 ]
+molecular = [
+  "ogb>=1.3.6,<2",
+  "pandas>=2.2,<4",
+  "rdkit>=2025.3,<2027",
+]
 dev = [
   "pytest>=8,<9",
   "ruff>=0.12,<1",

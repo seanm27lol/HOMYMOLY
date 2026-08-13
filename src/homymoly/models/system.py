@@ -267,7 +267,7 @@ class HomologicalRouterSystem(nn.Module):
                 device=batch.labels.device,
             )
             translation_diagnostics = torch.zeros(
-                (len(batch), len(TRANSLATOR_ORDER), 2),
+                (len(batch), len(TRANSLATOR_ORDER), 3),
                 dtype=torch.float32,
                 device=batch.labels.device,
             )
@@ -280,9 +280,11 @@ class HomologicalRouterSystem(nn.Module):
             losses = {
                 "cell_reconstruction": zero,
                 "cell_chain_consistency_surrogate": zero,
+                "cell_boundary_map_reconstruction": zero,
                 "cell_face_gate_supervision": zero,
                 "sheaf_reconstruction": zero,
                 "sheaf_cochain_consistency_surrogate": zero,
+                "sheaf_transport_map_reconstruction": zero,
             }
             return (
                 translated_embeddings,
@@ -311,9 +313,11 @@ class HomologicalRouterSystem(nn.Module):
         losses = {
             "cell_reconstruction": cell.reconstruction_loss,
             "cell_chain_consistency_surrogate": cell.consistency_surrogate,
+            "cell_boundary_map_reconstruction": cell.map_reconstruction_loss,
             "cell_face_gate_supervision": cell.supervision_loss,
             "sheaf_reconstruction": sheaf.reconstruction_loss,
             "sheaf_cochain_consistency_surrogate": sheaf.consistency_surrogate,
+            "sheaf_transport_map_reconstruction": sheaf.map_reconstruction_loss,
         }
         return (
             translated_embeddings,

@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch import Tensor
 
-Normalization = Literal["none", "max", "mean"]
+Normalization = Literal["none", "max", "mean", "quantile"]
 MatrixLike = Tensor | np.ndarray
 
 
@@ -97,19 +97,26 @@ def normalize_dissimilarity(
     matrix: MatrixLike,
     *,
     mode: Normalization = "max",
+    quantile: float = 0.9,
     eps: float | None = None,
     atol: float = 1e-7,
 ) -> Tensor:
     """Normalize off-diagonal distances independently within one view.
 
-    ``max`` and ``mean`` remove positive uniform rescaling. A collapsed view is
-    left at zero rather than divided by zero. Normalization is differentiable
-    almost everywhere, including with respect to a tensor scale statistic.
+    ``quantile`` divides by the requested all-matrix-entry quantile (0.9 by
+    default), matching the distance rescaling used by the published RTD and
+    SRTD algorithms. ``max`` and ``mean`` remain explicit alternatives. A
+    collapsed view is left at zero rather than divided by zero. Normalization
+    is differentiable almost everywhere, including with respect to a tensor
+    scale statistic.
     """
 
     value = validate_dissimilarity_matrix(matrix, atol=atol)
-    if mode not in {"none", "max", "mean"}:
-        raise ValueError("mode must be one of: none, max, mean")
+    if mode not in {"none", "max", "mean", "quantile"}:
+        raise ValueError("mode must be one of: none, max, mean, quantile")
+    quantile = float(quantile)
+    if not isfinite(quantile) or not 0.0 < quantile <= 1.0:
+        raise ValueError("quantile must be finite and in (0, 1]")
     if mode == "none" or value.shape[0] < 2:
         return value
 
@@ -126,7 +133,14 @@ def normalize_dissimilarity(
         device=value.device,
     )
     off_diagonal = value[indices[0], indices[1]]
-    scale = off_diagonal.max() if mode == "max" else off_diagonal.mean()
+    if mode == "max":
+        scale = off_diagonal.max()
+    elif mode == "mean":
+        scale = off_diagonal.mean()
+    else:
+        # The primary RTD implementation applies np.quantile to the complete
+        # N x N distance matrix, including the diagonal and both triangles.
+        scale = torch.quantile(value.flatten(), quantile)
     return value / scale.clamp_min(eps)
 
 

@@ -1,8 +1,10 @@
 schema_version: 2
 
+# Frozen before inspecting any result from seeds 20260906--20260910.
+# This campaign tests the scoped, historical regime-distilled router only.
 experiment:
-  name: gate2-confirmatory
-  seed: 20260803
+  name: routing-confirmatory-v2-s4
+  seed: 20260909
 
 data:
   num_samples: 6144
@@ -12,7 +14,7 @@ data:
   max_vertices: 64
   node_feature_dim: 4
   edge_feature_dim: 2
-  seed: 20260803
+  seed: 20260909
 
 runtime:
   device: cuda
@@ -29,9 +31,8 @@ model:
   dropout: 0.10
   router_hidden_dim: 96
   router_temperature: 1.0
-  # Translators are graph-only by default. Target cell/sheaf structure is held
-  # out and used only as supervision/evaluation, never as translator input.
-  translator_target_structure_access: false
+  # Historical target-view encoder retained only so this isolates routing.
+  translator_target_structure_access: true
 
 training:
   batch_size: 64
@@ -56,16 +57,14 @@ loss:
   translator_task_weight: 0.50
   translator_weight: 0.10
   chain_weight: 0.05
-  typed_map_weight: 0.05
+  typed_map_weight: 0.0
   rtd_weight: 0.02
   compute_cost_weight: 0.01
   entropy_weight: 0.005
   route_costs: [1.0, 1.35, 1.60]
   rtd_max_points: 24
   oracle_cost_weight: 0.02
-  # Historical routing used validation regime labels to estimate a conditional
-  # utility table. Set per_example for the non-privileged routing experiment.
-  routing_supervision: per_example
+  routing_supervision: regime_conditional
 
 gates:
   enforce: true
@@ -75,7 +74,7 @@ gates:
 
 artifacts:
   root: artifacts
-  run_name: gate2
+  run_name: routing-confirmatory-v2-s4
   checkpoints_dir: checkpoints
   tensorboard_dir: tensorboard
   profiles_dir: profiles

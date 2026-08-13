@@ -55,6 +55,7 @@ class TranslationOutput:
     edge_reconstruction: Tensor
     reconstruction_loss: Tensor
     consistency_surrogate: Tensor
+    map_reconstruction_loss: Tensor
     supervision_loss: Tensor
     per_sample_diagnostics: Tensor
 

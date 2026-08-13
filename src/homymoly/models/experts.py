@@ -118,9 +118,7 @@ class GraphExpert(nn.Module):
             inputs["node_features"], inputs["edge_index"][:, 1]
         )
         pair_hidden = apply_mask(
-            self.edge_pair_encoder(
-                torch.cat((tail_features, head_features), dim=-1)
-            ),
+            self.edge_pair_encoder(torch.cat((tail_features, head_features), dim=-1)),
             inputs["edge_mask"],
         )
         pooled = torch.cat(
@@ -222,12 +220,9 @@ class CellExpert(nn.Module):
             # Every valid face has boundary edges; padded faces are zeroed.
             boundary_max = apply_mask(boundary_max, face_valid)
             if inputs.get("face_boundary") is not None:
-                ring_size = (
-                    (inputs["face_boundary"][..., 1] != 0)
-                    .sum(dim=-1, keepdim=True)
-                    .to(boundary_hidden.dtype)
-                    / 12.0
-                )
+                ring_size = (inputs["face_boundary"][..., 1] != 0).sum(
+                    dim=-1, keepdim=True
+                ).to(boundary_hidden.dtype) / 12.0
             else:
                 ring_size = torch.full(
                     (*face_valid.shape, 1),
@@ -235,14 +230,14 @@ class CellExpert(nn.Module):
                     dtype=boundary_hidden.dtype,
                     device=boundary_hidden.device,
                 )
-            face_inputs = torch.cat(
-                (face_inputs, boundary_max, ring_size), dim=-1
-            )
+            face_inputs = torch.cat((face_inputs, boundary_max, ring_size), dim=-1)
             if self.config.bond_feature_dim > 0:
                 # Bond-type histogram of each ring (the aromatic-bond share
                 # is the chemically meaningful ring signal); the first
                 # bond_feature_dim one-hot channels are the type block.
-                type_block = inputs["edge_features"][..., : self.config.bond_feature_dim]
+                type_block = inputs["edge_features"][
+                    ..., : self.config.bond_feature_dim
+                ]
                 type_counts = torch.einsum(
                     "bfe,beh->bfh", coefficients.abs(), type_block
                 )

@@ -41,7 +41,8 @@ def test_launch_fingerprint_changes_with_config(tmp_path: Path) -> None:
 
 
 def test_idle_samples_rejects_compute_process(monkeypatch) -> None:
-    monkeypatch.setattr(MODULE, "_compute_processes", lambda _index: ((17, "trainer"),))
+    process = MODULE.ComputeProcess(17, "trainer", 256)
+    monkeypatch.setattr(MODULE, "_compute_processes", lambda _index: (process,))
     idle, utilization, processes = MODULE._idle_samples(
         gpu_index=0,
         max_utilization=10,
@@ -50,7 +51,50 @@ def test_idle_samples_rejects_compute_process(monkeypatch) -> None:
     )
     assert not idle
     assert utilization == []
-    assert processes == ((17, "trainer"),)
+    assert processes == (process,)
+
+
+def test_idle_samples_allows_one_bounded_background_context(monkeypatch) -> None:
+    process = MODULE.ComputeProcess(17, "ui_server.py", 462)
+    monkeypatch.setattr(MODULE, "_compute_processes", lambda _index: (process,))
+    monkeypatch.setattr(MODULE, "_gpu_utilization", lambda _index: 4)
+    idle, utilization, processes = MODULE._idle_samples(
+        gpu_index=0,
+        max_utilization=10,
+        samples=3,
+        interval_seconds=0,
+        max_background_processes=1,
+        max_background_memory_mib=512,
+    )
+    assert idle
+    assert utilization == [4, 4, 4]
+    assert processes == (process,)
+
+
+def test_background_policy_rejects_unknown_or_aggregate_excess_memory() -> None:
+    unknown = (MODULE.ComputeProcess(17, "unknown", None),)
+    assert MODULE._processes_block_training(
+        unknown, max_background_processes=1, max_background_memory_mib=512
+    )
+    two_contexts = (
+        MODULE.ComputeProcess(17, "first", 300),
+        MODULE.ComputeProcess(18, "second", 300),
+    )
+    assert MODULE._processes_block_training(
+        two_contexts, max_background_processes=2, max_background_memory_mib=512
+    )
+
+
+def test_compute_process_parser_includes_memory(monkeypatch) -> None:
+    monkeypatch.setattr(
+        MODULE,
+        "_run_nvidia_smi",
+        lambda _arguments: "17, ui_server.py, 462\n18, unknown, [N/A]\n",
+    )
+    assert MODULE._compute_processes(0) == (
+        MODULE.ComputeProcess(17, "ui_server.py", 462),
+        MODULE.ComputeProcess(18, "unknown", None),
+    )
 
 
 def test_idle_samples_requires_every_sample_below_threshold(monkeypatch) -> None:

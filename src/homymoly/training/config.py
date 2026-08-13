@@ -83,12 +83,19 @@ class Gate2ModelConfig:
     dropout: float = 0.10
     router_hidden_dim: int = 96
     router_temperature: float = 1.0
+    # True preserves the pre-audit schema for historical YAML files that did
+    # not carry this field. New conversion experiments set it false explicitly.
+    translator_target_structure_access: bool = True
 
     def __post_init__(self) -> None:
         for name in ("hidden_dim", "embedding_dim", "num_layers", "router_hidden_dim"):
             _positive_int(f"model.{name}", getattr(self, name))
         _bounded_float("model.dropout", self.dropout, 0.0, 0.9)
         _bounded_float("model.router_temperature", self.router_temperature, 0.05, 10.0)
+        if not isinstance(self.translator_target_structure_access, bool):
+            raise ConfigError(
+                "model.translator_target_structure_access must be boolean"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -162,12 +169,14 @@ class Gate2LossConfig:
     translator_task_weight: float = 0.50
     translator_weight: float = 0.10
     chain_weight: float = 0.05
+    typed_map_weight: float = 0.0
     rtd_weight: float = 0.02
     compute_cost_weight: float = 0.01
     entropy_weight: float = 0.005
     route_costs: tuple[float, float, float] = (1.0, 1.35, 1.60)
     rtd_max_points: int = 24
     oracle_cost_weight: float = 0.02
+    routing_supervision: str = "regime_conditional"
 
     def __post_init__(self) -> None:
         for name in (
@@ -176,6 +185,7 @@ class Gate2LossConfig:
             "translator_task_weight",
             "translator_weight",
             "chain_weight",
+            "typed_map_weight",
             "rtd_weight",
             "compute_cost_weight",
             "entropy_weight",
@@ -194,6 +204,10 @@ class Gate2LossConfig:
         ):
             raise ConfigError("loss.route_costs must contain three positive values")
         _positive_int("loss.rtd_max_points", self.rtd_max_points)
+        if self.routing_supervision not in ("regime_conditional", "per_example"):
+            raise ConfigError(
+                "loss.routing_supervision must be 'regime_conditional' or 'per_example'"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -210,7 +224,9 @@ class Gate2GateConfig:
             raise ConfigError("gates.enforce must be boolean")
         if self.minimum_specialized_routes not in (1, 2):
             raise ConfigError("gates.minimum_specialized_routes must be 1 or 2")
-        _bounded_float("gates.specialization_margin", self.specialization_margin, 0.0, 1.0)
+        _bounded_float(
+            "gates.specialization_margin", self.specialization_margin, 0.0, 1.0
+        )
         _bounded_float(
             "gates.translator_relative_improvement",
             self.translator_relative_improvement,

@@ -67,7 +67,7 @@ def test_system_public_contract_and_hard_soft_routing(padded_batch) -> None:  # 
     assert soft.evaluated_routes.shape == (batch_size, 3)
     assert soft.translated_embeddings.shape == (batch_size, 2, embedding_dim)
     assert soft.translated_logits.shape == (batch_size, 2, classes)
-    assert soft.translation_diagnostics.shape == (batch_size, 2, 2)
+    assert soft.translation_diagnostics.shape == (batch_size, 2, 3)
     assert soft.evaluated_translators.shape == (batch_size, 2)
     assert torch.all(soft.evaluated_routes)
     assert torch.all(soft.evaluated_translators)
@@ -92,9 +92,11 @@ def test_system_public_contract_and_hard_soft_routing(padded_batch) -> None:  # 
     expected_auxiliary = {
         "cell_reconstruction",
         "cell_chain_consistency_surrogate",
+        "cell_boundary_map_reconstruction",
         "cell_face_gate_supervision",
         "sheaf_reconstruction",
         "sheaf_cochain_consistency_surrogate",
+        "sheaf_transport_map_reconstruction",
         "route_expected_cost",
         "route_load_balance",
         "route_entropy",
@@ -208,9 +210,9 @@ def test_route_scoped_experts_and_translators_ignore_privileged_structure(
     # unchanged.
     changed_active_only = copy.deepcopy(padded_batch)
     with torch.no_grad():
-        changed_active_only.face_active[changed_active_only.face_mask] = (
-            ~changed_active_only.face_active[changed_active_only.face_mask]
-        )
+        changed_active_only.face_active[
+            changed_active_only.face_mask
+        ] = ~changed_active_only.face_active[changed_active_only.face_mask]
     _, _, sheaf_after_active = model.fixed_experts.forward_all(changed_active_only)
     _assert_expert_equal(sheaf, sheaf_after_active)
 
@@ -257,10 +259,11 @@ def test_translator_shapes_and_surrogate_losses_are_finite(padded_batch) -> None
     assert cell.structure_logits.shape == padded_batch.face_mask.shape
     assert sheaf.structure_logits.shape == padded_batch.edge_mask.shape
     for translation in (cell, sheaf):
-        assert translation.per_sample_diagnostics.shape == (batch_size, 2)
+        assert translation.per_sample_diagnostics.shape == (batch_size, 3)
         for value in (
             translation.reconstruction_loss,
             translation.consistency_surrogate,
+            translation.map_reconstruction_loss,
             translation.supervision_loss,
             translation.per_sample_diagnostics,
         ):
@@ -487,30 +490,24 @@ def test_router_precedes_and_is_independent_of_expert_parameters(padded_batch) -
     )
 
 
-def test_cell_translator_uses_face_active_only_in_its_face_pathway(
+def test_graph_only_translators_hold_out_target_structure(
     padded_batch,
 ) -> None:  # type: ignore[no-untyped-def]
-    """The cell translator consumes face_active as observation-level input.
-
-    The cell label is exactly whether the energized probe face is active, so
-    without face_active the translation task is structurally impossible
-    (measured: gate collapse, chance task accuracy in every run).  The
-    intended contract is now: face_active may shape the gate and task
-    pathway, but not the node/edge latent reconstructions, and the sheaf
-    translator must remain invariant to it.
-    """
+    """Targets supervise typed maps but never enter graph-only forward paths."""
 
     torch.manual_seed(19)
     model = build_model(_model_config()).eval()
-    changed_target = copy.deepcopy(padded_batch)
+    changed_cell_target = copy.deepcopy(padded_batch)
+    changed_sheaf_target = copy.deepcopy(padded_batch)
     with torch.no_grad():
-        changed_target.face_active[
-            changed_target.face_mask
-        ] = ~changed_target.face_active[changed_target.face_mask]
+        changed_cell_target.face_active[
+            changed_cell_target.face_mask
+        ] = ~changed_cell_target.face_active[changed_cell_target.face_mask]
+        changed_sheaf_target.transport[changed_sheaf_target.edge_mask] *= -1.0
         baseline = model.graph_to_cell(padded_batch)
-        changed = model.graph_to_cell(changed_target)
+        changed_cell = model.graph_to_cell(changed_cell_target)
         baseline_sheaf = model.graph_to_sheaf(padded_batch)
-        changed_sheaf = model.graph_to_sheaf(changed_target)
+        changed_sheaf = model.graph_to_sheaf(changed_sheaf_target)
 
     # Node/edge latents and reconstructions do not touch the face pathway.
     for name in (
@@ -521,20 +518,57 @@ def test_cell_translator_uses_face_active_only_in_its_face_pathway(
     ):
         torch.testing.assert_close(
             getattr(baseline, name),
-            getattr(changed, name),
+            getattr(changed_cell, name),
             rtol=0,
             atol=0,
         )
-    # The face pathway must respond: face_active is exactly its input.
-    assert not torch.equal(baseline.task_logits, changed.task_logits)
-    # The sheaf translator never consumes face_active.
-    for name in ("task_logits", "node_latent", "higher_latent"):
+    for name in ("task_logits", "structure_logits", "higher_latent"):
+        torch.testing.assert_close(
+            getattr(baseline, name),
+            getattr(changed_cell, name),
+            rtol=0,
+            atol=0,
+        )
+    assert not torch.equal(
+        baseline.map_reconstruction_loss,
+        changed_cell.map_reconstruction_loss,
+    )
+    for name in ("task_logits", "node_latent", "higher_latent", "structure_logits"):
         torch.testing.assert_close(
             getattr(baseline_sheaf, name),
             getattr(changed_sheaf, name),
             rtol=0,
             atol=0,
         )
+    assert not torch.equal(
+        baseline_sheaf.map_reconstruction_loss,
+        changed_sheaf.map_reconstruction_loss,
+    )
+
+
+def test_target_view_compatibility_mode_is_explicit(padded_batch) -> None:  # type: ignore[no-untyped-def]
+    base = _model_config()
+    config = ModelConfig(
+        expert=base.expert,
+        router=base.router,
+        translator=TranslatorConfig(
+            hidden_dim=base.translator.hidden_dim,
+            stalk_rank=base.translator.stalk_rank,
+            target_structure_access=True,
+        ),
+    )
+    torch.manual_seed(21)
+    model = build_model(config).eval()
+    changed = copy.deepcopy(padded_batch)
+    with torch.no_grad():
+        changed.face_active[changed.face_mask] = ~changed.face_active[changed.face_mask]
+        changed.transport[changed.edge_mask] *= -1.0
+        cell_before = model.graph_to_cell(padded_batch)
+        cell_after = model.graph_to_cell(changed)
+        sheaf_before = model.graph_to_sheaf(padded_batch)
+        sheaf_after = model.graph_to_sheaf(changed)
+    assert not torch.equal(cell_before.task_logits, cell_after.task_logits)
+    assert not torch.equal(sheaf_before.task_logits, sheaf_after.task_logits)
 
 
 def test_translated_task_logits_backpropagate_into_both_translators(
