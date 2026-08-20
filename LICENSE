@@ -1,0 +1,62 @@
+# Proprietary License Agreement
+
+**Copyright © 2026 Sean Mahdavian. All rights reserved.**
+
+This license governs the software, source code, documentation, and associated
+materials in this repository (the "Work"). By accessing, viewing, downloading,
+or using the Work, you agree to the terms below.
+
+## 1. What You May Do (Limited Grant)
+
+You are granted a limited, non-exclusive, non-transferable, revocable
+permission to:
+
+- **View and read** the Work.
+- **Clone or download** the Work for personal, educational, or research
+  evaluation on your own machine.
+- **Run locally** for personal, non-commercial evaluation.
+- **Cite** the Work in academic or research contexts with clear attribution:
+  `Sean Mahdavian, <project name>, github.com/seanm27lol/<repo>`.
+
+## 2. What You May Not Do
+
+Without prior written permission from the copyright holder, you may not:
+
+- **Use** the Work, in whole or in part, in any product, service, or project —
+  commercial or otherwise — beyond local evaluation.
+- **Redistribute** the Work, in original or modified form, publicly or
+  privately (including mirrors, re-uploads, and package registries).
+- **Modify and share** derivative works of the Work.
+- **Sublicense, sell, rent, or monetize** the Work or access to it.
+- **Use the Work to train, fine-tune, or evaluate machine-learning models**,
+  including inclusion in datasets, corpora, or benchmarks, without a separate
+  written agreement.
+- **Remove or alter** copyright notices or this license.
+
+## 3. Contributions
+
+If you submit a contribution (pull request, patch, suggestion) to the Work,
+you grant the copyright holder a perpetual, worldwide, non-exclusive,
+royalty-free license to use, modify, and incorporate that contribution into
+the Work under this license, and you confirm you have the right to do so.
+
+## 4. No Warranty
+
+THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. THE AUTHOR IS NOT LIABLE FOR
+ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM OR IN CONNECTION WITH THE
+WORK.
+
+## 5. Termination
+
+Any breach of these terms terminates your permission automatically. On
+termination, you must delete all copies of the Work in your possession.
+
+## 6. Commercial & Extended Licensing
+
+For commercial use, redistribution, ML training/evaluation rights, or any use
+beyond Section 1, contact:
+
+- seanmahdavian@gmail.com
+- smahdavian@exeter.edu
