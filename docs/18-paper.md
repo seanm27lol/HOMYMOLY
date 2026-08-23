@@ -77,14 +77,16 @@ loss terms contribute. It does not establish that the machinery generalizes.
 ### 1.2 What is and is not new
 
 Learning higher-order structure from graphs is an established direction:
-Differentiable Cell Complex Module [4] learns cell probabilities jointly with a
-task, Differentiable Lifting [5] learns liftings into cellular, simplicial, and
-combinatorial complexes, and Neural Sheaf Diffusion [6] learns sheaf restriction
-maps. Comparing paired representations through cross-barcodes is likewise
-established: Representation Topology Divergence [1], its differentiable
-autoencoder form [2], and the symmetric variant SRTD [3] are the direct basis for
-our divergence reference. Per-example dynamic routing among experts has an
-established literature as well [7–10].
+Differentiable Cell Complex Module [5] learns cell probabilities jointly with a
+task, Differentiable Lifting [6] learns liftings into cellular, simplicial, and
+combinatorial complexes, and Neural Sheaf Diffusion [7] and Knowledge Sheaves [8]
+learn sheaf restriction maps for graph and knowledge-graph data. Comparing paired
+representations through cross-barcodes is likewise established: Representation
+Topology Divergence [1], its differentiable autoencoder form [2], and the
+symmetric variant SRTD [3] are the direct basis for our divergence reference, and
+a quotient-homology account of neural representation [4] develops an adjacent
+algebraic view. Per-example dynamic routing among experts has an established
+literature as well [11–14].
 
 Against that background our contribution is deliberately small and is stated as a
 methodological one: a controlled benchmark in which an exact typed map is planted
@@ -186,11 +188,23 @@ outputs are withdrawn.
 ## 3. Related work
 
 Sections 2.5 and 1.2 cite the primary sources this work builds on. In summary:
-RTD [1], RTD-AE [2], and SRTD [3] define the representation-divergence reference;
-DCM [4] and DiffLift [5] are the closest precedents for learning higher-order
-topological structure from graph data; Neural Sheaf Diffusion [6] is the
-precedent for learned sheaf transports; DeepMoE [7], GMoE [8], GraphMETRO [9],
-and MvCGE [10] establish per-example dynamic expert routing on graph data.
+RTD [1], RTD-AE [2], and SRTD [3] define the representation-divergence reference,
+and quotient homology [4] offers a related algebraic treatment of representation;
+DCM [5] and DiffLift [6] are the closest precedents for learning higher-order
+topological structure from graph data; Neural Sheaf Diffusion [7] and Knowledge
+Sheaves [8] are the precedents for learned sheaf transports; DeepMoE [11],
+GMoE [12], GraphMETRO [13], and MvCGE [14] establish per-example dynamic expert
+routing on graph data.
+
+A separate line of work asks what algebraic structure a learned map should
+respect. Categorical deep learning [9] argues that architectures are usefully
+described as algebras over a theory, and functor learning by gradient
+descent [10] gives a concrete instance in which the learned object is required
+to preserve structure rather than merely fit data. Our nullspace-constrained
+typed map sits in that tradition operationally — exactness is imposed by
+construction — but §9 states plainly that nothing here validates a categorical
+claim, and §6.3 shows that imposing the structure is exactly what fails to
+identify the map.
 
 HOMYMOLY differs in combining fixed representation families, conversion
 diagnostics, and routing in one codebase. The present experiments do not
@@ -200,55 +214,14 @@ establish that this combination is new or better than any of the above.
 
 ### 4.1 Architecture and data flow
 
-```
-                    synthetic cellular annulus template
-                    12 vertices | 18 edges | 6 faces
-                    Betti (1, 1, 0) | 6 sectors
-                                  |
-                    plant one of 12 dihedral group elements
-                                  |
-                                  v
-   +---------------------------------------------------------------+
-   |  SOURCE COMPLEX C                     TARGET COMPLEX D        |
-   |  signals x0 (vertices)                signals y0 (vertices)   |
-   |         x1 (edges)                            y1 (edges)      |
-   |         x2 (faces)                            y2 (faces)      |
-   |  boundaries dC1, dC2                  boundaries dD1, dD2     |
-   +---------------------------------------------------------------+
-                     |                              ^
-                     |  identifying markers         |
-                     v                              |
-        +--------------------------+                |
-        |  flattened MLP selector  |                |
-        |  (observes markers only) |                |
-        +--------------------------+                |
-                     |                              |
-                     v                              |
-        +--------------------------+                |
-        |  hard-coded basis of 12  |                |
-        |  group-action matrices   |                |
-        +--------------------------+                |
-                     |                              |
-                     v                              |
-        +--------------------------------+          |
-        |  ExactChainMapLayer            |  applies |
-        |  (F0, F1, F2) constrained to   |----------+
-        |  nullspace of dD F - F dC = 0  |
-        +--------------------------------+
-                     |
-        +------------+-------------+---------------+
-        v            v             v               v
-   transformation  typed        chain-map      filtered
-   accuracy        recon. MSE   residual       mapping cone
-   (1 of 12)       per degree   (tol 1e-5)     -> exact Betti
-                                               -> soft nullity
-```
+<figure>
+  <img src="figures/architecture.svg" alt="Architecture and data flow of the identifiable typed-map experiment: a planted group element, a marker-only selector, a fixed twelve-element basis, the nullspace-constrained chain-map layer, and four scored outputs." width="680">
+  <figcaption><strong>Figure 1. Architecture and data flow.</strong> A group element is planted in the annulus template. The selector observes only the identifying markers and never sees the target complex. It chooses one member of a fixed twelve-element basis, and the resulting typed map is scored four ways. The chain-map constraint is structural — it holds for every parameter value — so the residual is a numerical check, not a learned objective.</figcaption>
+</figure>
 
-Read the diagram top to bottom: a group element is planted, the selector sees
-only identifying markers, it chooses a member of a fixed basis, and the resulting
-typed map is scored four ways. The chain-map constraint is structural — it holds
-for every parameter value — so the residual column is a numerical check, not a
-learned objective.
+Because the twelve basis maps are signed permutations, every map the layer can
+produce is invertible. Section 6.3 shows that this is exactly why the two
+structural objectives cannot identify the planted element.
 
 ### 4.2 Losses and ablations
 
@@ -426,6 +399,11 @@ Chance is 0.0833 for transformation accuracy and 0.1667 for cell-face accuracy.
 All standard deviations across the five seeds are zero for the saturated
 accuracies.
 
+<figure>
+  <img src="figures/fig-recovery.svg" alt="Two-panel bar chart. Left panel: transformation accuracy by objective, with six supervised objectives at 1.000 and cone-only and RTD-only at the 0.0833 chance line. Right panel: map mean-squared error on a log scale, showing roughly fifteen orders of magnitude between the supervised objectives and the two controls." width="680">
+  <figcaption><strong>Figure 2. Exact recovery by training objective.</strong> Mean over five seeds; every declared ablation is shown, grouped as supervised objectives then identifiability controls. Left: transformation accuracy against the 0.0833 chance baseline. Right: map mean-squared error on a log scale. Any objective carrying task or reconstruction supervision saturates; the two structure-only controls sit at chance with map errors fifteen orders of magnitude larger. Generated from <code>results/summaries/identifiable-campaign-summary.json</code>.</figcaption>
+</figure>
+
 The **engineering recovery gate passed in 10 of 10 applicable runs** — the
 `task_reconstruction` and `combined` objectives, five seeds each. In every
 applicable run both accuracies were exactly 1.0, map errors were at numerical
@@ -577,6 +555,11 @@ about 2.27× slower than the fastest single fixed route, which was `fixed_graph`
 in all five seeds. Routed evaluation also had lower peak allocated memory than
 dense (119,415,296 versus 169,401,344 bytes) in every seed.
 
+<figure>
+  <img src="figures/fig-compute.svg" alt="Horizontal bar chart of median inference latency for the routed path, three single fixed routes, and the dense three-expert path, with whiskers marking mean p95. Routed sits between the fixed routes and dense." width="680">
+  <figcaption><strong>Figure 3. Trained routing inference latency on GB10.</strong> Median over 100 timed iterations, averaged across five seeds; whiskers mark mean p95. Batch 64, bfloat16. Routed inference is faster than dense evaluation and slower than any single fixed route. All paths were timed in the plotted order inside one process, so residual thermal or allocator drift is confounded with path order. Generated from <code>results/summaries/compute-campaign.json</code>.</figcaption>
+</figure>
+
 > **Correction.** An earlier internal handoff recorded the routed-to-fastest-fixed
 > ratio as `1.863 ± 0.071`. That figure is not reproducible from any artifact in
 > this repository under any ratio definition we could construct, and it appears in
@@ -623,6 +606,11 @@ against a floor of p = 0.0078125. Adding translator and chain terms to the gauge
 objective produces no detectable change in the fixed-expert corruption
 diagnostic. Scope is unchanged: this is a fixed-expert embedding diagnostic and
 evaluates no conversion.
+
+<figure>
+  <img src="figures/fig-contrasts.svg" alt="Forest plot of twelve corruption contrasts with 95% intervals. Every interval crosses the zero line: nine Gate-3 base contrasts and three gauge contrasts." width="680">
+  <figcaption><strong>Figure 4. Every corruption contrast interval contains zero.</strong> Candidate minus baseline on the adjusted partial-Spearman endpoint. The nine Gate-3 base contrasts use a paired complete-block bootstrap and are conditional on a fixed checkpoint pair; the three gauge contrasts use a Student-t interval with df = 7 across eight training seeds. No multiplicity adjustment is applied. Generated from <code>results/gate3/paired_comparison_final.json</code> and <code>results/summaries/gauge-corruption-campaign.json</code>.</figcaption>
+</figure>
 
 ### 6.8 Historical molecular transfer
 
@@ -747,7 +735,10 @@ This work does **not** establish:
   chain-map law up to a fixed 1e-5 numerical tolerance;
 - any Langlands, eigensheaf, Fourier–Mukai, or category-theoretic machine
   learning result; those ideas are motivation, not results, and nothing in this
-  repository validates them;
+  repository validates them. Imposing a chain-map constraint by construction is
+  not a categorical claim in the sense of [9] or [10]: we fix one finite
+  hypothesis class by hand and select within it, and §6.3 shows that the
+  structural constraint carries no identifying information on its own;
 - a translator-based Gate-3 claim — the corruption programs evaluate fixed expert
   embeddings only.
 
@@ -844,35 +835,51 @@ tracked machine-readable file under `results/`.
    ICLR, 2023.
 3. Wang and Hu.
    [Symmetric Divergence and Normalized Similarity: A Unified Topological
-   Framework for Representation
-   Analysis](https://openreview.net/forum?id=pGgJ9qB2Io).
+   Framework for Representation Analysis](https://arxiv.org/abs/2606.06342).
+   TMLR, 2026. arXiv:2606.06342.
+4. Beshkov.
+   [A Quotient Homology Theory of Representation in Neural
+   Networks](https://arxiv.org/abs/2502.01360).
    TMLR, 2026.
-4. Battiloro, Spinelli, Telyatnikov, Bronstein, Scardapane, and Di Lorenzo.
+5. Battiloro, Spinelli, Telyatnikov, Bronstein, Scardapane, and Di Lorenzo.
    [From Latent Graph to Latent Topology Inference: Differentiable Cell Complex
-   Module](https://proceedings.iclr.cc/paper_files/paper/2024/hash/6b97236d90d945be7c58268207a14f4f-Abstract-Conference.html).
+   Module](https://arxiv.org/abs/2305.16174).
    ICLR, 2024.
-5. Franco, Duarte, Nikitin, Ponti, Mesquita, and Souza.
+6. Franco, Duarte, Nikitin, Ponti, Mesquita, and Souza.
    [Differentiable Lifting for Topological Neural
-   Networks](https://openreview.net/forum?id=eC89CbINIw).
-   ICLR, 2026.
-6. Bodnar, Di Giovanni, Chamberlain, Liò, and Bronstein.
-   [Neural Sheaf Diffusion](https://arxiv.org/abs/2202.04579).
+   Networks](https://neurips.cc/virtual/2025/123646).
+   NeurIPS 2025 Workshop on Non-Euclidean Foundation Models and Geometric
+   Learning. Workshop poster, not a main-conference paper.
+7. Bodnar, Di Giovanni, Chamberlain, Liò, and Bronstein.
+   [Neural Sheaf Diffusion: A Topological Perspective on Heterophily and
+   Oversmoothing in GNNs](https://arxiv.org/abs/2202.04579).
    NeurIPS, 2022.
-7. Wang, Yu, Dunlap, Ma, Wang, Mirhoseini, Darrell, and Gonzalez.
-   [Deep Mixture of Experts via Shallow
-   Embedding](https://proceedings.mlr.press/v115/wang20d.html).
-   UAI, 2020.
-8. H. Wang, Jiang, You, Han, Liu, Srinivasa, Kompella, and Z. Wang.
-   [Graph Mixture of Experts: Learning on Large-Scale Graphs with Explicit
-   Diversity
-   Modeling](https://papers.nips.cc/paper_files/paper/2023/hash/9f4064d145bad5e361206c3303bda7b8-Abstract-Conference.html).
-   NeurIPS, 2023.
-9. S. Wu, Cao, Ribeiro, Zou, and Leskovec.
-   [GraphMETRO: Mitigating Complex Graph Distribution Shifts via Mixture of
-   Aligned
-   Experts](https://papers.nips.cc/paper_files/paper/2024/hash/11c892a9fcc430cc0f4c7d457e5d60ea-Abstract-Conference.html).
-   NeurIPS, 2024.
-10. Z. Wu, Cai, Zhang, Lu, Chen, Zhuang, and Wang.
+8. Gebhart, Hansen, and Schrater.
+   [Knowledge Sheaves: A Sheaf-Theoretic Framework for Knowledge Graph
+   Embedding](https://proceedings.mlr.press/v206/gebhart23a.html).
+   AISTATS, 2023.
+9. Gavranović, Lessard, Dudzik, von Glehn, Madeira Araújo, and Veličković.
+   [Position: Categorical Deep Learning is an Algebraic Theory of All
+   Architectures](https://proceedings.mlr.press/v235/gavranovic24a.html).
+   ICML, 2024.
+10. Gavranović.
+    [Learning Functors using Gradient Descent](https://arxiv.org/abs/2009.06837).
+    EPTCS 323, 2020.
+11. Wang, Yu, Dunlap, Ma, Wang, Mirhoseini, Darrell, and Gonzalez.
+    [Deep Mixture of Experts via Shallow
+    Embedding](https://proceedings.mlr.press/v115/wang20d.html).
+    UAI, 2020.
+12. H. Wang, Jiang, You, Han, Liu, Srinivasa, Kompella, and Z. Wang.
+    [Graph Mixture of Experts: Learning on Large-Scale Graphs with Explicit
+    Diversity
+    Modeling](https://papers.nips.cc/paper_files/paper/2023/hash/9f4064d145bad5e361206c3303bda7b8-Abstract-Conference.html).
+    NeurIPS, 2023.
+13. S. Wu, Cao, Ribeiro, Zou, and Leskovec.
+    [GraphMETRO: Mitigating Complex Graph Distribution Shifts via Mixture of
+    Aligned
+    Experts](https://papers.nips.cc/paper_files/paper/2024/hash/11c892a9fcc430cc0f4c7d457e5d60ea-Abstract-Conference.html).
+    NeurIPS, 2024.
+14. Z. Wu, Cai, Zhang, Lu, Chen, Zhuang, and Wang.
     [Where Graph Meets Heterogeneity: Multi-View Collaborative Graph
-    Experts](https://openreview.net/forum?id=dsp8dUlZFq).
+    Experts](https://neurips.cc/virtual/2025/poster/116976).
     NeurIPS, 2025.

@@ -1,0 +1,139 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+from pathlib import Path
+from xml.etree import ElementTree
+
+import pytest
+
+SCRIPT = Path(__file__).parents[1] / "scripts" / "render_figures.py"
+SPEC = importlib.util.spec_from_file_location("render_figures", SCRIPT)
+assert SPEC is not None and SPEC.loader is not None
+MODULE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+
+RESULTS = Path(__file__).parents[1] / "results"
+
+
+def _summary() -> dict[str, object]:
+    return {
+        "frozen_design": {
+            "ablations": ["task_only", "cone_only", "combined", "rtd_only"],
+            "chance_baselines": {"transformation_accuracy": 0.0833},
+        },
+        "by_ablation": {
+            name: {
+                "endpoints": {
+                    "transformation_accuracy": {"mean": accuracy},
+                    "map_mse": {"mean": mse},
+                }
+            }
+            for name, accuracy, mse in (
+                ("task_only", 1.0, 2.6e-17),
+                ("cone_only", 0.0815, 0.109),
+                ("combined", 1.0, 1.7e-16),
+                ("rtd_only", 0.0833, 0.191),
+            )
+        },
+    }
+
+
+def test_recovery_figure_is_well_formed_and_reads_its_values_from_the_summary() -> None:
+    markup = MODULE.figure_recovery(_summary())
+
+    root = ElementTree.fromstring(markup)
+    assert root.tag.endswith("svg")
+    # Every declared ablation appears, and none is silently dropped.
+    for name in ("task_only", "cone_only", "combined", "rtd_only"):
+        assert name in markup
+    # The chance annotation is read from the summary, not hardcoded.
+    assert "chance 0.0833" in markup
+    # Structure-only controls are drawn in the second categorical slot.
+    assert MODULE.SERIES[1] in markup
+
+
+def test_recovery_figure_groups_controls_after_supervised_objectives() -> None:
+    markup = MODULE.figure_recovery(_summary())
+
+    positions = {
+        name: markup.index(f">{name}<")
+        for name in ("task_only", "combined", "cone_only", "rtd_only")
+    }
+    assert positions["task_only"] < positions["combined"]
+    assert positions["combined"] < positions["cone_only"]
+    assert positions["cone_only"] < positions["rtd_only"]
+
+
+def test_long_bars_label_inside_so_the_value_never_clips() -> None:
+    inside = MODULE._value_label(0.0, 90.0, 100.0, 0.0, "1.000")
+    outside = MODULE._value_label(0.0, 10.0, 100.0, 0.0, "0.08")
+
+    assert 'text-anchor="end"' in inside[0]
+    assert MODULE.SURFACE in inside[0]
+    assert 'text-anchor="start"' in outside[0]
+
+
+def test_every_generated_figure_parses_and_declares_an_accessible_label() -> None:
+    if not (RESULTS / "MANIFEST.json").is_file():
+        pytest.skip("tracked evidence bundle is not present")
+    gate3 = json.loads(
+        (RESULTS / "gate3" / "paired_comparison_final.json").read_text(encoding="utf-8")
+    )
+    gauge = json.loads(
+        (RESULTS / "summaries" / "gauge-corruption-campaign.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    compute = json.loads(
+        (RESULTS / "summaries" / "compute-campaign.json").read_text(encoding="utf-8")
+    )
+    identifiable = json.loads(
+        (RESULTS / "summaries" / "identifiable-campaign-summary.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    for markup in (
+        MODULE.figure_recovery(identifiable),
+        MODULE.figure_contrasts(gate3, gauge),
+        MODULE.figure_compute(compute),
+    ):
+        root = ElementTree.fromstring(markup)
+        assert root.attrib.get("role") == "img"
+        assert root.attrib.get("aria-label")
+        assert root.find("{http://www.w3.org/2000/svg}title") is not None
+
+
+def test_contrast_figure_plots_every_gate3_and_gauge_contrast() -> None:
+    if not (RESULTS / "MANIFEST.json").is_file():
+        pytest.skip("tracked evidence bundle is not present")
+    gate3 = json.loads(
+        (RESULTS / "gate3" / "paired_comparison_final.json").read_text(encoding="utf-8")
+    )
+    gauge = json.loads(
+        (RESULTS / "summaries" / "gauge-corruption-campaign.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    markup = MODULE.figure_contrasts(gate3, gauge)
+
+    expected = sum(len(entry["by_kind"]) for entry in gate3["comparisons"])
+    expected += len(gauge["by_kind"])
+    assert markup.count("<circle") == expected
+
+
+def test_committed_figures_match_a_fresh_render(tmp_path: Path) -> None:
+    """The tracked SVGs must be regenerable, so a stale figure cannot ship."""
+
+    figures = Path(__file__).parents[1] / "docs" / "figures"
+    if not (RESULTS / "MANIFEST.json").is_file() or not figures.is_dir():
+        pytest.skip("tracked evidence bundle or figure directory is not present")
+
+    MODULE.main(["--results-root", str(RESULTS), "--output-dir", str(tmp_path)])
+
+    for name in ("fig-recovery.svg", "fig-contrasts.svg", "fig-compute.svg"):
+        assert (tmp_path / name).read_text(encoding="utf-8") == (
+            figures / name
+        ).read_text(encoding="utf-8"), f"{name} is stale; re-run scripts/render_figures.py"
