@@ -97,6 +97,50 @@ def test_dihedral_basis_is_signed_orthogonal_and_closed_in_all_degrees() -> None
             assert len(common_matches) == 1
 
 
+def test_cone_and_rtd_signals_are_constant_across_the_whole_hypothesis_space() -> None:
+    """Lock the structural claim in docs/18-paper.md section 6.3.
+
+    Every basis map is a signed permutation, so every candidate is an
+    isomorphism of chain complexes and an isometry on signals. Cone acyclicity
+    and any distance-based divergence therefore take the same value on all
+    twelve hypotheses and carry zero information about which one was planted.
+    This is why ``cone_only`` and ``rtd_only`` sit at chance: not an
+    optimization failure, but a degenerate objective.
+    """
+
+    system = build_annulus_map_system(6)
+    complex_ = ChainComplex(
+        (system.num_vertices, system.num_edges, system.num_faces),
+        (system.boundary_1, system.boundary_2),
+    )
+
+    # Every candidate has an acyclic cone, so acyclicity cannot discriminate.
+    acyclic = tuple(
+        cone_betti_numbers(
+            ChainMap(
+                complex_,
+                complex_,
+                DegreeMaps(*(degree[index] for degree in system.basis)),
+            )
+        )
+        for index in range(system.num_transformations)
+    )
+    assert set(acyclic) == {(0, 0, 0, 0)}
+
+    # Every candidate preserves pairwise distances, so the paired dissimilarity
+    # matrices RTD consumes are identical and the divergence cannot discriminate.
+    generator = torch.Generator().manual_seed(20260823)
+    signals = torch.randn(
+        (48, system.num_edges), generator=generator, dtype=torch.float64
+    )
+    source_distances = torch.cdist(signals, signals)
+    for index in range(system.num_transformations):
+        mapped = signals @ system.basis.degree_one[index].to(torch.float64).mT
+        torch.testing.assert_close(
+            torch.cdist(mapped, mapped), source_distances, atol=1e-6, rtol=0.0
+        )
+
+
 def test_uniform_mixture_has_nontrivial_cone_and_proxy_separation() -> None:
     system = build_annulus_map_system(6)
     complex_ = ChainComplex(

@@ -123,7 +123,7 @@ This is a null under a hard ceiling. The benchmark cannot distinguish "these
 terms are useless" from "this task is too easy to reveal their value." Say the
 weaker thing.
 
-### 4.2 Structure alone cannot identify the map
+### 4.2 Structure alone cannot identify the map, and provably cannot
 
 | control | transformation accuracy | chance | cell-face accuracy | chance | hard-cone Betti |
 |---|---:|---:|---:|---:|---|
@@ -136,9 +136,47 @@ cone is acyclic in all 6,000 evaluated examples for both controls.**
 
 This is the sharpest finding in the campaign. A model trained only to make its
 mapping cone acyclic succeeds completely at making its mapping cone acyclic and
-learns nothing about which map was planted. **Acyclicity certifies invertibility
-within the template family; it does not certify correctness.** Any argument that
-cone acyclicity evidences a learned correspondence is refuted here.
+learns nothing about which map was planted.
+
+**It could not have gone otherwise.** Both structural signals are constant on
+the hypothesis space, so their information content about the planted element is
+exactly zero — this is a property of the construction, not an optimization
+failure. Each of the twelve basis maps is built as a signed permutation in every
+degree: `F0` permutes vertices, `F1` permutes edges with an orientation sign,
+and `F2` is fixed by matching the mapped cellular boundary to a unique oriented
+face (`build_annulus_map_system` in
+`src/homymoly/experiments/identifiable_maps.py`). Numerically, all twelve
+satisfy `Fᵀ F = I` at degrees 0, 1, and 2, and each has exactly one
+unit-magnitude entry per row and column.
+
+- **Cone signal.** A mapping cone is acyclic exactly when its chain map is a
+  quasi-isomorphism. A signed permutation is invertible, so all twelve
+  candidates are isomorphisms of chain complexes and all twelve have acyclic
+  cones. `[0,0,0,0]` in 6,000 of 6,000 examples is that constant made visible.
+- **RTD signal.** A signed permutation is orthogonal, hence an isometry, so the
+  mapped point cloud carries the same pairwise dissimilarity matrix as the
+  source under every candidate (maximum observed distance change 1.5e-07, at
+  float precision). The paired matrices RTD consumes are identical across the
+  hypothesis space, so the divergence is constant too.
+
+Both `*_only` objectives are therefore fully satisfiable by any of the twelve
+candidates, and chance identification is the only attainable outcome.
+
+**The scope of the warning is the point.** Any hypothesis class whose candidate
+maps are all invertible has a constant cone-acyclicity signal — and that is
+precisely the class a practitioner has in mind when a cone objective looks
+attractive. The circularity objection (the class was chosen to be isomorphisms)
+restates the finding rather than rebutting it: wanting the learned map to be
+structure-preserving is the same property that makes acyclicity useless for
+choosing among structure-preserving candidates.
+
+What makes it a trap rather than a triviality is the view from inside the
+training loop. The structural objective is driven to full satisfaction, the
+diagnostic returns a clean certificate on every single example, and
+identification never rises above chance. Nothing in the training signal reveals
+the problem. **Acyclicity certifies invertibility within the template family; it
+does not certify correctness.** A cone term is a legitimate constraint and a
+useless discriminator.
 
 ## 5. Trained compute benchmarks
 
@@ -194,6 +232,7 @@ Every number above is traceable to a tracked file under `results/`.
 | corruption reports (per-batch derivatives) | `results/gate3/*/`, `results/gate3g/*/` |
 | routing endpoint table | `results/summaries/routing-confirmatory-v2-summary.json` |
 | file-level provenance for all of the above | `results/MANIFEST.json` |
+| the §4.2 structural argument, machine-checked | `tests/test_identifiable_maps.py::test_cone_and_rtd_signals_are_constant_across_the_whole_hypothesis_space` and `::test_dihedral_basis_is_signed_orthogonal_and_closed_in_all_degrees` |
 
 ### Exact provenance
 

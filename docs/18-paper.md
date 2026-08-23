@@ -34,8 +34,13 @@ nothing measurable: all 21 declared continuous contrast intervals contain zero,
 against a saturated accuracy ceiling. Trained on structural losses *alone*, the
 model sits at chance — transformation accuracy 0.0815 (cone-only) and 0.0833
 (RTD-only) against a 0.0833 chance baseline — even though the decoded cones are
-acyclic in every evaluated example. Acyclicity therefore certifies that the
-selected map is invertible; it does not certify that it is the correct map.
+acyclic in every evaluated example. This is not an optimization failure: every
+candidate map is a signed permutation, hence an invertible isometry, so cone
+acyclicity and RTD are both *constant* on the hypothesis space and carry exactly
+zero information about which element was planted. Acyclicity certifies that the
+selected map is invertible; it does not certify that it is the correct map, and
+the same degeneracy afflicts any hypothesis class of invertible maps — which is
+the setting where a cone objective looks most attractive.
 
 Two further audited results are reported with their own boundaries. A frozen
 five-seed routing campaign gives a hard-minus-best-fixed-expert margin of +0.1098
@@ -86,9 +91,11 @@ methodological one: a controlled benchmark in which an exact typed map is plante
 and recoverable, a nullspace parameterization under which every parameter value
 satisfies the chain-map equation by construction, and an audited factorial
 measurement showing that mapping-cone and RTD objectives add nothing on this
-benchmark and cannot identify the map on their own. We make no claim of priority
-or of superiority over any cited system, and the comparison in §3 is positioning,
-not systematic review.
+benchmark and cannot identify the map on their own — together with the
+structural reason why (§6.3), which applies to any hypothesis class of
+invertible maps and not only to ours. We make no claim of priority or of
+superiority over any cited system, and the comparison in §3 is positioning, not
+systematic review.
 
 ## 2. Background and definitions
 
@@ -448,7 +455,7 @@ The honest reading: on this benchmark, mapping-cone and RTD terms neither help
 nor hurt. The benchmark cannot distinguish "these terms are useless" from "this
 task is too easy to reveal their value".
 
-### 6.3 Structural losses alone cannot identify the map
+### 6.3 Structural losses alone cannot identify the map, and provably cannot
 
 The two identifiability controls are the sharpest structural finding.
 
@@ -464,10 +471,53 @@ evaluated examples for both controls.**
 
 That combination is the point. A model trained only to make its mapping cone
 acyclic succeeds completely at making its mapping cone acyclic, and learns
-nothing about which map was planted. Acyclicity certifies invertibility within
-the synthetic template family; it does not certify correctness. Any claim that a
-cone objective supplies a useful training signal for identification is refuted on
-this benchmark.
+nothing about which map was planted.
+
+**This is not an optimization failure. Both signals are constant on the
+hypothesis space, so their information content about the planted element is
+exactly zero.** The construction makes this checkable rather than conjectural.
+Each of the twelve basis maps is built as a signed permutation in every degree:
+`F0` permutes vertices, `F1` permutes edges with an orientation sign, and `F2`
+is fixed by matching the mapped cellular boundary against a unique oriented
+face. We verified numerically that all twelve satisfy `Fᵀ F = I` at degrees 0,
+1, and 2, and that each is a signed permutation with exactly one unit-magnitude
+entry per row and column.
+
+Two consequences follow directly.
+
+- **The cone signal is constant.** A mapping cone is acyclic exactly when its
+  chain map is a quasi-isomorphism. A signed permutation is invertible, so every
+  one of the twelve candidates is an isomorphism of chain complexes, hence a
+  quasi-isomorphism, hence has an acyclic cone. Cone acyclicity takes the same
+  value on all twelve hypotheses. The observed `[0,0,0,0]` in 6,000 of 6,000
+  examples is the empirical signature of that constant, not a learned outcome.
+- **The RTD signal is constant.** A signed permutation is orthogonal, hence an
+  isometry, so the mapped point cloud has the same pairwise dissimilarity matrix
+  as the source under every candidate (maximum observed distance change
+  1.5e-07, at float precision). The paired matrices RTD consumes are therefore
+  identical across the hypothesis space, and the divergence is likewise
+  constant.
+
+So both `*_only` objectives are fully satisfiable by any of the twelve
+candidates, and chance-level identification is the only attainable outcome. The
+generalization is broader than this annulus: **any hypothesis class whose
+candidate maps are all invertible has a constant cone-acyclicity signal**, and
+that is precisely the setting in which a cone objective looks most attractive.
+
+The obvious objection — that this is circular, because the hypothesis class was
+chosen to consist of isomorphisms — is the finding restated rather than a
+rebuttal. The property that motivates reaching for a cone objective in the first
+place, namely wanting the learned map to be structure-preserving, is the same
+property that makes acyclicity useless for choosing among structure-preserving
+candidates. What makes it a trap rather than a triviality is the view from
+inside the training loop: the structural objective is driven to complete
+satisfaction, the diagnostic reports a clean certificate on every example, and
+identification never rises above chance. Nothing in the training signal reveals
+the problem.
+
+Acyclicity certifies invertibility within the template family; it does not
+certify correctness. Any claim that a cone objective supplies a useful training
+signal for identification is refuted here.
 
 ### 6.4 Frozen routing result
 
@@ -604,13 +654,21 @@ of supervision, and an analytic decoder does the same with no learning. The righ
 conclusion is that the machinery is correct, not that the model is strong.
 
 **Acyclicity is not correctness.** This is the result we would most want other
-work to carry forward. Cone-only and RTD-only training produce acyclic cones in
-6,000 of 6,000 evaluated examples while identifying the planted map at chance. A
-mapping cone certifies that the decoded map is invertible on the template family;
-it says nothing about whether it is the right map. Treating cone acyclicity as
-evidence of learned correspondence would be a mistake, and our controls
-demonstrate exactly how that mistake would look from the inside — the structural
-objective is fully satisfied and the science is absent.
+work to carry forward, and §6.3 shows it is structural rather than incidental.
+Because every candidate map is a signed permutation — invertible and
+distance-preserving — cone acyclicity and RTD are constant across the hypothesis
+space, so neither can carry information about which element was planted. Chance
+identification is the only attainable outcome, and the acyclic cones in 6,000 of
+6,000 examples are that constant made visible.
+
+The scope of the warning is what matters. Any hypothesis class of invertible
+maps inherits the same degeneracy, and that is exactly the class a practitioner
+has in mind when a cone objective seems appealing. Treating acyclicity as
+evidence of learned correspondence would be a mistake, and our controls show
+precisely how that mistake looks from the inside: the structural objective is
+driven to full satisfaction, every example returns a clean certificate, and the
+science is absent. A cone term is a legitimate *constraint* and a useless
+*discriminator* among structure-preserving candidates.
 
 **Routing and conversion remain separate claims.** A router can choose among
 fixed experts without learning any map between their domains. The +0.1098 margin
@@ -681,7 +739,8 @@ implementation and exactness study.
 This work does **not** establish:
 
 - superiority of cone or RTD training losses — both are null here, and neither
-  can identify the map alone;
+  can identify the map alone, provably so within a hypothesis class of
+  invertible maps (§6.3);
 - conversion quality on real data or out-of-distribution structures;
 - general equivalence between graphs, cellular complexes, and sheaves;
 - a learned quasi-isomorphism or exact sequence — the verified identity is the
