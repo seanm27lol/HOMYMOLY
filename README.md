@@ -36,8 +36,13 @@ known-attainable ceiling, not evidence of a powerful model.
 - Trained on structural losses *alone*, the model sits at chance —
   transformation accuracy 0.0815 (cone-only) and 0.0833 (RTD-only) against a
   0.0833 baseline — **while producing acyclic cones in 6,000 of 6,000 evaluated
-  examples.** Cone acyclicity certifies that the decoded map is invertible; it
-  does not certify that it is the correct map.
+  examples.** This is not an optimization failure. Every candidate map is a
+  signed permutation, hence an invertible isometry, so cone acyclicity and RTD
+  are both *constant* across the hypothesis space and carry exactly zero
+  information about which map was planted. Cone acyclicity certifies that the
+  decoded map is invertible; it does not certify that it is the correct map —
+  and the same degeneracy holds for **any** hypothesis class of invertible maps,
+  which is the setting where a cone objective looks most attractive.
 
 **Routing** (frozen five-seed v2 campaign): hard-minus-best-fixed margin
 **+0.1098** (SD 0.0117; Student-t 95% CI [0.0953, 0.1243]), meeting the frozen
