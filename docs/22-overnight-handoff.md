@@ -32,7 +32,8 @@ Do not call the project finished until all of the following are true:
   `agent/research-remediation`.
 - Historical remediation pull request #3 was merged with both CI jobs green:
   <https://github.com/seanm27lol/HOMYMOLY/pull/3>. Commits made after that merge
-  require a new release pull request.
+  are being collected in draft release pull request #8:
+  <https://github.com/seanm27lol/HOMYMOLY/pull/8>.
 - Repository visibility: `PRIVATE`. The repository was briefly public earlier;
   making it private cannot retract that historical exposure.
 - Audited GB10 campaign: 56/56 scheduler steps completed—40 training runs, one
@@ -272,12 +273,12 @@ git commit -m "<specific message>"
 git push origin agent/research-remediation
 ```
 
-Because PR #3 is already merged, create a new release PR after the next pushed
-commit if no open PR exists. Keep it draft until the paper and evidence are
-complete. Then wait for every check and re-run:
+PR #8 is the current draft release PR. Keep it draft until the paper and
+evidence are complete. After every pushed commit, wait for every check and
+re-run:
 
 ```bash
-gh pr checks <new-pr-number> --repo seanm27lol/HOMYMOLY --watch
+gh pr checks 8 --repo seanm27lol/HOMYMOLY --watch
 gh repo view seanm27lol/HOMYMOLY \
   --json visibility,isPrivate,url
 git status --short
