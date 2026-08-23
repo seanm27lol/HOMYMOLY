@@ -1,5 +1,12 @@
 # Gate-5 record: molecular transfer (2026-08-03)
 
+> **Validity correction (2026-08-13).** The v1 graph/cell comparison was the
+> initial official-test read. V2 and v3 were designed after inspecting earlier
+> official-test results, and v2 was restored after inspecting v3. Their test
+> AUROCs are post-test development scores, not unbiased final-test estimates.
+> This record also corrects ring prevalence, parser-failure handling, and the
+> precise v2/v3 feature definitions below.
+
 Gate 5 moves to a molecular benchmark after the synthetic gates, testing
 the graph route against chemically valid ring/2-cell lifts on OGBG-MOLHIV
 with official splits and evaluator. Claims entry: C6 in
@@ -7,9 +14,10 @@ with official splits and evaluator. Claims entry: C6 in
 
 ## Verdict
 
-**C6 not supported at this architecture and recipe: the ring-lift route
-loses to the plain graph route by ~5 AUROC points on the official test
-split, consistently across three seeds.**
+**The initial v1 comparison does not support C6:** the ring-lift route loses
+to the graph route by 0.0481 AUROC on the official test split, with graph
+winning all three paired initialization seeds. Later redesigns are exploratory
+because the test set had already been inspected.
 
 | route | params | valid AUROC (mean) | test AUROC (3 seeds) | test mean ± std |
 |---|---|---|---|---|
@@ -25,8 +33,8 @@ split, consistently across three seeds.**
   boundary-edge representation — no long ring was encoded as a
   nonexistent triangle (the plan's prerequisite, migrated in the Gate-5
   build). Ring extraction verified against independent graph-cycle
-  detection on all splits (only ~0.2% rdkit-unparseable metal complexes
-  differ).
+  presence on all splits. Seven SMILES (0.017%) fail RDKit parsing; they are
+  retained with zero faces rather than excluded.
 - Trainer (`scripts/train_molhiv.py`): BCE, AdamW 3e-4, cosine, batch 64,
   early stopping on validation AUROC (patience 8), official evaluator for
   test. Matched configs (hidden 128, 3 layers, embedding 64); parameter
@@ -37,19 +45,24 @@ split, consistently across three seeds.**
 
 ## Recorded properties of the official split
 
-The scaffold split is strongly skewed by ring content: train is 79%
-ring-bearing while valid/test are ~100% ring-bearing (2/4113 ring-free
-molecules on test). Ring-free transfer is therefore **not evaluable** on
-the official test split; the test AUROC above is effectively the
-ring-bearing subset for both routes — the regime where the cell route was
-built to win, and it still loses.
+The official split contains 32,901/4,113/4,113 molecules. RDKit produced at
+least one `AtomRing` for 31,316/4,111/4,111 molecules
+(95.18%/99.951%/99.951%), yielding 95,393/15,894/14,974 ring faces. A separate
+graph-cycle-rank audit finds 31,319/4,113/4,113 cyclic graphs: validation and
+test contain no acyclic examples. Their two zero-face cases per split are
+RDKit parse failures, not ring-free molecules; both test failures are negative
+labels, so subgroup AUROC is undefined. Acyclic transfer is therefore not
+evaluable on this test set. Ring-presence agreement is 41,120/41,127; exact
+`AtomRings` counts and graph cyclomatic rank are different ring bases and were
+not expected to match count-for-count.
 
 ## Interpretation (measured, not speculative)
 
-- The gap is not noise: all three seeds agree (graph worst seed 0.755
-  still beats cell best seed 0.742). Valid AUROC is within 0.012, so the
-  cell route's deficit is generalization to unseen scaffolds, not
-  optimization.
+- All three paired seeds favor graph (graph worst seed 0.755 still exceeds
+  cell best seed 0.742). The validation gap is 0.0119 versus 0.0481 on test;
+  this is consistent with greater scaffold-test degradation for cell but does
+  not identify optimization versus generalization because training scores
+  were not recorded.
 - This is coherent with the Gate-3 record: higher-order structural
   machinery has not shown benefit at these scales in any of our three
   data designs (independent, gauge, molecular). The face gating pathway
@@ -62,23 +75,20 @@ built to win, and it still loses.
 
 ## Consequences
 
-- The routing contribution currently stands on the synthetic Gate-2
-  result (C3, supported); molecular transfer of the routed system is not
-  warranted until a fixed route wins on molecules — routing between a
-  losing cell route and the graph route adds nothing.
-- Remaining open thread from Gate 3: the gauge-tier observation that
-  topological defects carry more independent damage signal when
-  translations are consistency-constrained (partial ρ 0.31 vs 0.14) —
-  a multi-seed pilot is the cheap next measurement if pursued.
+- The initial synthetic Gate-2 confirmatory interval crossed zero, and its
+  later stabilized interval was post-selection. A fresh frozen routing
+  campaign is reported separately; this molecular experiment does not add
+  evidence for routed multi-representation benefit.
+- Historical Gate-3 partial correlations are invalidated by the 2026-08-13
+  audit and provide no molecular design signal.
 
 ## The molecularly-informed redesign (2026-08-04, v2 evaluation)
 
 The redesign directions above were implemented as an optional
-`molecular_mode` on the cell expert: the face encoder additionally
-receives a per-face masked max over boundary edge features (the
-strongest bond in the ring, which the oriented boundary sum can cancel)
-and the ring size as a normalized scalar. Evaluated on the identical
-protocol (3 seeds, official split/evaluator,
+`molecular_mode` on the cell expert: the face encoder additionally receives
+an elementwise masked max over learned boundary-edge embeddings and normalized
+ring size. It was evaluated after the v1 official-test result on the same
+split (3 seeds,
 `artifacts/gate5/molhiv_results_v2.json`):
 
 | route | test AUROC mean ± std | valid mean |
@@ -87,34 +97,34 @@ protocol (3 seeds, official split/evaluator,
 | cell (v1) | 0.723 ± 0.017 | 0.782 |
 | **cell_molecular (v2)** | **0.757 ± 0.002** | 0.771 |
 
-- The redesign recovers **+0.034** of the v1 cell route's −0.048
-  deficit (~70%), and it is the most consistent route of the three
-  (test std 0.002 vs 0.014–0.017).
+- Descriptively, v2 is +0.0343 above v1 and has the smallest observed
+  initialization-seed SD (0.0015). Its validation mean is lower than v1
+  (0.7713 vs 0.7817), and its official-test score is post-test development
+  evidence.
 - It still trails the graph route by 0.014 on average, so C6's strict
   form (beat the graph route) remains unsupported — but the direction
-  is validated: ring-aware features, not the mere presence of 2-cells,
-  carry the molecular signal. Next iteration if pursued: bond-type and
+  generates a hypothesis that ring-aware pooling, not the mere presence of
+  2-cells, may matter. It does not validate that direction on held-out data.
+  Next iteration if pursued: bond-type and
   stereo-conditioned face aggregation (the one-hot bond channels are
   currently pooled indiscriminately) and a second face message round
   rather than deeper readout.
 
-## v3 ablation: bond-type ring histograms are a negative result
+## v3 exploratory iteration: raw bond-type counts
 
-Iteration two added per-face bond-type histograms (the five one-hot bond
-channels weighted by boundary coefficients — the aromatic-bond share of
-each ring) to the v2 face encoder. Evaluated on the identical protocol
+Iteration two added raw per-ring counts for the five OGB bond-type one-hot
+categories to the v2 face encoder. It was evaluated after inspecting v2 on
+the same official test split
 (`artifacts/gate5/molhiv_results_v3.json`):
 
 | variant | test AUROC mean ± std | valid mean |
 |---|---|---|
-| v2 (strongest-bond max + ring size) | **0.757 ± 0.002** | 0.771 |
-| v3 (+ bond-type histograms) | 0.729 ± 0.025 | 0.761 |
+| v2 (elementwise edge-embedding max + ring size) | **0.757 ± 0.002** | 0.771 |
+| v3 (+ raw bond-type counts) | 0.729 ± 0.025 | 0.761 |
 
-v3 is worse on mean, variance, and validation — a clean negative
-ablation, with a mechanical explanation: bond-type distributions are
-scaffold-specific, so histogram features inject exactly the variance the
-scaffold test split shifts. The shipped molecular default reverts to the
-v2 configuration (`bond_feature_dim` remains available as an opt-in for
-future variants). Design lesson recorded for the next iteration: enrich
-*within-ring* relational structure (stereo/position along the ring)
-rather than distributional bond statistics.
+v3 is descriptively worse on mean, seed SD, and validation. Because this was
+adaptive reuse of the test set, it is not a clean held-out ablation. A
+scaffold-specific bond-distribution effect is one hypothesis, not a measured
+cause. The shipped molecular default reverts to v2, but any next molecular
+iteration must select architectures on a fresh locked split or external
+benchmark before reporting a final test score.

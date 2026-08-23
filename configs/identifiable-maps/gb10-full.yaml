@@ -1,0 +1,46 @@
+experiment:
+  seed: 20260821
+  device: cuda
+  deterministic: true
+
+data:
+  sectors: 6
+  train_samples: 4800
+  validation_samples: 1200
+  test_samples: 1200
+  noise_std: 0.05
+
+model:
+  hidden_dim: 256
+  dropout: 0.05
+  map_temperature: 0.5
+
+training:
+  epochs: 100
+  batch_size: 192
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  early_stopping_patience: 15
+  minimum_improvement: 0.000001
+  num_workers: 4
+
+loss:
+  ablation: combined
+  cone_temperature: 0.05
+  rtd_training_entities: 48
+  combined_weights:
+    task: 1.0
+    reconstruction: 1.0
+    cell: 0.25
+    sheaf: 0.25
+    cone: 0.1
+    rtd: 0.25
+
+evaluation:
+  map_tolerance: 0.00001
+  rank_atol: 0.0000001
+  exact_rtd_entities: 24
+  exact_rtd_max_dim: 1
+
+output:
+  directory: artifacts/identifiable-maps/gb10-combined

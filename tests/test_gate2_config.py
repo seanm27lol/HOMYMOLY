@@ -17,6 +17,8 @@ def test_repository_gate2_config_loads() -> None:
     assert config.data.num_samples == 6144
     assert config.run_dir == ROOT / "artifacts" / "gate2"
     assert config.loss.route_costs == (1.0, 1.35, 1.60)
+    assert config.loss.routing_supervision == "per_example"
+    assert config.model.translator_target_structure_access is False
 
 
 def test_gate2_config_rejects_unknown_fields(tmp_path: Path) -> None:
@@ -33,4 +35,22 @@ def test_gate2_config_rejects_overlapping_splits(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     with pytest.raises(ConfigError, match="sum to less than 1"):
+        load_gate2_config(path)
+
+
+def test_legacy_config_defaults_to_target_view_compatibility(tmp_path: Path) -> None:
+    path = tmp_path / "legacy.yaml"
+    path.write_text("schema_version: 2\n", encoding="utf-8")
+    config = load_gate2_config(path)
+    assert config.model.translator_target_structure_access is True
+    assert config.loss.routing_supervision == "regime_conditional"
+
+
+def test_gate2_config_rejects_unknown_routing_supervision(tmp_path: Path) -> None:
+    path = tmp_path / "bad.yaml"
+    path.write_text(
+        "schema_version: 2\nloss:\n  routing_supervision: hindsight\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ConfigError, match="routing_supervision"):
         load_gate2_config(path)

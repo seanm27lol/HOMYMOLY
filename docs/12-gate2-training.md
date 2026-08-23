@@ -8,12 +8,23 @@ The executable stack contains:
 
 1. a confirmatory `ConfirmatoryStructuredSignal` dataset with group-disjoint splits and reduced scalar shortcuts;
 2. fixed graph, active-cell, and rank-2 connection-sheaf experts with a shared embedding contract;
-3. graph-to-cell and graph-to-sheaf neural translators with explicitly named reconstruction and consistency surrogates;
+3. graph-to-cell and graph-to-sheaf neural translators with target values
+   held out by default, supervised typed-structure reconstruction, and
+   explicitly named consistency surrogates; candidate cell incidence is
+   supplied, and the current synthetic held-out targets are not identifiable
+   from graph inputs, so this is not yet conversion evidence;
 4. a diagnostic- and compute-aware three-route router supporting soft and hard decisions;
-5. directional and symmetric differentiable **H0 RTD-style surrogates** plus exact small-sample H0 reference diagnostics;
+5. directional and symmetric differentiable **H0 RTD-style surrogates**, a
+   degree-specific published-convention RTD/SRTD evaluation reference, and a
+   separate architecturally exact two-term chain-map/cone experiment;
 6. phased optimization, evaluation, atomic checkpoints, deterministic resume, JSONL metrics, and TensorBoard output.
 
-The H0 surrogate is not the complete published RTD/SRTD cross-barcode construction. The exact reference now lives in `src/homymoly/metrics/exact_rtd.py` (directional, half-sum, and symmetric cone cross-barcodes with the acceptance tests in `tests/test_exact_rtd.py`); it is an evaluation oracle, not a loss. The surrogate remains the training signal and the two must not be reported interchangeably — measured on identical inputs they can disagree in directional ordering.
+The H0 surrogate is not the complete published RTD/SRTD cross-barcode
+construction. The exact reference in `src/homymoly/metrics/exact_rtd.py`
+defaults to homological degree 1 and full-matrix 0.9-quantile normalization;
+it is an evaluation oracle, not a loss. Per-degree APIs are explicit, so
+truncation-frontier degrees cannot leak into a scalar. The surrogate remains a
+training signal and the two must not be reported interchangeably.
 
 ## Configuration and smoke test
 
@@ -56,7 +67,14 @@ The managed user-cron entry can be installed idempotently with:
 python scripts/install_training_cron.py --interval-minutes 5 --max-utilization 10
 ```
 
-Every check takes three utilization samples and also inspects NVIDIA compute processes. Training starts only if all samples are at or below the threshold and no compute process is present. The launcher uses a filesystem lock, validates any prior PID, and honors a completion marker, so overlapping cron invocations cannot start duplicate runs.
+Every check takes three utilization samples and also inspects NVIDIA compute
+processes. By default, one existing background context using at most 512 MiB
+is allowed so the persistent GB10 UI server does not block every run. Unknown
+memory, excess aggregate memory, a second context, or any utilization sample
+above the threshold blocks launch. A final telemetry check runs immediately
+before launch. The launcher uses a filesystem lock, validates any prior PID,
+and honors a completion marker, so overlapping cron invocations cannot start
+duplicate runs.
 
 Scheduler state is stored under `artifacts/gate2/scheduler/`:
 
@@ -75,6 +93,10 @@ This does not alter unrelated crontab entries.
 
 ## Outputs and claim boundary
 
-Metrics, checkpoints, TensorBoard events, configuration snapshots, and the final evaluation summary live under `artifacts/gate2/` and are intentionally ignored by Git. The repository records code and protocols; machine-specific checkpoints remain local unless explicitly promoted later.
+Metrics, checkpoints, TensorBoard events, configuration snapshots, and final
+summaries live under `artifacts/` and are intentionally ignored by Git. The
+`scripts/export_artifact_bundle.py` command promotes bounded textual evidence
+with SHA-256 checksums, source/config snapshots, and a resolved distribution
+inventory; large checkpoints and datasets are inventoried but never copied.
 
 Success on the confirmatory synthetic benchmark would support continuing the investigation. It would not by itself establish superiority on molecular data, validate Langlands analogies, or show that a direct mapping-cone objective improves learning.

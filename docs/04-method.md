@@ -76,6 +76,15 @@ Exact cone homology is evaluation-only unless the translator is parameterized as
 
 ## Concrete v0.1 graph-hub design
 
+> **Implementation boundary (audit 2026-08-13).** The padded oriented
+> boundary-edge migration described below is complete. The current neural
+> translators do not yet instantiate the declared exact chain maps or their
+> mapping cones; the exact two-term map layer is a separate controlled
+> experiment. In target-held-out mode, candidate incidence is supplied, but
+> the current synthetic generator makes face activity and sheaf transports
+> unidentifiable from graph inputs. An identifiable benchmark is required
+> before this prospective design can support a conversion claim.
+
 Every sample begins as an attributed graph with candidate 2-cells and optional local-frame information. Three legal routes produce a common graph-level embedding:
 
 ```text
@@ -86,7 +95,12 @@ G -> SheafLift -> SheafExpert -> SheafProject -> pool
 
 The graph hub avoids six underidentified pairwise translators. Direct cell-to-sheaf conversion and arbitrary multihop routing are deferred until the three primary routes work.
 
-For the Stage-1/2 cell route, enumerate triangles as candidate faces and learn soft inclusion gates. The topology core accepts arbitrary simple-cycle faces, but the current batched data contract is explicitly triangle-only. Before molecular rings or short chordless cycles are enabled, replace the `[3, F]` interface with sparse \(B_2\) or padded oriented boundary-edge indices and coefficients. Every candidate face column must be an oriented cycle so that \(B_1B_2=0\) remains exact. The projection back to edge space can be tested against the Hodge projection
+For the Stage-1/2 cell route, enumerate candidate faces and learn soft
+inclusion gates. The topology core and current batched contract accept padded
+oriented boundary-edge indices and coefficients, including arbitrary encoded
+simple-cycle faces. Every candidate face column must be an oriented cycle so
+that \(B_1B_2=0\) remains exact. The projection back to edge space can be
+tested against the Hodge projection
 
 \[
 P_1=I-B_2(B_2^\top B_2)^+B_2^\top,
@@ -102,7 +116,15 @@ For the sheaf route, lift node channels into finite stalks and infer incidence r
 
 Start with low stalk ranks and tied-transpose or pseudoinverse projections. More general adjoint-like translators are a later experiment.
 
-The first router should be deliberately small. It observes cheap, label-independent summaries such as graph size, degree moments, candidate-face count, feature norms, and estimated local inconsistency. Top-1 routing can use a straight-through Gumbel-softmax relaxation. Training proceeds in three stages: pretrain experts and translators, train the router against per-sample oracle routes with experts frozen, then jointly fine-tune while annealing soft to hard routing and monitoring load balance.
+The first router should be deliberately small. The implemented router observes
+cheap summaries of the available structured views, including graph features,
+candidate/active-face statistics, and sheaf transport statistics; it does not
+receive a label or regime tensor at inference. Top-1 routing uses a
+straight-through decision. Training proceeds by pretraining experts and
+translators, training the router against an oracle route, and then jointly
+fine-tuning while monitoring load balance. Historical oracle targets used
+privileged regime distillation; the canonical configuration instead uses
+per-example utility targets.
 
 ## Important anti-collapse constraints
 

@@ -32,6 +32,38 @@ and does not require a cross-space distance \(d(x_i,y_j)\).
 
 Each adapter must provide symmetric finite dissimilarities, zero diagonal, nonnegative entries, identical entity ordering, and a declared normalization. A joint permutation of both matrices must not change the score.
 
+## Implemented reference convention (frozen 2026-08-13)
+
+The exact, non-differentiable reference lives in
+`src/homymoly/metrics/exact_rtd.py`. Its default convention is:
+
+- normalize each within-view dissimilarity matrix independently by its 0.9
+  quantile;
+- compute that quantile over the **complete \(b \times b\) matrix**, including
+  the zero diagonal and both copies of every symmetric off-diagonal entry, as
+  in the published RTD implementation;
+- report the published scalar RTD convention in homological degree 1;
+- report SRTD in one explicitly named homological degree (degree 1 by default),
+  or use the `*_by_degree` APIs when several degrees are part of a declared
+  analysis; and
+- construct one extra simplex/chain degree internally to determine deaths,
+  then exclude truncation-frontier generators from the returned degrees.
+
+`max_dim` is a construction and reporting bound. It is not an instruction to
+sum persistence across all degrees. Likewise, max normalization remains an
+explicit alternative for sensitivity analysis, not the default reference
+convention.
+
+The pre-audit Gate-3 corruption reports violated this convention: they used
+max normalization and added scores from multiple degrees, including a
+truncation frontier. Those historical “exact SRTD” scalars are invalid and
+must not be compared with results from the corrected reference.
+
+The differentiable signal in `src/homymoly/metrics/paired_topology.py` is a
+separate **H0 RTD-style surrogate**. It is not a cross-barcode implementation
+of published RTD or SRTD and must retain that qualified name in tables and
+claims.
+
 ## Required variants
 
 Initial evaluations should report:

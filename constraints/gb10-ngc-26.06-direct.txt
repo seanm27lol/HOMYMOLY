@@ -1,0 +1,12 @@
+# Direct packages verified on the NVIDIA GB10 environments used for this repo.
+# The NGC image supplies its own CUDA-enabled torch and numpy builds; do not
+# replace them from PyPI. An exported artifact bundle records the complete
+# resolved distribution inventory for each promoted result set.
+networkx==3.6.1
+PyYAML==6.0.3
+tensorboard==2.20.0
+
+# Optional `molecular` extra, verified on ARM64/GB10.
+ogb==1.3.6
+pandas==3.0.5
+rdkit==2026.3.5

@@ -13,6 +13,7 @@ from .ops import (
     MLP,
     apply_mask,
     face_boundary_aggregate,
+    face_boundary_coefficients,
     face_holonomy,
     face_vertex_mean,
     masked_feature_energy,
@@ -49,20 +50,16 @@ def _masked_binary_cross_entropy(
 
 
 class GraphToCellTranslator(nn.Module):
-    """Lift graph observations to active-face features and reconstruct them.
+    """Predict a cell lift from graph observations and candidate incidence.
 
-    Candidate-face gates and task predictions use graph observations,
-    candidate incidence, and ``face_active`` — observation-level structure in
-    the cell view, which the task makes essential: the cell label is exactly
-    whether the energized probe face is active, so without it the
-    translation task is structurally impossible (measured: gate collapse and
-    chance task accuracy in every run before the input was wired in).
-    ``face_active`` additionally supervises the gate as a separately named
-    loss.  ``consistency_surrogate`` compares a learned face code with the
-    oriented aggregation of learned edge features; it is not asserted to be
-    an exact chain-map residual.  The task readout keeps both the mean and
-    the max over faces: the task signal is a single gated face, which mean
-    pooling alone dilutes below the noise floor.
+    By default the target activity mask is held out of the forward inputs and
+    used only to supervise the predicted face gates. An explicit compatibility
+    flag can restore the historical target-view encoder for old checkpoints,
+    but that mode must not be described as graph-only conversion.
+
+    ``map_reconstruction_loss`` compares the predicted soft cellular boundary
+    operator against the held-out target operator. It is not a cone loss or a
+    chain-map residual; it is an explicit, typed structure-reconstruction term.
     """
 
     def __init__(
@@ -72,6 +69,7 @@ class GraphToCellTranslator(nn.Module):
     ) -> None:
         super().__init__()
         hidden = translator_config.hidden_dim
+        self.target_structure_access = translator_config.target_structure_access
         self.node_lift = MLP(expert_config.node_feature_dim, hidden, hidden)
         self.edge_lift = MLP(expert_config.edge_feature_dim, hidden, hidden)
         self.face_lift = MLP(2 * hidden + 1, hidden, hidden)
@@ -115,16 +113,19 @@ class GraphToCellTranslator(nn.Module):
             candidate_mask,
             face_vertices=cell.get("face_vertices"),
         )
-        # face_active is observation-level structure in the cell view (the
-        # same input the cell expert consumes): the cell label is exactly
-        # whether the energized probe face is active, so the task pathway
-        # cannot see the label without it.  The gate remains separately
-        # supervised.
+        # Historical compatibility may expose the observed target activity.
+        # In graph-only mode the corresponding input channel is identically
+        # zero and face_active appears only in the supervised losses below.
+        activity_input = (
+            cell["face_active"].unsqueeze(-1).to(vertex_latent.dtype)
+            if self.target_structure_access
+            else torch.zeros_like(vertex_latent[..., :1])
+        )
         face_inputs = torch.cat(
             (
                 vertex_latent,
                 boundary_latent,
-                cell["face_active"].unsqueeze(-1).to(vertex_latent.dtype),
+                activity_input,
             ),
             dim=-1,
         )
@@ -175,6 +176,25 @@ class GraphToCellTranslator(nn.Module):
             cell["face_active"],
             candidate_mask,
         )
+        boundary_operator = face_boundary_coefficients(
+            graph["edge_index"],
+            graph["edge_mask"],
+            cell["face_index"],
+            candidate_mask,
+            dtype=torch.float32,
+            face_boundary=cell.get("face_boundary"),
+        )
+        soft_faces = torch.sigmoid(structure_logits.float()) * candidate_mask.float()
+        predicted_boundary_operator = boundary_operator * soft_faces.unsqueeze(-1)
+        target_boundary_operator = boundary_operator * cell[
+            "face_active"
+        ].float().unsqueeze(-1)
+        per_sample_map_reconstruction = _per_sample_masked_mse(
+            predicted_boundary_operator,
+            target_boundary_operator,
+            candidate_mask,
+        )
+        map_reconstruction_loss = per_sample_map_reconstruction.mean()
 
         per_sample_reconstruction = 0.5 * (
             _per_sample_masked_mse(
@@ -198,9 +218,15 @@ class GraphToCellTranslator(nn.Module):
             edge_reconstruction=edge_reconstruction,
             reconstruction_loss=reconstruction_loss,
             consistency_surrogate=consistency_surrogate,
+            map_reconstruction_loss=map_reconstruction_loss,
             supervision_loss=supervision_loss,
             per_sample_diagnostics=torch.stack(
-                (per_sample_reconstruction, per_sample_consistency), dim=-1
+                (
+                    per_sample_reconstruction,
+                    per_sample_consistency,
+                    per_sample_map_reconstruction,
+                ),
+                dim=-1,
             ),
         )
 
@@ -228,7 +254,13 @@ class GraphToSheafTranslator(nn.Module):
         hidden = translator_config.hidden_dim
         rank = translator_config.stalk_rank
         self.eps = translator_config.eps
+        self.target_structure_access = translator_config.target_structure_access
         self.node_lift = MLP(expert_config.node_feature_dim, hidden, rank)
+        self.transport_angle = MLP(
+            expert_config.edge_feature_dim + 2 * rank,
+            hidden,
+            1,
+        )
         self.edge_lift = MLP(expert_config.edge_feature_dim + rank + 1, hidden, hidden)
         self.face_encoder = MLP(4, hidden, hidden)
         self.node_reconstruction = MLP(rank, hidden, expert_config.node_feature_dim)
@@ -260,7 +292,29 @@ class GraphToSheafTranslator(nn.Module):
             self.node_lift(apply_mask(graph["node_features"], graph["node_mask"])),
             graph["node_mask"],
         )
-        residual = self._residual(node_latent, sheaf)
+        if self.target_structure_access:
+            predicted_transport = sheaf["transport"].to(node_latent.dtype)
+        else:
+            tails = safe_gather_nodes(node_latent, graph["edge_index"][:, 0])
+            heads = safe_gather_nodes(node_latent, graph["edge_index"][:, 1])
+            angle = apply_mask(
+                self.transport_angle(
+                    torch.cat((graph["edge_features"], tails, heads), dim=-1)
+                ).squeeze(-1),
+                graph["edge_mask"],
+            )
+            cosine = torch.cos(angle.float()).to(node_latent.dtype)
+            sine = torch.sin(angle.float()).to(node_latent.dtype)
+            predicted_transport = torch.stack(
+                (
+                    torch.stack((cosine, -sine), dim=-1),
+                    torch.stack((sine, cosine), dim=-1),
+                ),
+                dim=-2,
+            )
+            predicted_transport = apply_mask(predicted_transport, graph["edge_mask"])
+        predicted_sheaf = {**sheaf, "transport": predicted_transport}
+        residual = self._residual(node_latent, predicted_sheaf)
         # The consistency loss drives residuals toward zero, where an
         # unclamped sqrt has infinite derivative.  Eps must go *inside* the
         # sqrt: clamping afterwards still chains 0 * inf = NaN on backward.
@@ -289,7 +343,7 @@ class GraphToSheafTranslator(nn.Module):
         )
         face_valid = sheaf["face_mask"]
         holonomy = face_holonomy(
-            sheaf["transport"],
+            predicted_transport,
             sheaf["edge_index"],
             sheaf["edge_mask"],
             sheaf["face_index"],
@@ -298,9 +352,7 @@ class GraphToSheafTranslator(nn.Module):
         )
         identity = torch.eye(2, dtype=holonomy.dtype, device=holonomy.device)
         face_hidden = apply_mask(
-            self.face_encoder(
-                (holonomy - identity).flatten(-2).to(node_latent.dtype)
-            ),
+            self.face_encoder((holonomy - identity).flatten(-2).to(node_latent.dtype)),
             face_valid,
         )
         task_embedding = self.task_readout(
@@ -334,6 +386,12 @@ class GraphToSheafTranslator(nn.Module):
         stalk_energy = masked_feature_energy(node_latent, graph["node_mask"])
         per_sample_consistency = residual_energy / stalk_energy.clamp_min(self.eps)
         consistency_surrogate = per_sample_consistency.mean()
+        per_sample_map_reconstruction = _per_sample_masked_mse(
+            predicted_transport,
+            sheaf["transport"],
+            graph["edge_mask"],
+        )
+        map_reconstruction_loss = per_sample_map_reconstruction.mean()
         per_sample_reconstruction = 0.5 * (
             _per_sample_masked_mse(
                 node_reconstruction, graph["node_features"], graph["node_mask"]
@@ -353,9 +411,15 @@ class GraphToSheafTranslator(nn.Module):
             edge_reconstruction=edge_reconstruction,
             reconstruction_loss=reconstruction_loss,
             consistency_surrogate=consistency_surrogate,
+            map_reconstruction_loss=map_reconstruction_loss,
             supervision_loss=reconstruction_loss * 0.0,
             per_sample_diagnostics=torch.stack(
-                (per_sample_reconstruction, per_sample_consistency), dim=-1
+                (
+                    per_sample_reconstruction,
+                    per_sample_consistency,
+                    per_sample_map_reconstruction,
+                ),
+                dim=-1,
             ),
         )
 

@@ -85,6 +85,7 @@ class TranslatorConfig:
     hidden_dim: int = 32
     stalk_rank: int = 2
     eps: float = 1e-6
+    target_structure_access: bool = False
 
     def __post_init__(self) -> None:
         _positive("hidden_dim", self.hidden_dim)
@@ -92,6 +93,8 @@ class TranslatorConfig:
             raise ValueError("Gate-2 data exposes rank-2 connection transports")
         if self.eps <= 0:
             raise ValueError("eps must be positive")
+        if not isinstance(self.target_structure_access, bool):
+            raise TypeError("target_structure_access must be boolean")
 
 
 @dataclass(frozen=True, slots=True)

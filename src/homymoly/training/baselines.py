@@ -83,7 +83,9 @@ class ShortcutBaselineConfig:
             if not isinstance(value, (int, float)) or not isfinite(float(value)):
                 raise ValueError(f"{name} must be finite")
         if self.learning_rate <= 0 or self.weight_decay < 0:
-            raise ValueError("learning_rate must be positive and weight_decay non-negative")
+            raise ValueError(
+                "learning_rate must be positive and weight_decay non-negative"
+            )
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -167,12 +169,8 @@ class PermutationInvariantBaseline(nn.Module):
         transport: Tensor,
         structure_features: Tensor,
     ) -> Tensor:
-        node_embedding = self._masked_mean(
-            self.node_encoder(node_features), node_mask
-        )
-        edge_embedding = self._masked_mean(
-            self.edge_encoder(edge_features), edge_mask
-        )
+        node_embedding = self._masked_mean(self.node_encoder(node_features), node_mask)
+        edge_embedding = self._masked_mean(self.edge_encoder(edge_features), edge_mask)
         transport_embedding = self._masked_mean(
             self.transport_encoder(transport.flatten(start_dim=-2)), edge_mask
         )
@@ -196,9 +194,7 @@ def scalar_amplitude_features(sample: StructuredSample) -> Tensor:
         (
             float(sample.node_features[:, 0].abs().max()),
             float(top_edges.values.mean()),
-            float(
-                torch.linalg.vector_norm(sample.node_features[:, -2:], dim=1).mean()
-            ),
+            float(torch.linalg.vector_norm(sample.node_features[:, -2:], dim=1).mean()),
         ),
         dtype=torch.float32,
     )
@@ -333,9 +329,7 @@ def _metrics(
 ) -> dict[str, Any]:
     report: dict[str, Any] = {}
     for split_name, indices in data.splits.items():
-        report[f"{split_name}_accuracy"] = _accuracy(
-            logits, data.labels, indices
-        )
+        report[f"{split_name}_accuracy"] = _accuracy(logits, data.labels, indices)
     test_indices = data.splits["test"]
     by_regime: dict[str, float] = {}
     for route_index, route in enumerate(ROUTES):
@@ -421,20 +415,15 @@ def _nearest_centroid_route_accuracy(data: _CampaignData) -> float:
             for route_index in range(len(ROUTES))
         ]
     )
-    distances = ((features[test, None, :] - centroids[None, :, :]) ** 2).sum(
-        dim=-1
-    )
+    distances = ((features[test, None, :] - centroids[None, :, :]) ** 2).sum(dim=-1)
     predictions = distances.argmin(dim=-1)
-    return float(
-        (predictions == data.regimes[test]).to(dtype=torch.float32).mean()
-    )
+    return float((predictions == data.regimes[test]).to(dtype=torch.float32).mean())
 
 
 def _graph_oracle(sample: StructuredSample) -> int:
     tail, head = sample.edge_index
-    anchor_mask = (
-        (sample.node_features[tail, 0].abs() > 0.5)
-        & (sample.node_features[head, 0].abs() > 0.5)
+    anchor_mask = (sample.node_features[tail, 0].abs() > 0.5) & (
+        sample.node_features[head, 0].abs() > 0.5
     )
     products = (
         sample.node_features[tail[anchor_mask], 0]
@@ -480,10 +469,7 @@ def _sheaf_oracle(sample: StructuredSample) -> int:
 def _oracle_report(data: _CampaignData) -> dict[str, Any]:
     predictors = (_graph_oracle, _cell_oracle, _sheaf_oracle)
     predictions = torch.tensor(
-        [
-            [predictor(sample) for predictor in predictors]
-            for sample in data.samples
-        ],
+        [[predictor(sample) for predictor in predictors] for sample in data.samples],
         dtype=torch.long,
     )
     test = data.splits["test"]

@@ -16,11 +16,15 @@ import numpy as np
 import pytest
 import torch
 
+from homymoly.metrics.distances import normalize_dissimilarity
 from homymoly.metrics.exact_rtd import (
     cone_cross_barcode,
     exact_rtd,
+    exact_rtd_by_degree,
     exact_rtd_directional,
+    exact_rtd_directional_by_degree,
     exact_srtd,
+    exact_srtd_by_degree,
     total_persistence,
 )
 
@@ -86,7 +90,7 @@ def test_directional_scores_and_half_sum_symmetry(paired_clouds) -> None:  # typ
 def test_collapse_produces_structured_nonzero_barcode() -> None:
     rng = np.random.default_rng(19)
     distances = _euclidean(rng.normal(size=(8, 3)))
-    collapsed = (torch.ones_like(distances) - torch.eye(8, dtype=torch.float64)).double()
+    collapsed = torch.zeros_like(distances)
     barcode = cone_cross_barcode(distances, collapsed, mode="srtd")
     finite = [interval for interval in barcode if interval.death != inf]
     assert finite, "collapse must produce finite discrepancy intervals"
@@ -105,7 +109,9 @@ def test_localized_difference_is_detected() -> None:
 
 def test_interval_lengths_respect_stability_bound(paired_clouds) -> None:  # type: ignore[no-untyped-def]
     source, target = paired_clouds
-    bound = float((source - target).abs().max())
+    normalized_source = normalize_dissimilarity(source, mode="quantile")
+    normalized_target = normalize_dissimilarity(target, mode="quantile")
+    bound = float((normalized_source - normalized_target).abs().max())
     for mode in ("forward", "reverse", "srtd"):
         for interval in cone_cross_barcode(source, target, mode=mode):
             if interval.death == inf:
@@ -125,6 +131,138 @@ def test_srtd_degree_one_equals_sum_of_directionals(paired_clouds) -> None:  # t
         cone_cross_barcode(source, target, mode="reverse"), degree=1
     )
     assert symmetric == pytest.approx(forward + reverse, abs=1e-12)
+
+
+def test_published_three_point_directional_fixture() -> None:
+    """Hand reduction of the degree-one cross-barcode on three vertices."""
+
+    source = torch.tensor(
+        ((0.0, 1.0, 5.0), (1.0, 0.0, 4.0), (5.0, 4.0, 0.0)),
+        dtype=torch.float64,
+    )
+    target = torch.tensor(
+        ((0.0, 2.0, 6.0), (2.0, 0.0, 3.0), (6.0, 3.0, 0.0)),
+        dtype=torch.float64,
+    )
+    forward = cone_cross_barcode(
+        source, target, mode="forward", max_dim=1, normalization="none"
+    )
+    reverse = cone_cross_barcode(
+        source, target, mode="reverse", max_dim=1, normalization="none"
+    )
+    symmetric = cone_cross_barcode(
+        source, target, mode="srtd", max_dim=1, normalization="none"
+    )
+
+    assert [(bar.degree, bar.birth, bar.death) for bar in forward] == [(1, 3.0, 4.0)]
+    assert [(bar.degree, bar.birth, bar.death) for bar in reverse] == [(1, 1.0, 2.0)]
+    assert sorted((bar.degree, bar.birth, bar.death) for bar in symmetric) == [
+        (1, 1.0, 2.0),
+        (1, 3.0, 4.0),
+    ]
+    assert exact_rtd_directional(
+        source, target, max_dim=1, normalization="none"
+    ) == pytest.approx(1.0)
+    assert exact_rtd(source, target, max_dim=1, normalization="none") == pytest.approx(
+        1.0
+    )
+    assert exact_srtd(source, target, max_dim=1, normalization="none") == pytest.approx(
+        2.0
+    )
+
+
+def test_collapse_fixture_matches_shifted_ordinary_h0_barcode() -> None:
+    """RTD collapse theorem: degree-one cross-bars are finite H0 bars."""
+
+    source = torch.tensor(
+        ((0.0, 1.0, 3.0), (1.0, 0.0, 2.0), (3.0, 2.0, 0.0)),
+        dtype=torch.float64,
+    )
+    collapsed = torch.zeros_like(source)
+    barcode = cone_cross_barcode(
+        source, collapsed, mode="forward", max_dim=1, normalization="none"
+    )
+    assert sorted((bar.birth, bar.death) for bar in barcode) == [
+        (0.0, 1.0),
+        (0.0, 2.0),
+    ]
+    assert exact_rtd_directional(
+        source, collapsed, max_dim=1, normalization="none"
+    ) == pytest.approx(3.0)
+
+
+def test_quantile_normalization_matches_official_full_matrix_convention() -> None:
+    matrix = torch.zeros((5, 5), dtype=torch.float64)
+    upper = torch.triu_indices(5, 5, offset=1)
+    values = torch.arange(1, 11, dtype=torch.float64).square()
+    matrix[upper[0], upper[1]] = values
+    matrix = matrix + matrix.mT
+
+    normalized = normalize_dissimilarity(matrix, mode="quantile", quantile=0.9)
+    # np.quantile/torch.quantile on all 25 entries gives 81.0. Taking only
+    # unique off-diagonal distances would give 82.9 and is not the official
+    # RTD implementation's convention.
+    torch.testing.assert_close(normalized, matrix / 81.0)
+    assert float(torch.quantile(values, 0.9)) == pytest.approx(82.9)
+
+
+def test_degree_specific_scores_exclude_truncation_frontier() -> None:
+    rng = np.random.default_rng(321)
+    source = rng.random((7, 7))
+    source = (source + source.T) * 0.5
+    np.fill_diagonal(source, 0.0)
+    target = rng.random((7, 7))
+    target = (target + target.T) * 0.5
+    np.fill_diagonal(target, 0.0)
+    source_tensor = torch.tensor(source, dtype=torch.float64)
+    target_tensor = torch.tensor(target, dtype=torch.float64)
+
+    shallow = exact_srtd_by_degree(
+        source_tensor, target_tensor, max_dim=1, normalization="none"
+    )
+    deep = exact_srtd_by_degree(
+        source_tensor, target_tensor, max_dim=3, normalization="none"
+    )
+    assert shallow == pytest.approx(deep[:2], abs=1e-12)
+    assert deep[2] > 0.0
+    assert exact_srtd(
+        source_tensor, target_tensor, max_dim=3, normalization="none"
+    ) == pytest.approx(deep[1], abs=1e-12)
+    assert exact_srtd(
+        source_tensor,
+        target_tensor,
+        degree=2,
+        max_dim=3,
+        normalization="none",
+    ) == pytest.approx(deep[2], abs=1e-12)
+    assert all(
+        bar.degree <= 1
+        for bar in cone_cross_barcode(
+            source_tensor,
+            target_tensor,
+            max_dim=1,
+            normalization="none",
+        )
+    )
+
+
+def test_per_degree_rtd_api_and_degree_validation(paired_clouds) -> None:  # type: ignore[no-untyped-def]
+    source, target = paired_clouds
+    forward = exact_rtd_directional_by_degree(source, target, max_dim=2)
+    reverse = exact_rtd_directional_by_degree(target, source, max_dim=2)
+    symmetric = exact_rtd_by_degree(source, target, max_dim=2)
+    assert symmetric == pytest.approx(
+        tuple(
+            0.5 * (left + right) for left, right in zip(forward, reverse, strict=True)
+        )
+    )
+    assert exact_rtd(source, target) == pytest.approx(symmetric[1])
+    with pytest.raises(ValueError, match="must not exceed"):
+        exact_srtd(source, target, degree=2, max_dim=1)
+    with pytest.raises(ValueError, match="nonnegative integer"):
+        cone_cross_barcode(source, target, max_dim=-1)
+    with pytest.raises(ValueError, match="quantile"):
+        normalize_dissimilarity(source, mode="quantile", quantile=0.0)
 
 
 def test_size_guard_and_shape_validation() -> None:
