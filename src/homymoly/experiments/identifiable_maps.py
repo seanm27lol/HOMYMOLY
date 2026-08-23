@@ -77,6 +77,12 @@ class AnnulusMapSystem:
     basis: DegreeMaps
     marker_pairs: tuple[tuple[int, int], ...]
     transformations: tuple[tuple[int, int], ...]
+    # True where the candidate preserves the first homology class. All-True for
+    # the historical dihedral-only class; half False once cycle-killing twins
+    # are included, which is what makes the mapping cone informative.
+    cycle_survives: tuple[bool, ...] = ()
+    # Unit-norm harmonic representative of H1 at degree one.
+    harmonic_one: Tensor | None = None
 
     @property
     def num_vertices(self) -> int:
@@ -100,6 +106,7 @@ def build_annulus_map_system(
     *,
     dtype: torch.dtype = torch.float64,
     tolerance: float = 1e-12,
+    include_cycle_killing: bool = False,
 ) -> AnnulusMapSystem:
     """Build a cellular annulus and its orientation-aware dihedral maps.
 
@@ -214,6 +221,66 @@ def build_annulus_map_system(
 
     if len(set(marker_pairs)) != 2 * sectors:
         raise RuntimeError("ordered graph markers do not identify the dihedral action")
+
+    # The degree-one harmonic direction spans H1. It is the only direction a
+    # cycle-killing twin treats differently from its rotation, so it is both the
+    # tool for building those twins and the dial that controls how visible they
+    # are in the data.
+    boundary_1 = incidence.boundary_1.to(torch.float64)
+    boundary_2 = incidence.boundary_2.to(torch.float64)
+    laplacian = boundary_1.mT @ boundary_1 + boundary_2 @ boundary_2.mT
+    eigenvalues, eigenvectors = torch.linalg.eigh(laplacian)
+    harmonic_dimension = int(
+        (eigenvalues < 1e-9 * max(float(eigenvalues[-1]), 1.0)).sum()
+    )
+    if harmonic_dimension != 1:
+        raise RuntimeError(
+            "the annulus must have a one-dimensional first homology; "
+            f"found {harmonic_dimension}"
+        )
+    harmonic = eigenvectors[:, :1]
+    harmonic = harmonic / harmonic.norm()
+
+    if include_cycle_killing:
+        # Append a cycle-killing twin for every rotation: F = R . P, where P is
+        # the orthogonal projector that removes the harmonic direction at degree
+        # one. P is the identity on boundaries, so R . P remains an exact chain
+        # map and stays injective on B1 -- the twins are mutually
+        # distinguishable -- but it sends the H1 generator to zero.
+        #
+        # The twin shares its vertex map with the rotation, so the ordered
+        # markers are identical between a pair by construction. The marker
+        # channel therefore narrows the class to a pair and stops; the remaining
+        # bit is exactly whether the cycle survived.
+        projector = torch.eye(len(incidence.edges), dtype=torch.float64)
+        projector = projector - harmonic @ harmonic.mT
+
+        for index in range(2 * sectors):
+            degree_one = maps_one[index].to(torch.float64) @ projector
+            residual_one = (
+                boundary_1 @ degree_one - maps_zero[index].to(torch.float64) @ boundary_1
+            )
+            residual_two = (
+                boundary_2 @ maps_two[index].to(torch.float64)
+                - degree_one @ boundary_2
+            )
+            residual = max(
+                float(residual_one.abs().max()), float(residual_two.abs().max())
+            )
+            if residual > tolerance:
+                raise RuntimeError(
+                    "a generated cycle-killing map violates the chain-map law: "
+                    f"{residual:.3e} > {tolerance:.3e}"
+                )
+            maps_zero.append(maps_zero[index])
+            maps_one.append(degree_one)
+            maps_two.append(maps_two[index])
+            marker_pairs.append(marker_pairs[index])
+            transformations.append(transformations[index])
+        cycle_survives = (True,) * (2 * sectors) + (False,) * (2 * sectors)
+    else:
+        cycle_survives = (True,) * (2 * sectors)
+
     return AnnulusMapSystem(
         sectors=sectors,
         edges=tuple(incidence.edges),
@@ -227,6 +294,8 @@ def build_annulus_map_system(
         ),
         marker_pairs=tuple(marker_pairs),
         transformations=tuple(transformations),
+        cycle_survives=cycle_survives,
+        harmonic_one=harmonic.squeeze(-1).to(dtype=dtype),
     )
 
 
@@ -281,6 +350,8 @@ class IdentifiableTypedMapDataset(Dataset[dict[str, Tensor | str]]):
         sectors: int = 6,
         noise_std: float = 0.05,
         dtype: torch.dtype = torch.float32,
+        include_cycle_killing: bool = False,
+        cycle_weight: float | None = None,
     ) -> None:
         if isinstance(num_samples, bool) or not isinstance(num_samples, int):
             raise TypeError("num_samples must be an integer")
@@ -288,15 +359,38 @@ class IdentifiableTypedMapDataset(Dataset[dict[str, Tensor | str]]):
             raise ValueError("num_samples must be positive")
         if noise_std < 0:
             raise ValueError("noise_std must be nonnegative")
+        if cycle_weight is not None and not 0.0 <= cycle_weight <= 1.0:
+            raise ValueError("cycle_weight must lie in [0, 1]")
         self.num_samples = num_samples
         self.seed = int(seed)
         self.noise_std = float(noise_std)
         self.dtype = dtype
-        self.system = build_annulus_map_system(sectors, dtype=dtype)
+        self.cycle_weight = None if cycle_weight is None else float(cycle_weight)
+        self.system = build_annulus_map_system(
+            sectors, dtype=dtype, include_cycle_killing=include_cycle_killing
+        )
         self._class_stride = self._coprime_stride(self.system.num_transformations)
         self._class_offset = _coordinate_seed(self.seed, 0xD1ED) % (
             self.system.num_transformations
         )
+
+    def _attenuate_cycle(self, signal: Tensor) -> Tensor:
+        """Scale a degree-one signal's harmonic component by ``cycle_weight``.
+
+        A cycle-killing twin differs from its rotation only by ``R h h^T``, so the
+        harmonic component of the input is the *only* thing that distinguishes
+        them. Scaling it by alpha therefore dials how visible that distinction is,
+        while leaving the boundary and co-boundary parts of the signal — and
+        every other target channel — exactly as they were. At ``alpha = 0`` the
+        twins are indistinguishable from the data and only the mapping cone can
+        tell them apart.
+        """
+
+        if self.cycle_weight is None or self.system.harmonic_one is None:
+            return signal
+        harmonic = self.system.harmonic_one.to(signal.dtype)
+        component = torch.dot(signal, harmonic)
+        return signal - (1.0 - self.cycle_weight) * component * harmonic
 
     def _coprime_stride(self, classes: int) -> int:
         candidate = 1 + _coordinate_seed(self.seed, 0x57A1DE) % (classes - 1)
@@ -338,12 +432,19 @@ class IdentifiableTypedMapDataset(Dataset[dict[str, Tensor | str]]):
         source_zero = torch.randn(
             self.system.num_vertices, generator=generator, dtype=self.dtype
         )
-        source_one = torch.randn(
-            self.system.num_edges, generator=generator, dtype=self.dtype
+        source_one = self._attenuate_cycle(
+            torch.randn(self.system.num_edges, generator=generator, dtype=self.dtype)
         )
         source_two = self.system.boundary_2.mT @ source_one
-        source_sheaf_angle = 0.75 * torch.tanh(
-            torch.randn(self.system.num_edges, generator=generator, dtype=self.dtype)
+        # The sheaf angle also passes through the degree-one map, so it would
+        # leak the twin distinction unless it is attenuated the same way.
+        source_sheaf_angle = self._attenuate_cycle(
+            0.75
+            * torch.tanh(
+                torch.randn(
+                    self.system.num_edges, generator=generator, dtype=self.dtype
+                )
+            )
         )
 
         node_noise = self.noise_std * torch.randn(

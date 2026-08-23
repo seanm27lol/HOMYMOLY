@@ -705,6 +705,19 @@ have room to contribute and a null becomes informative.
   per family, and are not matched-accuracy comparisons.
 - **Mixed tail statistics.** The identifiable runner reports p90 and the routing
   runner reports p95. These are never pooled and must not be compared directly.
+- **The §6.3 result is demonstrated for selection over a fixed class.** Every
+  candidate's cone score is fixed before training, which is why the signal
+  carries no information. That argument does not by itself cover a map learned
+  as continuous parameters, where the cone score moves as the parameters move.
+  An exploratory paired probe in that setting — a learned map between two
+  different cycle complexes, twelve seeds, structural term on versus off —
+  found no improvement in held-out error at any training-set size, with every
+  interval containing zero. That probe was not preregistered and is not counted
+  as a result here; it is recorded in
+  [`docs/24`](24-continuous-map-probe.md). Notably it failed for a *different*
+  reason: sampling the learned map space found structure preservation to be
+  generic (200 of 200 random maps were quasi-isomorphisms), so a prior favouring
+  it had nothing to discriminate.
 - **No multiplicity control.** No adjustment is applied to any interval or
   p-value in this report.
 - **Artifact boundaries.** The 8.8 GB `artifacts/` tree is untracked. Tracked

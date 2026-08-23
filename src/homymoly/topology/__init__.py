@@ -8,6 +8,15 @@ from .chain import (
     numerical_rank,
 )
 from .cone import cone_betti_numbers, hodge_projector, mapping_cone
+from .defects import (
+    DegreeDefect,
+    cone_betti_from_defects,
+    degree_defect,
+    exactness_defects,
+    harmonic_basis,
+    induced_homology_map,
+    is_quasi_isomorphism,
+)
 from .incidence import (
     Edge,
     Face,
@@ -24,6 +33,7 @@ from .sheaf import connection_coboundary, connection_residual, cycle_holonomy
 __all__ = [
     "ChainComplex",
     "ChainMap",
+    "DegreeDefect",
     "Edge",
     "Face",
     "OrientedIncidence",
@@ -32,12 +42,18 @@ __all__ = [
     "build_oriented_incidence",
     "canonical_cycle",
     "canonical_edge",
+    "cone_betti_from_defects",
     "cone_betti_numbers",
     "connection_coboundary",
     "connection_residual",
     "cycle_holonomy",
+    "degree_defect",
+    "exactness_defects",
     "graph_to_cell_inclusion",
+    "harmonic_basis",
     "hodge_projector",
+    "induced_homology_map",
+    "is_quasi_isomorphism",
     "mapping_cone",
     "nullity",
     "numerical_rank",
