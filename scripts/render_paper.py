@@ -33,18 +33,28 @@ blockquote { border-left: 4px solid #64748b; color: #334155; margin: 0.8em 0;
 code { background: #f1f5f9; font: 8.8pt Consolas, monospace; padding: 0.05em 0.2em; }
 pre { background: #f1f5f9; line-height: 1.22; padding: 0.6em;
       page-break-inside: avoid; white-space: pre-wrap; }
+figure { break-inside: avoid; margin: 1em 0; page-break-inside: avoid;
+         text-align: center; }
+figure img { height: auto; max-width: 100%; }
+figcaption { color: #334155; font: 9.2pt/1.4 Arial, sans-serif; margin-top: 0.45em;
+             text-align: left; }
+p > img { display: block; height: auto; margin: 0 auto; max-width: 100%; }
 """
 
 
-def _html(markdown_text: str, *, title: str) -> str:
+def _html(markdown_text: str, *, title: str, base: str = "") -> str:
     body = markdown.markdown(
         markdown_text,
         extensions=("tables", "fenced_code", "sane_lists"),
         output_format="html5",
     )
+    # The staging directory is a sibling of the Markdown source, so a <base>
+    # pointing at the source directory lets one relative image path work both on
+    # GitHub and in the rendered PDF.
+    base_tag = f"<base href='{base}'>" if base else ""
     return (
         "<!doctype html><html><head><meta charset='utf-8'>"
-        f"<title>{title}</title><style>{_STYLE}</style></head>"
+        f"{base_tag}<title>{title}</title><style>{_STYLE}</style></head>"
         f"<body>{body}</body></html>"
     )
 
@@ -103,7 +113,11 @@ def main() -> int:
         ),
         source.stem,
     )
-    document = _html(source.read_text(encoding="utf-8"), title=title)
+    document = _html(
+        source.read_text(encoding="utf-8"),
+        title=title,
+        base=source.parent.as_uri() + "/",
+    )
     # The staging directory must sit beside the output rather than in the system
     # temp tree: a snap-confined Chromium gets a private /tmp and would silently
     # render its own "file not found" page into a one-page PDF.

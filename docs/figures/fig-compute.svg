@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="300" viewBox="0 0 680 300" role="img" aria-label="Trained routing inference latency">
+  <title>Trained routing inference latency</title>
+  <rect width="680" height="300" fill="#ffffff"/>
+  <text x="0.0" y="20.0" font-family="Arial, Helvetica, sans-serif" font-size="13.0" fill="#0b0b0b" text-anchor="start" font-weight="bold">Trained routing inference latency on GB10</text>
+  <text x="0.0" y="36.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">Median over 100 timed iterations, averaged across five seeds; whisker marks mean p95.</text>
+  <text x="0.0" y="50.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">Batch 64, bfloat16. Paths were timed in this order inside one process.</text>
+  <line x1="108.0" y1="68.0" x2="108.0" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="108.0" y="239.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">0</text>
+  <line x1="178.2" y1="68.0" x2="178.2" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="178.2" y="239.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">10</text>
+  <line x1="248.3" y1="68.0" x2="248.3" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="248.3" y="239.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">20</text>
+  <line x1="318.5" y1="68.0" x2="318.5" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="318.5" y="239.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">30</text>
+  <line x1="388.6" y1="68.0" x2="388.6" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="388.6" y="239.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">40</text>
+  <line x1="458.8" y1="68.0" x2="458.8" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="458.8" y="239.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">50</text>
+  <line x1="528.9" y1="68.0" x2="528.9" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="528.9" y="239.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">60</text>
+  <line x1="599.1" y1="68.0" x2="599.1" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="599.1" y="239.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">70</text>
+  <text x="346.0" y="256.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#52514e" text-anchor="middle" font-weight="normal">milliseconds</text>
+  <text x="98.0" y="87.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="10.0" fill="#0b0b0b" text-anchor="end" font-weight="normal">routed</text>
+  <rect x="108.0" y="76.0" width="266.4" height="15.0" rx="3" ry="3" fill="#2a78d6"/>
+  <line x1="374.4" y1="83.5" x2="400.0" y2="83.5" stroke="#7a7873" stroke-width="1.2"/>
+  <line x1="400.0" y1="78.0" x2="400.0" y2="89.0" stroke="#7a7873" stroke-width="1.2"/>
+  <text x="408.0" y="87.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#52514e" text-anchor="start" font-weight="normal">38.0 ms</text>
+  <text x="98.0" y="117.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="10.0" fill="#0b0b0b" text-anchor="end" font-weight="normal">fixed_graph</text>
+  <rect x="108.0" y="106.0" width="117.4" height="15.0" rx="3" ry="3" fill="#eb6834"/>
+  <line x1="225.4" y1="113.5" x2="236.7" y2="113.5" stroke="#7a7873" stroke-width="1.2"/>
+  <line x1="236.7" y1="108.0" x2="236.7" y2="119.0" stroke="#7a7873" stroke-width="1.2"/>
+  <text x="244.7" y="117.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#52514e" text-anchor="start" font-weight="normal">16.7 ms</text>
+  <text x="98.0" y="147.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="10.0" fill="#0b0b0b" text-anchor="end" font-weight="normal">fixed_cell</text>
+  <rect x="108.0" y="136.0" width="142.0" height="15.0" rx="3" ry="3" fill="#eb6834"/>
+  <line x1="250.0" y1="143.5" x2="264.8" y2="143.5" stroke="#7a7873" stroke-width="1.2"/>
+  <line x1="264.8" y1="138.0" x2="264.8" y2="149.0" stroke="#7a7873" stroke-width="1.2"/>
+  <text x="272.8" y="147.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#52514e" text-anchor="start" font-weight="normal">20.2 ms</text>
+  <text x="98.0" y="177.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="10.0" fill="#0b0b0b" text-anchor="end" font-weight="normal">fixed_sheaf</text>
+  <rect x="108.0" y="166.0" width="148.2" height="15.0" rx="3" ry="3" fill="#eb6834"/>
+  <line x1="256.2" y1="173.5" x2="269.1" y2="173.5" stroke="#7a7873" stroke-width="1.2"/>
+  <line x1="269.1" y1="168.0" x2="269.1" y2="179.0" stroke="#7a7873" stroke-width="1.2"/>
+  <text x="277.1" y="177.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#52514e" text-anchor="start" font-weight="normal">21.1 ms</text>
+  <text x="98.0" y="207.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="10.0" fill="#0b0b0b" text-anchor="end" font-weight="normal">dense</text>
+  <rect x="108.0" y="196.0" width="408.1" height="15.0" rx="3" ry="3" fill="#1baf7a"/>
+  <line x1="516.1" y1="203.5" x2="557.0" y2="203.5" stroke="#7a7873" stroke-width="1.2"/>
+  <line x1="557.0" y1="198.0" x2="557.0" y2="209.0" stroke="#7a7873" stroke-width="1.2"/>
+  <text x="565.0" y="207.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#52514e" text-anchor="start" font-weight="normal">58.2 ms</text>
+  <rect x="0.0" y="281.0" width="9.0" height="9.0" rx="2" ry="2" fill="#2a78d6"/>
+  <text x="14.0" y="288.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">routed</text>
+  <rect x="59.6" y="281.0" width="9.0" height="9.0" rx="2" ry="2" fill="#eb6834"/>
+  <text x="73.6" y="288.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">single fixed route</text>
+  <rect x="198.4" y="281.0" width="9.0" height="9.0" rx="2" ry="2" fill="#1baf7a"/>
+  <text x="212.4" y="288.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">dense three-expert</text>
+</svg>
