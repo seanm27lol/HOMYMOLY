@@ -31,7 +31,8 @@ th { background: #f1f5f9; }
 blockquote { border-left: 4px solid #64748b; color: #334155; margin: 0.8em 0;
              padding: 0.25em 0.75em; }
 code { background: #f1f5f9; font: 8.8pt Consolas, monospace; padding: 0.05em 0.2em; }
-pre { background: #f1f5f9; padding: 0.6em; white-space: pre-wrap; }
+pre { background: #f1f5f9; line-height: 1.22; padding: 0.6em;
+      page-break-inside: avoid; white-space: pre-wrap; }
 """
 
 
@@ -46,6 +47,34 @@ def _html(markdown_text: str, *, title: str) -> str:
         f"<title>{title}</title><style>{_STYLE}</style></head>"
         f"<body>{body}</body></html>"
     )
+
+
+def _pdf_page_count(pdf_bytes: bytes) -> int:
+    return pdf_bytes.count(b"/Type /Page") - pdf_bytes.count(b"/Type /Pages")
+
+
+def _render_problem(output: Path, document: str) -> str | None:
+    """Catch a Chromium render that produced an error page instead of the paper.
+
+    Chromium exits zero after rendering its own ``ERR_FILE_NOT_FOUND`` screen, so
+    the exit status alone cannot distinguish a real document from a failure. A
+    long source that collapses to a single page is the signature of that failure.
+    """
+
+    if not output.is_file():
+        return "no output file was produced"
+    pdf_bytes = output.read_bytes()
+    if not pdf_bytes.startswith(b"%PDF-"):
+        return "output is not a PDF"
+    pages = _pdf_page_count(pdf_bytes)
+    if pages < 1:
+        return "no pages were rendered"
+    # Roughly 3.5 KB of HTML fits on a rendered page; require the page count to
+    # be in the same order of magnitude as the source.
+    expected = max(1, len(document) // 12000)
+    if pages < expected:
+        return f"rendered {pages} page(s) from {len(document)} bytes of HTML"
+    return None
 
 
 def main() -> int:
@@ -75,7 +104,12 @@ def main() -> int:
         source.stem,
     )
     document = _html(source.read_text(encoding="utf-8"), title=title)
-    with tempfile.TemporaryDirectory(prefix="homymoly-paper-") as temporary:
+    # The staging directory must sit beside the output rather than in the system
+    # temp tree: a snap-confined Chromium gets a private /tmp and would silently
+    # render its own "file not found" page into a one-page PDF.
+    with tempfile.TemporaryDirectory(
+        prefix=".homymoly-paper-", dir=output.parent
+    ) as temporary:
         html_path = Path(temporary) / "paper.html"
         html_path.write_text(document, encoding="utf-8")
         subprocess.run(
@@ -91,6 +125,9 @@ def main() -> int:
             check=True,
             timeout=120,
         )
+    problem = _render_problem(output, document)
+    if problem is not None:
+        parser.error(f"the rendered PDF looks wrong: {problem}")
     print(output)
     return 0
 
