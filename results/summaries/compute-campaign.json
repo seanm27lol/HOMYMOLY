@@ -1,0 +1,1208 @@
+{
+  "analysis_provenance": {
+    "sealed_receipt": {
+      "completed_at": "2026-08-23T03:01:26.739211+00:00",
+      "completed_steps": 56,
+      "launch_fingerprint": "44408d7adf8467e594879b46e25a1cb7fd89a7e7a5d5f3446548bcbf3ed1096e",
+      "path": "artifacts/scheduler/identifiable-gb10-factorial-v1/runs/44408d7adf8467e594879b46e25a1cb7fd89a7e7a5d5f3446548bcbf3ed1096e/campaign.complete.json",
+      "sha256": "8c05500e73f9542f3ac5e3901e332a8d94013e1bdb59a30f0cdf60200177550c"
+    },
+    "shared_device_name": "NVIDIA GB10",
+    "shared_git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+    "summarizer": {
+      "path": "scripts/summarize_compute_campaign.py",
+      "sha256": "ce97f75553576f690b7434d24ffdbe62d9b1a464d100cbff547774a0aaec254e"
+    }
+  },
+  "campaign_id": "identifiable-gb10-factorial-v1",
+  "identifiable": {
+    "by_ablation": {
+      "combined": {
+        "max_chain_residual": 1.4210854715202004e-14,
+        "mean_latency_ms": {
+          "mean": 0.2823912956118584,
+          "n": 5,
+          "sample_standard_deviation": 0.011581480442663548,
+          "student_t_95_ci": [
+            0.2680109883013265,
+            0.29677160292239024
+          ],
+          "student_t_degrees_of_freedom": 4,
+          "values_in_seed_order": [
+            0.30270559996366503,
+            0.27387967944145203,
+            0.278918719291687,
+            0.2767014417052269,
+            0.2797510376572609
+          ]
+        },
+        "median_latency_ms": {
+          "mean": 0.27526400089263914,
+          "n": 5,
+          "sample_standard_deviation": 0.0037165816710126205,
+          "student_t_95_ci": [
+            0.27064925523568756,
+            0.2798787465495907
+          ],
+          "student_t_degrees_of_freedom": 4,
+          "values_in_seed_order": [
+            0.28123199939727783,
+            0.27163200080394745,
+            0.27582399547100067,
+            0.2728320062160492,
+            0.27480000257492065
+          ]
+        },
+        "n_seeds": 5,
+        "p90_latency_ms": {
+          "mean": 0.2899180793762207,
+          "n": 5,
+          "sample_standard_deviation": 0.01513084479409841,
+          "student_t_95_ci": [
+            0.2711306541343183,
+            0.3087055046181231
+          ],
+          "student_t_degrees_of_freedom": 4,
+          "values_in_seed_order": [
+            0.31680639982223513,
+            0.28048319816589357,
+            0.28515519499778746,
+            0.28304320871829985,
+            0.2841023951768875
+          ]
+        },
+        "parameters": [
+          95448
+        ],
+        "peak_cuda_memory_allocated_bytes": [
+          35069440
+        ],
+        "peak_cuda_memory_allocated_bytes_identical_across_seeds": true,
+        "seeds_in_order": [
+          20260821,
+          20260822,
+          20260823,
+          20260824,
+          20260825
+        ]
+      },
+      "task_reconstruction": {
+        "max_chain_residual": 1.4210854715202004e-14,
+        "mean_latency_ms": {
+          "mean": 0.2873322235941887,
+          "n": 5,
+          "sample_standard_deviation": 0.011265023253671146,
+          "student_t_95_ci": [
+            0.27334484978217344,
+            0.30131959740620395
+          ],
+          "student_t_degrees_of_freedom": 4,
+          "values_in_seed_order": [
+            0.29917760103940966,
+            0.29986879974603653,
+            0.28202911853790286,
+            0.27778464049100876,
+            0.2778009581565857
+          ]
+        },
+        "median_latency_ms": {
+          "mean": 0.2761535972356796,
+          "n": 5,
+          "sample_standard_deviation": 0.0022110315151309323,
+          "student_t_95_ci": [
+            0.27340823900464317,
+            0.27889895546671606
+          ],
+          "student_t_degrees_of_freedom": 4,
+          "values_in_seed_order": [
+            0.27407999336719513,
+            0.2792479991912842,
+            0.27769599854946136,
+            0.274959996342659,
+            0.27478399872779846
+          ]
+        },
+        "n_seeds": 5,
+        "p90_latency_ms": {
+          "mean": 0.2979097592830658,
+          "n": 5,
+          "sample_standard_deviation": 0.01889094204575333,
+          "student_t_95_ci": [
+            0.2744535566543711,
+            0.3213659619117605
+          ],
+          "student_t_degrees_of_freedom": 4,
+          "values_in_seed_order": [
+            0.3184416085481644,
+            0.3186847984790802,
+            0.2854752063751221,
+            0.2846751928329468,
+            0.2822719901800156
+          ]
+        },
+        "parameters": [
+          95448
+        ],
+        "peak_cuda_memory_allocated_bytes": [
+          35069440
+        ],
+        "peak_cuda_memory_allocated_bytes_identical_across_seeds": true,
+        "seeds_in_order": [
+          20260821,
+          20260822,
+          20260823,
+          20260824,
+          20260825
+        ]
+      }
+    },
+    "experiment": "identifiable-map-checkpoint-inference-benchmark",
+    "paired_contrast": {
+      "contrast": "combined minus task_reconstruction",
+      "endpoint": "median forward latency in milliseconds",
+      "interpretation": "Both ablations execute the same inference graph, so this contrast is a runner-noise check rather than an architectural comparison.",
+      "mean": -0.0008895963430404664,
+      "n": 5,
+      "paired_differences_in_seed_order": [
+        0.007152006030082703,
+        -0.007615998387336731,
+        -0.0018720030784606934,
+        -0.0021279901266098022,
+        1.6003847122192383e-05
+      ],
+      "sample_standard_deviation": 0.005320495913219416,
+      "shared_inference_graph": true,
+      "student_t_95_ci": [
+        -0.007495864570604644,
+        0.005716671884523712
+      ],
+      "student_t_degrees_of_freedom": 4,
+      "values_in_seed_order": [
+        0.007152006030082703,
+        -0.007615998387336731,
+        -0.0018720030784606934,
+        -0.0021279901266098022,
+        1.6003847122192383e-05
+      ]
+    },
+    "runs": [
+      {
+        "ablation": "combined",
+        "batch_size": 192,
+        "best_epoch": 99,
+        "chain_residual_max": 3.552713678800501e-15,
+        "checkpoint_sha256": "4da3529a6ab43570c18248688467798821f4de74dd451c978aaf492c43cd9ab0",
+        "code_fingerprint": "8f05dd35916ed7050c578ff978cfeaa7fc0a800ef14778a564316de91554c87d",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_identifiable_maps.py",
+          "--config",
+          "artifacts/identifiable-maps/campaign/seed-20260821/combined/effective_config.yaml",
+          "--checkpoint",
+          "artifacts/identifiable-maps/campaign/seed-20260821/combined/checkpoint.pt",
+          "--output",
+          "artifacts/identifiable-maps/benchmarks/gb10-s1-combined.json",
+          "--device",
+          "cuda",
+          "--batch-size",
+          "192",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100"
+        ],
+        "config_sha256": "4ce5b4d4493905d312b3caa975e7fbf63c5165ef9f040dd3c4c7207b748d8953",
+        "cublas_workspace_config": ":4096:8",
+        "cuda": "13.0",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "latency_ms": {
+          "maximum": 1.391584038734436,
+          "mean": 0.30270559996366503,
+          "median": 0.28123199939727783,
+          "minimum": 0.2712000012397766,
+          "p10": 0.2729983925819397,
+          "p90": 0.31680639982223513
+        },
+        "map_tolerance": 1e-05,
+        "materialization_checksum": 295.4641819000244,
+        "measurement_scope": "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles",
+        "parameters": 95448,
+        "path": "artifacts/identifiable-maps/benchmarks/gb10-s1-combined.json",
+        "peak_cuda_memory_allocated_bytes": 35069440,
+        "peak_cuda_memory_reserved_bytes": 35651584,
+        "python": "3.12.3",
+        "runner_sha256": "81401fad96ee7eccfc7fdfa3ae6d249d0c520a0ee901a799bea7ffbdce2325e7",
+        "seed": 20260821,
+        "sha256": "309d76ab530c818d1d186765b200f0f5135fb85bb999276bbf893565e998631a",
+        "throughput_examples_per_second_at_median": 682710.3615928652,
+        "torch": "2.13.0+cu130",
+        "warmup": 20
+      },
+      {
+        "ablation": "task_reconstruction",
+        "batch_size": 192,
+        "best_epoch": 99,
+        "chain_residual_max": 1.7763568394002505e-15,
+        "checkpoint_sha256": "323c9c939adea85ab98129442a83679e1695ba85a84930e45314eef8ec9ac911",
+        "code_fingerprint": "8f05dd35916ed7050c578ff978cfeaa7fc0a800ef14778a564316de91554c87d",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_identifiable_maps.py",
+          "--config",
+          "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/effective_config.yaml",
+          "--checkpoint",
+          "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/checkpoint.pt",
+          "--output",
+          "artifacts/identifiable-maps/benchmarks/gb10-s1-task_reconstruction.json",
+          "--device",
+          "cuda",
+          "--batch-size",
+          "192",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100"
+        ],
+        "config_sha256": "2b0817697b661fdae8b74a2fe4be6465031b9a458760048c44028b63b9556015",
+        "cublas_workspace_config": ":4096:8",
+        "cuda": "13.0",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "latency_ms": {
+          "maximum": 1.2956160306930542,
+          "mean": 0.29917760103940966,
+          "median": 0.27407999336719513,
+          "minimum": 0.26236799359321594,
+          "p10": 0.26677761077880857,
+          "p90": 0.3184416085481644
+        },
+        "map_tolerance": 1e-05,
+        "materialization_checksum": 288.09540271759033,
+        "measurement_scope": "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles",
+        "parameters": 95448,
+        "path": "artifacts/identifiable-maps/benchmarks/gb10-s1-task_reconstruction.json",
+        "peak_cuda_memory_allocated_bytes": 35069440,
+        "peak_cuda_memory_reserved_bytes": 35651584,
+        "python": "3.12.3",
+        "runner_sha256": "81401fad96ee7eccfc7fdfa3ae6d249d0c520a0ee901a799bea7ffbdce2325e7",
+        "seed": 20260821,
+        "sha256": "9fb487fa219c156abd91c7b889a4a258cae21d356abde721f6e5f74cd1c2c11d",
+        "throughput_examples_per_second_at_median": 700525.4109984251,
+        "torch": "2.13.0+cu130",
+        "warmup": 20
+      },
+      {
+        "ablation": "combined",
+        "batch_size": 192,
+        "best_epoch": 99,
+        "chain_residual_max": 3.552713678800501e-15,
+        "checkpoint_sha256": "c35bb789330f85273c0439849e2fb61d7504114631abfc8af400f6805658f3ae",
+        "code_fingerprint": "8f05dd35916ed7050c578ff978cfeaa7fc0a800ef14778a564316de91554c87d",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_identifiable_maps.py",
+          "--config",
+          "artifacts/identifiable-maps/campaign/seed-20260822/combined/effective_config.yaml",
+          "--checkpoint",
+          "artifacts/identifiable-maps/campaign/seed-20260822/combined/checkpoint.pt",
+          "--output",
+          "artifacts/identifiable-maps/benchmarks/gb10-s2-combined.json",
+          "--device",
+          "cuda",
+          "--batch-size",
+          "192",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100"
+        ],
+        "config_sha256": "86c9047d8b8c2ac981562a4e5d5819393c5a82baefc84ac6c2aaad4442fea98c",
+        "cublas_workspace_config": ":4096:8",
+        "cuda": "13.0",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "latency_ms": {
+          "maximum": 0.3768639862537384,
+          "mean": 0.27387967944145203,
+          "median": 0.27163200080394745,
+          "minimum": 0.2643519937992096,
+          "p10": 0.26636800169944763,
+          "p90": 0.28048319816589357
+        },
+        "map_tolerance": 1e-05,
+        "materialization_checksum": 271.4276075363159,
+        "measurement_scope": "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles",
+        "parameters": 95448,
+        "path": "artifacts/identifiable-maps/benchmarks/gb10-s2-combined.json",
+        "peak_cuda_memory_allocated_bytes": 35069440,
+        "peak_cuda_memory_reserved_bytes": 35651584,
+        "python": "3.12.3",
+        "runner_sha256": "81401fad96ee7eccfc7fdfa3ae6d249d0c520a0ee901a799bea7ffbdce2325e7",
+        "seed": 20260822,
+        "sha256": "a0706613fa62066fdff8c3f3564c5b598326e25ecf92dc38b35aded6f551893a",
+        "throughput_examples_per_second_at_median": 706838.6619828992,
+        "torch": "2.13.0+cu130",
+        "warmup": 20
+      },
+      {
+        "ablation": "task_reconstruction",
+        "batch_size": 192,
+        "best_epoch": 99,
+        "chain_residual_max": 8.881784197001252e-16,
+        "checkpoint_sha256": "8a530af8aa03837ae75677203b124741adab703db86d76e1d344a0805fe25f88",
+        "code_fingerprint": "8f05dd35916ed7050c578ff978cfeaa7fc0a800ef14778a564316de91554c87d",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_identifiable_maps.py",
+          "--config",
+          "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/effective_config.yaml",
+          "--checkpoint",
+          "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/checkpoint.pt",
+          "--output",
+          "artifacts/identifiable-maps/benchmarks/gb10-s2-task_reconstruction.json",
+          "--device",
+          "cuda",
+          "--batch-size",
+          "192",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100"
+        ],
+        "config_sha256": "0c442e4df9a0ec6252596da0701b7d4b08ad6ad4f5d9ab716712c9133cc0e344",
+        "cublas_workspace_config": ":4096:8",
+        "cuda": "13.0",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "latency_ms": {
+          "maximum": 1.306015968322754,
+          "mean": 0.29986879974603653,
+          "median": 0.2792479991912842,
+          "minimum": 0.2707520127296448,
+          "p10": 0.2732128083705902,
+          "p90": 0.3186847984790802
+        },
+        "map_tolerance": 1e-05,
+        "materialization_checksum": 278.99136543273926,
+        "measurement_scope": "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles",
+        "parameters": 95448,
+        "path": "artifacts/identifiable-maps/benchmarks/gb10-s2-task_reconstruction.json",
+        "peak_cuda_memory_allocated_bytes": 35069440,
+        "peak_cuda_memory_reserved_bytes": 35651584,
+        "python": "3.12.3",
+        "runner_sha256": "81401fad96ee7eccfc7fdfa3ae6d249d0c520a0ee901a799bea7ffbdce2325e7",
+        "seed": 20260822,
+        "sha256": "d5326dbbeb044a9cbdc64c5e00050658aec05b6b393b8e0c362ed27e003e6adf",
+        "throughput_examples_per_second_at_median": 687560.8797772638,
+        "torch": "2.13.0+cu130",
+        "warmup": 20
+      },
+      {
+        "ablation": "combined",
+        "batch_size": 192,
+        "best_epoch": 99,
+        "chain_residual_max": 1.4210854715202004e-14,
+        "checkpoint_sha256": "52231a5421801263ddb31c350b7141ab1691ace006644edb679c2010e0900d03",
+        "code_fingerprint": "8f05dd35916ed7050c578ff978cfeaa7fc0a800ef14778a564316de91554c87d",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_identifiable_maps.py",
+          "--config",
+          "artifacts/identifiable-maps/campaign/seed-20260823/combined/effective_config.yaml",
+          "--checkpoint",
+          "artifacts/identifiable-maps/campaign/seed-20260823/combined/checkpoint.pt",
+          "--output",
+          "artifacts/identifiable-maps/benchmarks/gb10-s3-combined.json",
+          "--device",
+          "cuda",
+          "--batch-size",
+          "192",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100"
+        ],
+        "config_sha256": "73b2748c8285d07e2b5470000541dedac24b29dbf696e68b4471af713ee8a0f2",
+        "cublas_workspace_config": ":4096:8",
+        "cuda": "13.0",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "latency_ms": {
+          "maximum": 0.4379520118236542,
+          "mean": 0.278918719291687,
+          "median": 0.27582399547100067,
+          "minimum": 0.26950401067733765,
+          "p10": 0.2712959945201874,
+          "p90": 0.28515519499778746
+        },
+        "map_tolerance": 1e-05,
+        "materialization_checksum": -248.4485149383545,
+        "measurement_scope": "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles",
+        "parameters": 95448,
+        "path": "artifacts/identifiable-maps/benchmarks/gb10-s3-combined.json",
+        "peak_cuda_memory_allocated_bytes": 35069440,
+        "peak_cuda_memory_reserved_bytes": 35651584,
+        "python": "3.12.3",
+        "runner_sha256": "81401fad96ee7eccfc7fdfa3ae6d249d0c520a0ee901a799bea7ffbdce2325e7",
+        "seed": 20260823,
+        "sha256": "2d0e1b695831b1019257c507f251957cbc8783dd9db09987bc7868243c8f2669",
+        "throughput_examples_per_second_at_median": 696096.0726862733,
+        "torch": "2.13.0+cu130",
+        "warmup": 20
+      },
+      {
+        "ablation": "task_reconstruction",
+        "batch_size": 192,
+        "best_epoch": 100,
+        "chain_residual_max": 7.105427357601002e-15,
+        "checkpoint_sha256": "48da7530e6c90b669ed89751342b42df4946b1c452f5adb59989cd9d827f82b0",
+        "code_fingerprint": "8f05dd35916ed7050c578ff978cfeaa7fc0a800ef14778a564316de91554c87d",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_identifiable_maps.py",
+          "--config",
+          "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/effective_config.yaml",
+          "--checkpoint",
+          "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/checkpoint.pt",
+          "--output",
+          "artifacts/identifiable-maps/benchmarks/gb10-s3-task_reconstruction.json",
+          "--device",
+          "cuda",
+          "--batch-size",
+          "192",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100"
+        ],
+        "config_sha256": "d89ae3ee6fcf53a6359e7ed69742c2526d39f080527b777b0938b586d237e051",
+        "cublas_workspace_config": ":4096:8",
+        "cuda": "13.0",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "latency_ms": {
+          "maximum": 0.5120959877967834,
+          "mean": 0.28202911853790286,
+          "median": 0.27769599854946136,
+          "minimum": 0.2712959945201874,
+          "p10": 0.27368320524692535,
+          "p90": 0.2854752063751221
+        },
+        "map_tolerance": 1e-05,
+        "materialization_checksum": -257.94458389282227,
+        "measurement_scope": "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles",
+        "parameters": 95448,
+        "path": "artifacts/identifiable-maps/benchmarks/gb10-s3-task_reconstruction.json",
+        "peak_cuda_memory_allocated_bytes": 35069440,
+        "peak_cuda_memory_reserved_bytes": 35651584,
+        "python": "3.12.3",
+        "runner_sha256": "81401fad96ee7eccfc7fdfa3ae6d249d0c520a0ee901a799bea7ffbdce2325e7",
+        "seed": 20260823,
+        "sha256": "c1739b18bb20a9c477f47ac116ee8395e2714a8e6448b51cf2343bc0cabb658e",
+        "throughput_examples_per_second_at_median": 691403.5528164164,
+        "torch": "2.13.0+cu130",
+        "warmup": 20
+      },
+      {
+        "ablation": "combined",
+        "batch_size": 192,
+        "best_epoch": 100,
+        "chain_residual_max": 1.7763568394002505e-15,
+        "checkpoint_sha256": "ff554e80baaa007b401f247547414afc7389e4374a42bc0e0a9455fec60af115",
+        "code_fingerprint": "8f05dd35916ed7050c578ff978cfeaa7fc0a800ef14778a564316de91554c87d",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_identifiable_maps.py",
+          "--config",
+          "artifacts/identifiable-maps/campaign/seed-20260824/combined/effective_config.yaml",
+          "--checkpoint",
+          "artifacts/identifiable-maps/campaign/seed-20260824/combined/checkpoint.pt",
+          "--output",
+          "artifacts/identifiable-maps/benchmarks/gb10-s4-combined.json",
+          "--device",
+          "cuda",
+          "--batch-size",
+          "192",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100"
+        ],
+        "config_sha256": "3ad40e9d6a3ecc5c9788d597b1d44fb9b9412c81307058cd6c32ecf4ec7d6f3b",
+        "cublas_workspace_config": ":4096:8",
+        "cuda": "13.0",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "latency_ms": {
+          "maximum": 0.4724160134792328,
+          "mean": 0.2767014417052269,
+          "median": 0.2728320062160492,
+          "minimum": 0.26652801036834717,
+          "p10": 0.26857600212097166,
+          "p90": 0.28304320871829985
+        },
+        "map_tolerance": 1e-05,
+        "materialization_checksum": 1506.6535949707031,
+        "measurement_scope": "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles",
+        "parameters": 95448,
+        "path": "artifacts/identifiable-maps/benchmarks/gb10-s4-combined.json",
+        "peak_cuda_memory_allocated_bytes": 35069440,
+        "peak_cuda_memory_reserved_bytes": 35651584,
+        "python": "3.12.3",
+        "runner_sha256": "81401fad96ee7eccfc7fdfa3ae6d249d0c520a0ee901a799bea7ffbdce2325e7",
+        "seed": 20260824,
+        "sha256": "636441361c28a7096d64fbffaca9dc73624d2ccf92a9d8c4306a2977dc3595bf",
+        "throughput_examples_per_second_at_median": 703729.751735798,
+        "torch": "2.13.0+cu130",
+        "warmup": 20
+      },
+      {
+        "ablation": "task_reconstruction",
+        "batch_size": 192,
+        "best_epoch": 100,
+        "chain_residual_max": 7.105427357601002e-15,
+        "checkpoint_sha256": "dc974e94fa7cc3f12be8e71d600432699835387f3ea12ee2fef39d01082cc052",
+        "code_fingerprint": "8f05dd35916ed7050c578ff978cfeaa7fc0a800ef14778a564316de91554c87d",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_identifiable_maps.py",
+          "--config",
+          "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/effective_config.yaml",
+          "--checkpoint",
+          "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/checkpoint.pt",
+          "--output",
+          "artifacts/identifiable-maps/benchmarks/gb10-s4-task_reconstruction.json",
+          "--device",
+          "cuda",
+          "--batch-size",
+          "192",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100"
+        ],
+        "config_sha256": "ae87e7db10cbc363ab7f6d2823a77d436e6d12ddf71a0602a088f51b7cce43ca",
+        "cublas_workspace_config": ":4096:8",
+        "cuda": "13.0",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "latency_ms": {
+          "maximum": 0.4158079922199249,
+          "mean": 0.27778464049100876,
+          "median": 0.274959996342659,
+          "minimum": 0.26688000559806824,
+          "p10": 0.2698111981153488,
+          "p90": 0.2846751928329468
+        },
+        "map_tolerance": 1e-05,
+        "materialization_checksum": 1508.6884498596191,
+        "measurement_scope": "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles",
+        "parameters": 95448,
+        "path": "artifacts/identifiable-maps/benchmarks/gb10-s4-task_reconstruction.json",
+        "peak_cuda_memory_allocated_bytes": 35069440,
+        "peak_cuda_memory_reserved_bytes": 35651584,
+        "python": "3.12.3",
+        "runner_sha256": "81401fad96ee7eccfc7fdfa3ae6d249d0c520a0ee901a799bea7ffbdce2325e7",
+        "seed": 20260824,
+        "sha256": "2f71bbe382c23d1658c9375a051ace6569e63e03ca76f4c5590e52ba63dcd9f8",
+        "throughput_examples_per_second_at_median": 698283.3959625418,
+        "torch": "2.13.0+cu130",
+        "warmup": 20
+      },
+      {
+        "ablation": "combined",
+        "batch_size": 192,
+        "best_epoch": 99,
+        "chain_residual_max": 7.105427357601002e-15,
+        "checkpoint_sha256": "b4d6d3283723be1c389ddc3c85d37a33470cf2d10fda71105471767b629c1e95",
+        "code_fingerprint": "8f05dd35916ed7050c578ff978cfeaa7fc0a800ef14778a564316de91554c87d",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_identifiable_maps.py",
+          "--config",
+          "artifacts/identifiable-maps/campaign/seed-20260825/combined/effective_config.yaml",
+          "--checkpoint",
+          "artifacts/identifiable-maps/campaign/seed-20260825/combined/checkpoint.pt",
+          "--output",
+          "artifacts/identifiable-maps/benchmarks/gb10-s5-combined.json",
+          "--device",
+          "cuda",
+          "--batch-size",
+          "192",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100"
+        ],
+        "config_sha256": "ff3e67e8211c0e2cb5756bbadbc1cc91fe33f880e48bc3a8136db05c0e96e287",
+        "cublas_workspace_config": ":4096:8",
+        "cuda": "13.0",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "latency_ms": {
+          "maximum": 0.49401599168777466,
+          "mean": 0.2797510376572609,
+          "median": 0.27480000257492065,
+          "minimum": 0.26716798543930054,
+          "p10": 0.2694303959608078,
+          "p90": 0.2841023951768875
+        },
+        "map_tolerance": 1e-05,
+        "materialization_checksum": 235.92400550842285,
+        "measurement_scope": "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles",
+        "parameters": 95448,
+        "path": "artifacts/identifiable-maps/benchmarks/gb10-s5-combined.json",
+        "peak_cuda_memory_allocated_bytes": 35069440,
+        "peak_cuda_memory_reserved_bytes": 35651584,
+        "python": "3.12.3",
+        "runner_sha256": "81401fad96ee7eccfc7fdfa3ae6d249d0c520a0ee901a799bea7ffbdce2325e7",
+        "seed": 20260825,
+        "sha256": "1ce34c2eb2dc595efbf33df17a3f8037be416b9fad52a6b89df8694ee648548c",
+        "throughput_examples_per_second_at_median": 698689.9497850394,
+        "torch": "2.13.0+cu130",
+        "warmup": 20
+      },
+      {
+        "ablation": "task_reconstruction",
+        "batch_size": 192,
+        "best_epoch": 99,
+        "chain_residual_max": 1.4210854715202004e-14,
+        "checkpoint_sha256": "92b370f1f2ad97340b9fc832fe7bdbe67dce87ebf0f9aa51245e85ef4373ac84",
+        "code_fingerprint": "8f05dd35916ed7050c578ff978cfeaa7fc0a800ef14778a564316de91554c87d",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_identifiable_maps.py",
+          "--config",
+          "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/effective_config.yaml",
+          "--checkpoint",
+          "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/checkpoint.pt",
+          "--output",
+          "artifacts/identifiable-maps/benchmarks/gb10-s5-task_reconstruction.json",
+          "--device",
+          "cuda",
+          "--batch-size",
+          "192",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100"
+        ],
+        "config_sha256": "5776d869cc55b53030859a7fadb4f1051febb5c5537b383b5c2b2329e52b1cc1",
+        "cublas_workspace_config": ":4096:8",
+        "cuda": "13.0",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "latency_ms": {
+          "maximum": 0.4635840058326721,
+          "mean": 0.2778009581565857,
+          "median": 0.27478399872779846,
+          "minimum": 0.266431987285614,
+          "p10": 0.2695199906826019,
+          "p90": 0.2822719901800156
+        },
+        "map_tolerance": 1e-05,
+        "materialization_checksum": 222.98288345336914,
+        "measurement_scope": "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles",
+        "parameters": 95448,
+        "path": "artifacts/identifiable-maps/benchmarks/gb10-s5-task_reconstruction.json",
+        "peak_cuda_memory_allocated_bytes": 35069440,
+        "peak_cuda_memory_reserved_bytes": 35651584,
+        "python": "3.12.3",
+        "runner_sha256": "81401fad96ee7eccfc7fdfa3ae6d249d0c520a0ee901a799bea7ffbdce2325e7",
+        "seed": 20260825,
+        "sha256": "134d26400bf314d5afe96bd15ba3df426ca8e723b30340d28a9656aa0127c983",
+        "throughput_examples_per_second_at_median": 698730.6425735349,
+        "torch": "2.13.0+cu130",
+        "warmup": 20
+      }
+    ]
+  },
+  "interpretation_guardrail": "Routed inference is faster than dense inference and slower than the fastest single fixed route on this machine; both statements are descriptive medians from one runner. The identifiable ablations share one inference graph, so their timings are indistinguishable by construction. Identifiable tails are p90 and routing tails are p95; the two families are never pooled.",
+  "measurement_protocol": {
+    "identifiable": {
+      "batch_size": [
+        192
+      ],
+      "benchmark_order": [
+        "artifacts/identifiable-maps/benchmarks/gb10-s1-combined.json",
+        "artifacts/identifiable-maps/benchmarks/gb10-s1-task_reconstruction.json",
+        "artifacts/identifiable-maps/benchmarks/gb10-s2-combined.json",
+        "artifacts/identifiable-maps/benchmarks/gb10-s2-task_reconstruction.json",
+        "artifacts/identifiable-maps/benchmarks/gb10-s3-combined.json",
+        "artifacts/identifiable-maps/benchmarks/gb10-s3-task_reconstruction.json",
+        "artifacts/identifiable-maps/benchmarks/gb10-s4-combined.json",
+        "artifacts/identifiable-maps/benchmarks/gb10-s4-task_reconstruction.json",
+        "artifacts/identifiable-maps/benchmarks/gb10-s5-combined.json",
+        "artifacts/identifiable-maps/benchmarks/gb10-s5-task_reconstruction.json"
+      ],
+      "deterministic_algorithms": [
+        true
+      ],
+      "exclusions": "data loading, training losses, exact RTD, and exact cone rank oracles are outside the timed region",
+      "measurement_scope": [
+        "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles"
+      ],
+      "raw_iteration_timings_note": "only the summary quantiles listed above were persisted; the per-iteration series was not written to disk",
+      "raw_iteration_timings_retained": false,
+      "runner": "scripts/benchmark_identifiable_maps.py",
+      "tail_statistic": "p90",
+      "tail_statistic_note": "this runner records p10 and p90; it never records p95",
+      "timed_iterations": [
+        100
+      ],
+      "timing_method": "per-iteration wall-clock over a warmed, synchronized CUDA forward pass; the reported median is the median of the timed iterations",
+      "warmup_iterations": [
+        20
+      ]
+    },
+    "routing": {
+      "batch_size": [
+        64
+      ],
+      "benchmark_order": [
+        "artifacts/benchmarks/routing-confirmatory-v2-s1-compute.json",
+        "artifacts/benchmarks/routing-confirmatory-v2-s2-compute.json",
+        "artifacts/benchmarks/routing-confirmatory-v2-s3-compute.json",
+        "artifacts/benchmarks/routing-confirmatory-v2-s4-compute.json",
+        "artifacts/benchmarks/routing-confirmatory-v2-s5-compute.json"
+      ],
+      "exclusions": "data loading and loss computation are outside the timed region",
+      "order_caveat": "all paths were timed in a fixed order inside a single process, so any residual thermal or allocator drift is confounded with path order",
+      "path_order_within_run": [
+        "routed",
+        "fixed_graph",
+        "fixed_cell",
+        "fixed_sheaf",
+        "dense"
+      ],
+      "precision": [
+        "torch.bfloat16"
+      ],
+      "raw_iteration_timings_note": "only mean, median, standard deviation, and p95 were persisted per path",
+      "raw_iteration_timings_retained": false,
+      "runner": "scripts/benchmark_compute.py",
+      "tail_statistic": "p95",
+      "tail_statistic_note": "this runner records p95; it never records p90",
+      "timed_iterations": [
+        100
+      ],
+      "timing_method": "per-iteration wall-clock over a warmed, synchronized CUDA forward pass for each of the routed, dense, and fixed-route paths measured in one process"
+    }
+  },
+  "routing": {
+    "dense_to_routed_median_ratio": {
+      "mean": 1.5319963432873862,
+      "n": 5,
+      "sample_standard_deviation": 0.03464802596316557,
+      "student_t_95_ci": [
+        1.488975136843159,
+        1.5750175497316135
+      ],
+      "student_t_degrees_of_freedom": 4,
+      "values_in_seed_order": [
+        1.511614692016058,
+        1.5132728615377917,
+        1.5050288443714255,
+        1.5887594372912837,
+        1.5413058812203724
+      ]
+    },
+    "experiment": "routing-confirmatory-v2-compute-benchmark",
+    "fastest_fixed_route_per_seed": {
+      "routing-confirmatory-v2-s1": "fixed_graph",
+      "routing-confirmatory-v2-s2": "fixed_graph",
+      "routing-confirmatory-v2-s3": "fixed_graph",
+      "routing-confirmatory-v2-s4": "fixed_graph",
+      "routing-confirmatory-v2-s5": "fixed_graph"
+    },
+    "n_seeds": 5,
+    "routed_peak_memory_below_dense_in_every_seed": true,
+    "routed_to_fastest_fixed_median_ratio": {
+      "mean": 2.2686186600064326,
+      "n": 5,
+      "sample_standard_deviation": 0.04317678941009274,
+      "student_t_95_ci": [
+        2.215007595041714,
+        2.322229724971151
+      ],
+      "student_t_degrees_of_freedom": 4,
+      "values_in_seed_order": [
+        2.2771284307165462,
+        2.297711963335214,
+        2.316437101922589,
+        2.2085429517321686,
+        2.2432728523256444
+      ]
+    },
+    "runs": [
+      {
+        "batch_size": 64,
+        "checkpoint_sha256": "fb1b709aa658102fe491213e683f4a03e952bb6c160518128b4a01c89deb6fb7",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_compute.py",
+          "--config",
+          "configs/routing-confirmatory-v2-s1.yaml",
+          "--checkpoint",
+          "artifacts/routing-confirmatory-v2-s1/checkpoints/last.pt",
+          "--batch-size",
+          "64",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100",
+          "--output",
+          "artifacts/benchmarks/routing-confirmatory-v2-s1-compute.json"
+        ],
+        "config": "routing-confirmatory-v2-s1.yaml",
+        "config_sha256": "3295c825f19f28f5edc678d51be94cf7aa1eac5bf23b37b9994b4513e69f669e",
+        "cuda": "13.0",
+        "dense_to_routed_median_ratio": 1.511614692016058,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "fastest_fixed_route": "fixed_graph",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "median_latency_ms": {
+          "dense": 58.20648549706675,
+          "fixed_cell": 20.392662001540884,
+          "fixed_graph": 16.90996650722809,
+          "fixed_sheaf": 21.395139512605965,
+          "routed": 38.50616549607366
+        },
+        "p95_latency_ms": {
+          "dense": 63.95305600017309,
+          "fixed_cell": 22.48056000098586,
+          "fixed_graph": 18.50997901055962,
+          "fixed_sheaf": 23.128617031034082,
+          "routed": 43.33271901123226
+        },
+        "path": "artifacts/benchmarks/routing-confirmatory-v2-s1-compute.json",
+        "peak_memory_bytes": {
+          "dense": 169401344,
+          "fixed_cell": 164400128,
+          "fixed_graph": 164400128,
+          "fixed_sheaf": 169857536,
+          "routed": 119415296
+        },
+        "platform": "Linux-6.17.0-1026-nvidia-aarch64-with-glibc2.39",
+        "precision": "torch.bfloat16",
+        "python": "3.12.3",
+        "route_profile_on_benchmark_batch": {
+          "cell": 0.375,
+          "graph": 0.4375,
+          "sheaf": 0.1875
+        },
+        "routed_peak_memory_below_dense": true,
+        "routed_to_fastest_fixed_median_ratio": 2.2771284307165462,
+        "run_name": "routing-confirmatory-v2-s1",
+        "sha256": "7d5461eab59f9bbd255280f17e0419f1f37fce7e2bb62ab425277c988a0203ab",
+        "torch": "2.13.0+cu130"
+      },
+      {
+        "batch_size": 64,
+        "checkpoint_sha256": "da14008032b9422e4b351ac4542d8670f33c96f485a6599ca5f5c6df2386962b",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_compute.py",
+          "--config",
+          "configs/routing-confirmatory-v2-s2.yaml",
+          "--checkpoint",
+          "artifacts/routing-confirmatory-v2-s2/checkpoints/last.pt",
+          "--batch-size",
+          "64",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100",
+          "--output",
+          "artifacts/benchmarks/routing-confirmatory-v2-s2-compute.json"
+        ],
+        "config": "routing-confirmatory-v2-s2.yaml",
+        "config_sha256": "f711646d1bf5c5c4ee9cb4fedf39f2b2edb5141444d3051042ecbacd4027fe13",
+        "cuda": "13.0",
+        "dense_to_routed_median_ratio": 1.5132728615377917,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "fastest_fixed_route": "fixed_graph",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "median_latency_ms": {
+          "dense": 57.5403135153465,
+          "fixed_cell": 19.875861471518874,
+          "fixed_graph": 16.54852897627279,
+          "fixed_sheaf": 20.82669601077214,
+          "routed": 38.02375300438143
+        },
+        "p95_latency_ms": {
+          "dense": 63.4079150040634,
+          "fixed_cell": 21.9859040225856,
+          "fixed_graph": 17.89732201723382,
+          "fixed_sheaf": 22.575968992896378,
+          "routed": 41.267710039392114
+        },
+        "path": "artifacts/benchmarks/routing-confirmatory-v2-s2-compute.json",
+        "peak_memory_bytes": {
+          "dense": 167523840,
+          "fixed_cell": 163610112,
+          "fixed_graph": 163610112,
+          "fixed_sheaf": 169438208,
+          "routed": 116310016
+        },
+        "platform": "Linux-6.17.0-1026-nvidia-aarch64-with-glibc2.39",
+        "precision": "torch.bfloat16",
+        "python": "3.12.3",
+        "route_profile_on_benchmark_batch": {
+          "cell": 0.40625,
+          "graph": 0.234375,
+          "sheaf": 0.359375
+        },
+        "routed_peak_memory_below_dense": true,
+        "routed_to_fastest_fixed_median_ratio": 2.297711963335214,
+        "run_name": "routing-confirmatory-v2-s2",
+        "sha256": "9baffe967d6e7c6a4fa5590c6eb126061e4726e30808145813c6d1d8d046b9c5",
+        "torch": "2.13.0+cu130"
+      },
+      {
+        "batch_size": 64,
+        "checkpoint_sha256": "493a58ac77cdae5b85fd1abfa50236ef60ead3aa169658dbbcb58120cb17c984",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_compute.py",
+          "--config",
+          "configs/routing-confirmatory-v2-s3.yaml",
+          "--checkpoint",
+          "artifacts/routing-confirmatory-v2-s3/checkpoints/last.pt",
+          "--batch-size",
+          "64",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100",
+          "--output",
+          "artifacts/benchmarks/routing-confirmatory-v2-s3-compute.json"
+        ],
+        "config": "routing-confirmatory-v2-s3.yaml",
+        "config_sha256": "072d66d569d168a1d6150403e0254ec9320dbc2c552b6945830fd915f858e75f",
+        "cuda": "13.0",
+        "dense_to_routed_median_ratio": 1.5050288443714255,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "fastest_fixed_route": "fixed_graph",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "median_latency_ms": {
+          "dense": 56.29002850037068,
+          "fixed_cell": 19.63409298332408,
+          "fixed_graph": 16.146044043125585,
+          "fixed_sheaf": 20.35229097236879,
+          "routed": 37.40129547077231
+        },
+        "p95_latency_ms": {
+          "dense": 62.74769897572696,
+          "fixed_cell": 21.76240098197013,
+          "fixed_graph": 17.951461020857096,
+          "fixed_sheaf": 21.907061978708953,
+          "routed": 42.15577198192477
+        },
+        "path": "artifacts/benchmarks/routing-confirmatory-v2-s3-compute.json",
+        "peak_memory_bytes": {
+          "dense": 165376000,
+          "fixed_cell": 160518656,
+          "fixed_graph": 160518656,
+          "fixed_sheaf": 165602816,
+          "routed": 120018944
+        },
+        "platform": "Linux-6.17.0-1026-nvidia-aarch64-with-glibc2.39",
+        "precision": "torch.bfloat16",
+        "python": "3.12.3",
+        "route_profile_on_benchmark_batch": {
+          "cell": 0.46875,
+          "graph": 0.296875,
+          "sheaf": 0.234375
+        },
+        "routed_peak_memory_below_dense": true,
+        "routed_to_fastest_fixed_median_ratio": 2.316437101922589,
+        "run_name": "routing-confirmatory-v2-s3",
+        "sha256": "b7b14d11e69f3e6a5b5918a068eb182a4c344513e875bf7f8affe4ce45b3f8d0",
+        "torch": "2.13.0+cu130"
+      },
+      {
+        "batch_size": 64,
+        "checkpoint_sha256": "9732681f1b24a6388d19c4990fedc907ac82adc7efd47ab1c6f988fdb18caa6b",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_compute.py",
+          "--config",
+          "configs/routing-confirmatory-v2-s4.yaml",
+          "--checkpoint",
+          "artifacts/routing-confirmatory-v2-s4/checkpoints/last.pt",
+          "--batch-size",
+          "64",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100",
+          "--output",
+          "artifacts/benchmarks/routing-confirmatory-v2-s4-compute.json"
+        ],
+        "config": "routing-confirmatory-v2-s4.yaml",
+        "config_sha256": "56b0059d4d41da4540ca186f7828cd87cfe7fc4a69f294dc21717a2a251c912b",
+        "cuda": "13.0",
+        "dense_to_routed_median_ratio": 1.5887594372912837,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "fastest_fixed_route": "fixed_graph",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "median_latency_ms": {
+          "dense": 59.75703403237276,
+          "fixed_cell": 20.811555499676615,
+          "fixed_graph": 17.030407529091462,
+          "fixed_sheaf": 21.62141597364098,
+          "routed": 37.612386513501406
+        },
+        "p95_latency_ms": {
+          "dense": 65.23888203082606,
+          "fixed_cell": 22.715641011018306,
+          "fixed_graph": 18.674372986424714,
+          "fixed_sheaf": 23.90157600166276,
+          "routed": 38.9020869624801
+        },
+        "path": "artifacts/benchmarks/routing-confirmatory-v2-s4-compute.json",
+        "peak_memory_bytes": {
+          "dense": 170107392,
+          "fixed_cell": 165280768,
+          "fixed_graph": 165280768,
+          "fixed_sheaf": 170268672,
+          "routed": 121822208
+        },
+        "platform": "Linux-6.17.0-1026-nvidia-aarch64-with-glibc2.39",
+        "precision": "torch.bfloat16",
+        "python": "3.12.3",
+        "route_profile_on_benchmark_batch": {
+          "cell": 0.1875,
+          "graph": 0.46875,
+          "sheaf": 0.34375
+        },
+        "routed_peak_memory_below_dense": true,
+        "routed_to_fastest_fixed_median_ratio": 2.2085429517321686,
+        "run_name": "routing-confirmatory-v2-s4",
+        "sha256": "1f655ee19a323906215bde0d42473026a4d39dc4261a65ca2dbcba431f4cd4ce",
+        "torch": "2.13.0+cu130"
+      },
+      {
+        "batch_size": 64,
+        "checkpoint_sha256": "62770e02fe8a6eb23ac5f3520a67e90cbcb0632bc7f07063731fe956a2304a04",
+        "command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/benchmark_compute.py",
+          "--config",
+          "configs/routing-confirmatory-v2-s5.yaml",
+          "--checkpoint",
+          "artifacts/routing-confirmatory-v2-s5/checkpoints/last.pt",
+          "--batch-size",
+          "64",
+          "--warmup",
+          "20",
+          "--iterations",
+          "100",
+          "--output",
+          "artifacts/benchmarks/routing-confirmatory-v2-s5-compute.json"
+        ],
+        "config": "routing-confirmatory-v2-s5.yaml",
+        "config_sha256": "b612ed011ef8e2ec139019a3713714d6e88896b3cf2ee9eefefab15a379ccaa1",
+        "cuda": "13.0",
+        "dense_to_routed_median_ratio": 1.5413058812203724,
+        "device": "cuda",
+        "device_name": "NVIDIA GB10",
+        "fastest_fixed_route": "fixed_graph",
+        "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "iterations": 100,
+        "median_latency_ms": {
+          "dense": 59.02221947326325,
+          "fixed_cell": 20.48146299785003,
+          "fixed_graph": 17.07043548231013,
+          "fixed_sheaf": 21.400959958555177,
+          "routed": 38.29364449484274
+        },
+        "p95_latency_ms": {
+          "dense": 64.66827198164538,
+          "fixed_cell": 22.787247027736157,
+          "fixed_graph": 18.67695798864588,
+          "fixed_sheaf": 23.3370199566707,
+          "routed": 42.48021898092702
+        },
+        "path": "artifacts/benchmarks/routing-confirmatory-v2-s5-compute.json",
+        "peak_memory_bytes": {
+          "dense": 169395712,
+          "fixed_cell": 164394496,
+          "fixed_graph": 164394496,
+          "fixed_sheaf": 169851904,
+          "routed": 116478464
+        },
+        "platform": "Linux-6.17.0-1026-nvidia-aarch64-with-glibc2.39",
+        "precision": "torch.bfloat16",
+        "python": "3.12.3",
+        "route_profile_on_benchmark_batch": {
+          "cell": 0.375,
+          "graph": 0.40625,
+          "sheaf": 0.21875
+        },
+        "routed_peak_memory_below_dense": true,
+        "routed_to_fastest_fixed_median_ratio": 2.2432728523256444,
+        "run_name": "routing-confirmatory-v2-s5",
+        "sha256": "56c806c298cd3481405f261c2b56753bbaefee53be278c00d136b55b937176c8",
+        "torch": "2.13.0+cu130"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "scope": "Descriptive inference-timing measurements from one runner on one GB10 machine. Not a preregistered matched-compute Pareto claim and not an accuracy result.",
+  "validation": {
+    "checkpoint_hashes_verified": true,
+    "config_hashes_verified": true,
+    "identifiable_benchmarks_expected": 10,
+    "identifiable_benchmarks_validated": 10,
+    "identifiable_runner_hashes_verified": true,
+    "receipt_hashes_verified": true,
+    "routing_benchmarks_expected": 5,
+    "routing_benchmarks_validated": 5,
+    "routing_runner_hash_note": "scripts/benchmark_compute.py does not embed its own SHA-256 in its output; the routing files are instead pinned by the sealed receipt hash, the recorded git revision, and the recorded command.",
+    "routing_runner_hash_recorded_in_artifact": false,
+    "shared_hardware_verified": true,
+    "status": "passed",
+    "tail_statistics_not_pooled": true
+  }
+}

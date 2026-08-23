@@ -1,0 +1,164 @@
+{
+  "primary": {
+    "decision": "supported",
+    "decision_rule": "supported iff lower confidence endpoint > 0",
+    "mean_margin": 0.10980392156862748,
+    "n": 5,
+    "sample_standard_deviation": 0.011691858705881204,
+    "student_t_95_ci": [
+      0.09528656154248374,
+      0.12432128159477121
+    ]
+  },
+  "primary_endpoint": "hard_accuracy - max(fixed expert accuracies)",
+  "protocol": "docs/19-routing-confirmatory-v2-protocol.md",
+  "rows": [
+    {
+      "best_fixed_accuracy": 0.6742919389978214,
+      "code_fingerprint": "473fb0f6714798274c38949107221df3bd941e89273a6eef76e54394d6c1f1d8",
+      "config": "configs/routing-confirmatory-v2-s1.yaml",
+      "config_sha256": "3295c825f19f28f5edc678d51be94cf7aa1eac5bf23b37b9994b4513e69f669e",
+      "dense_accuracy": 0.7723311546840959,
+      "failed_gate": null,
+      "fixed_accuracy": {
+        "cell": 0.6742919389978214,
+        "graph": 0.664488017429194,
+        "sheaf": 0.6666666666666666
+      },
+      "git_revision": "e69b07707950b6abe332366c51fe8c94254899f3",
+      "git_status_at_start": "",
+      "hard_accuracy": 0.8028322440087146,
+      "primary_margin": 0.1285403050108932,
+      "route_accuracy": 0.6100217864923747,
+      "route_mutual_information": 0.16223720433091973,
+      "route_utilization": {
+        "cell": 0.3442265795206972,
+        "graph": 0.32679738562091504,
+        "sheaf": 0.3289760348583878
+      },
+      "routed_minus_dense": 0.030501089324618702,
+      "run_name": "routing-confirmatory-v2-s1",
+      "run_status": "completed"
+    },
+    {
+      "best_fixed_accuracy": 0.6753812636165577,
+      "code_fingerprint": "473fb0f6714798274c38949107221df3bd941e89273a6eef76e54394d6c1f1d8",
+      "config": "configs/routing-confirmatory-v2-s2.yaml",
+      "config_sha256": "f711646d1bf5c5c4ee9cb4fedf39f2b2edb5141444d3051042ecbacd4027fe13",
+      "dense_accuracy": 0.7570806100217865,
+      "failed_gate": null,
+      "fixed_accuracy": {
+        "cell": 0.6753812636165577,
+        "graph": 0.6666666666666666,
+        "sheaf": 0.6666666666666666
+      },
+      "git_revision": "e69b07707950b6abe332366c51fe8c94254899f3",
+      "git_status_at_start": "M README.md\n M docs/08-claims-ledger.md\n M docs/12-gate2-training.md\n M docs/14-gate2-review.md\n M docs/15-gate3-record.md\n M docs/16-gate5-record.md\n M docs/17-gate2-confirmatory.md\n?? scripts/summarize_routing_campaign.py\n?? tests/test_summarize_routing_campaign.py",
+      "hard_accuracy": 0.7745098039215687,
+      "primary_margin": 0.09912854030501095,
+      "route_accuracy": 0.5468409586056645,
+      "route_mutual_information": 0.09716537761615196,
+      "route_utilization": {
+        "cell": 0.3442265795206972,
+        "graph": 0.30501089324618735,
+        "sheaf": 0.35076252723311546
+      },
+      "routed_minus_dense": 0.017429193899782147,
+      "run_name": "routing-confirmatory-v2-s2",
+      "run_status": "completed"
+    },
+    {
+      "best_fixed_accuracy": 0.6666666666666666,
+      "code_fingerprint": "473fb0f6714798274c38949107221df3bd941e89273a6eef76e54394d6c1f1d8",
+      "config": "configs/routing-confirmatory-v2-s3.yaml",
+      "config_sha256": "072d66d569d168a1d6150403e0254ec9320dbc2c552b6945830fd915f858e75f",
+      "dense_accuracy": 0.7581699346405228,
+      "failed_gate": null,
+      "fixed_accuracy": {
+        "cell": 0.6666666666666666,
+        "graph": 0.6655773420479303,
+        "sheaf": 0.6666666666666666
+      },
+      "git_revision": "e69b07707950b6abe332366c51fe8c94254899f3",
+      "git_status_at_start": "M README.md\n M docs/02-literature-review.md\n M docs/05-rtd-integration.md\n M docs/08-claims-ledger.md\n M docs/10-gb10-experimental-plan.md\n M docs/12-gate2-training.md\n M docs/14-gate2-review.md\n M docs/15-gate3-record.md\n M docs/16-gate5-record.md\n M docs/17-gate2-confirmatory.md\n M docs/18-paper.md\n M scripts/eval_corruption.py\n M tests/test_eval_corruption_stats.py\n?? docs/20-audit-remediation.md\n?? scripts/summarize_routing_campaign.py\n?? tests/test_summarize_routing_campaign.py",
+      "hard_accuracy": 0.7679738562091504,
+      "primary_margin": 0.10130718954248374,
+      "route_accuracy": 0.5381263616557734,
+      "route_mutual_information": 0.0934387722333939,
+      "route_utilization": {
+        "cell": 0.3899782135076253,
+        "graph": 0.31808278867102396,
+        "sheaf": 0.29193899782135074
+      },
+      "routed_minus_dense": 0.009803921568627527,
+      "run_name": "routing-confirmatory-v2-s3",
+      "run_status": "completed"
+    },
+    {
+      "best_fixed_accuracy": 0.6666666666666666,
+      "code_fingerprint": "473fb0f6714798274c38949107221df3bd941e89273a6eef76e54394d6c1f1d8",
+      "config": "configs/routing-confirmatory-v2-s4.yaml",
+      "config_sha256": "56b0059d4d41da4540ca186f7828cd87cfe7fc4a69f294dc21717a2a251c912b",
+      "dense_accuracy": 0.7342047930283224,
+      "failed_gate": null,
+      "fixed_accuracy": {
+        "cell": 0.659041394335512,
+        "graph": 0.6612200435729847,
+        "sheaf": 0.6666666666666666
+      },
+      "git_revision": "e69b07707950b6abe332366c51fe8c94254899f3",
+      "git_status_at_start": "M .github/workflows/ci.yml\n M README.md\n M docs/02-literature-review.md\n M docs/05-rtd-integration.md\n M docs/08-claims-ledger.md\n M docs/10-gb10-experimental-plan.md\n M docs/12-gate2-training.md\n M docs/13-gate2-run-handoff.md\n M docs/14-gate2-review.md\n M docs/15-gate3-record.md\n M docs/16-gate5-record.md\n M docs/17-gate2-confirmatory.md\n M docs/18-paper.md\n M references.bib\n M scripts/benchmark_compute.py\n M scripts/eval_corruption.py\n M scripts/train_exact_chain_map.py\n M tests/test_eval_corruption_stats.py\n?? docs/20-audit-remediation.md\n?? scripts/summarize_routing_campaign.py\n?? tests/test_summarize_routing_campaign.py",
+      "hard_accuracy": 0.7788671023965141,
+      "primary_margin": 0.1122004357298475,
+      "route_accuracy": 0.5751633986928104,
+      "route_mutual_information": 0.12640220422529236,
+      "route_utilization": {
+        "cell": 0.3289760348583878,
+        "graph": 0.3812636165577342,
+        "sheaf": 0.289760348583878
+      },
+      "routed_minus_dense": 0.04466230936819171,
+      "run_name": "routing-confirmatory-v2-s4",
+      "run_status": "completed"
+    },
+    {
+      "best_fixed_accuracy": 0.6666666666666666,
+      "code_fingerprint": "473fb0f6714798274c38949107221df3bd941e89273a6eef76e54394d6c1f1d8",
+      "config": "configs/routing-confirmatory-v2-s5.yaml",
+      "config_sha256": "b612ed011ef8e2ec139019a3713714d6e88896b3cf2ee9eefefab15a379ccaa1",
+      "dense_accuracy": 0.7505446623093682,
+      "failed_gate": null,
+      "fixed_accuracy": {
+        "cell": 0.6666666666666666,
+        "graph": 0.6633986928104575,
+        "sheaf": 0.6666666666666666
+      },
+      "git_revision": "e69b07707950b6abe332366c51fe8c94254899f3",
+      "git_status_at_start": "M .github/workflows/ci.yml\n M README.md\n M docs/02-literature-review.md\n M docs/04-method.md\n M docs/05-rtd-integration.md\n M docs/08-claims-ledger.md\n M docs/10-gb10-experimental-plan.md\n M docs/12-gate2-training.md\n M docs/13-gate2-run-handoff.md\n M docs/14-gate2-review.md\n M docs/15-gate3-record.md\n M docs/16-gate5-record.md\n M docs/17-gate2-confirmatory.md\n M docs/18-paper.md\n M docs/19-routing-confirmatory-v2-protocol.md\n M references.bib\n M scripts/benchmark_compute.py\n M scripts/eval_corruption.py\n M scripts/train_exact_chain_map.py\n M tests/test_eval_corruption_stats.py\n?? docs/20-audit-remediation.md\n?? scripts/render_paper.py\n?? scripts/summarize_routing_campaign.py\n?? tests/test_render_paper.py\n?? tests/test_summarize_routing_campaign.py",
+      "hard_accuracy": 0.7745098039215687,
+      "primary_margin": 0.10784313725490202,
+      "route_accuracy": 0.5501089324618736,
+      "route_mutual_information": 0.10057470286689771,
+      "route_utilization": {
+        "cell": 0.33986928104575165,
+        "graph": 0.34967320261437906,
+        "sheaf": 0.3104575163398693
+      },
+      "routed_minus_dense": 0.023965141612200425,
+      "run_name": "routing-confirmatory-v2-s5",
+      "run_status": "completed"
+    }
+  ],
+  "run_status_counts": {
+    "completed": 5
+  },
+  "schema_version": 1,
+  "shared_code_fingerprint": "473fb0f6714798274c38949107221df3bd941e89273a6eef76e54394d6c1f1d8",
+  "shared_environment": {
+    "cuda_version": "13.0",
+    "device": "cuda",
+    "device_name": "NVIDIA GB10",
+    "torch_version": "2.13.0+cu130"
+  },
+  "shared_git_revision": "e69b07707950b6abe332366c51fe8c94254899f3"
+}

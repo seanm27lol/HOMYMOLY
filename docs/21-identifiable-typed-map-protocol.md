@@ -277,3 +277,40 @@ implementation can recover its controlled targets. It does not demonstrate
 that structural losses improve a ceiling-limited task, that arbitrary graph,
 cell, or connection representations are interchangeable, or that a generally
 learned conversion architecture has been achieved.
+
+---
+
+## Appendix: frozen result
+
+Added 2026-08-23. **The protocol above is historical and unchanged.** This
+appendix records only the outcome of executing it. The full readable record is
+[`docs/23-identifiable-results.md`](23-identifiable-results.md).
+
+The campaign completed all 40 prespecified runs — 8 ablations × 5 seeds — with
+zero missing, replaced, or excluded runs, under launch fingerprint
+`44408d7adf8467e594879b46e25a1cb7fd89a7e7a5d5f3446548bcbf3ed1096e` at commit
+`8021292e97abfec91768f1b5437c883a42c29c60`. The strict summary is
+`artifacts/identifiable-maps/campaign-summary.json`, SHA-256
+`0cd0defb0b0d41b5f7563c364cfdda62cb72c5e5a845bdd5d1ab76a2e1cb953c`, exported to
+`results/summaries/identifiable-campaign-summary.json`.
+
+**The engineering recovery gate passed in 10 of 10 applicable runs.** In every
+applicable run transformation accuracy and cell-face accuracy were exactly 1.0,
+map errors were at numerical precision, chain-map residuals met the fixed 1e-5
+tolerance (largest observed 1.42e-14), and hard cones were acyclic.
+
+Every objective containing task or reconstruction supervision reached 1.000 on
+both accuracy endpoints across all five seeds. The two identifiability controls
+did not: `cone_only` reached transformation accuracy 0.0815 and `rtd_only`
+0.0833, against a chance baseline of 0.0833 — **while producing acyclic hard
+cones in 6,000 of 6,000 evaluated examples each.** As the protocol anticipated,
+passing a structural check is not evidence of recovery: acyclicity certifies
+that the decoded map is invertible within the template family, not that it is
+the planted map.
+
+All 21 declared continuous contrast endpoints have Student-t intervals (df = 4)
+containing zero. No structural-loss benefit is established. The interpretation
+in the protocol stands: this is a pilot of a finite, explicitly identifiable
+action with exact architectural chain laws, and the accuracy ceiling — also
+reached by a closed-form analytic marker decoder — means the nulls are weak
+evidence of absence rather than strong evidence against the structural terms.

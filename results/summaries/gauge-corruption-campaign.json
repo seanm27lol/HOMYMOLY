@@ -1,0 +1,1331 @@
+{
+  "aggregation": {
+    "corruption_kinds": [
+      "edge_cochain_noise",
+      "node_anchor_noise",
+      "transport_rotation"
+    ],
+    "minimum_attainable_two_sided_sign_test_pvalue_without_ties": 0.0078125,
+    "multiplicity_adjustment": "none",
+    "n_paired_seeds": 8,
+    "student_t_degrees_of_freedom": 7,
+    "unit_of_analysis": "training seed"
+  },
+  "analysis_provenance": {
+    "analysis_method": "paired-cross-model-corruption-v1",
+    "analysis_seed": 20260813,
+    "claim_boundary": "Fixed-expert embedding diagnostic only; this paired analysis does not evaluate representation conversion, a translator, or a learned chain map.",
+    "comparator_sha256": "699e33d6eedcecfa1ce89131a723f120442edc0d329f2c4fe51f4690e969b38b",
+    "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+    "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+    "summarizer": {
+      "path": "scripts/summarize_gauge_corruption_campaign.py",
+      "sha256": "06aecc0b2eaa6a351e37adcf91b08b67851d0cc0df33ed6c07c53b0ecdff860e"
+    }
+  },
+  "by_kind": {
+    "edge_cochain_noise": {
+      "contrast": "candidate (gauge-plus-chain) minus baseline (gauge-task-only)",
+      "differences_in_seed_order": [
+        -0.28019286345647243,
+        0.011723914431061605,
+        0.07956138274713491,
+        0.028900151137071728,
+        -0.207031154278779,
+        -0.12401243382544724,
+        -0.3271365585338078,
+        0.044165051677746314
+      ],
+      "endpoint": "adjusted partial Spearman correlation between the topological defect diagnostic and the damage rate, severity- and displacement-adjusted with block fixed effects",
+      "interval_includes_zero": true,
+      "mean_difference": -0.09675281376268649,
+      "n_paired_seeds": 8,
+      "per_seed": [
+        {
+          "baseline_adjusted_partial_spearman": 0.2957729671312868,
+          "candidate_adjusted_partial_spearman": 0.0155801036748144,
+          "candidate_minus_baseline": -0.28019286345647243,
+          "seed": 20260803,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.134765625
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.07166190566772844,
+          "candidate_adjusted_partial_spearman": 0.08338582009879004,
+          "candidate_minus_baseline": 0.011723914431061605,
+          "seed": 20260804,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.8876953125
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.00896624972149847,
+          "candidate_adjusted_partial_spearman": 0.08852763246863338,
+          "candidate_minus_baseline": 0.07956138274713491,
+          "seed": 20260805,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.733154296875
+        },
+        {
+          "baseline_adjusted_partial_spearman": -0.013185101255182024,
+          "candidate_adjusted_partial_spearman": 0.015715049881889702,
+          "candidate_minus_baseline": 0.028900151137071728,
+          "seed": 20260806,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.88037109375
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.22555428232655045,
+          "candidate_adjusted_partial_spearman": 0.01852312804777144,
+          "candidate_minus_baseline": -0.207031154278779,
+          "seed": 20260807,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.197021484375
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.16041520205578458,
+          "candidate_adjusted_partial_spearman": 0.03640276823033734,
+          "candidate_minus_baseline": -0.12401243382544724,
+          "seed": 20260808,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.398681640625
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.26169077600222285,
+          "candidate_adjusted_partial_spearman": -0.06544578253158494,
+          "candidate_minus_baseline": -0.3271365585338078,
+          "seed": 20260809,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.11181640625
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.2751046845359937,
+          "candidate_adjusted_partial_spearman": 0.31926973621374,
+          "candidate_minus_baseline": 0.044165051677746314,
+          "seed": 20260810,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.768310546875
+        }
+      ],
+      "sample_standard_deviation_of_differences": 0.15952238078458958,
+      "seeds_in_order": [
+        20260803,
+        20260804,
+        20260805,
+        20260806,
+        20260807,
+        20260808,
+        20260809,
+        20260810
+      ],
+      "sensitivity_sign_test": {
+        "candidate_favorable": 4,
+        "candidate_unfavorable": 4,
+        "definition": "exact two-sided binomial sign test on nonzero candidate-minus-baseline differences",
+        "minimum_attainable_pvalue_without_ties": 0.0078125,
+        "nonzero_trials": 8,
+        "pvalue_two_sided": 1.0,
+        "ties_discarded": 0
+      },
+      "student_t_95_ci": [
+        -0.23011686158975164,
+        0.03661123406437866
+      ],
+      "student_t_degrees_of_freedom": 7
+    },
+    "node_anchor_noise": {
+      "contrast": "candidate (gauge-plus-chain) minus baseline (gauge-task-only)",
+      "differences_in_seed_order": [
+        -0.10125339046670294,
+        0.007297474680023973,
+        0.08647506503209589,
+        -0.21789502001690425,
+        -0.04819692599452225,
+        0.052893300881365235,
+        -0.07543432772340512,
+        -0.14317193695270494
+      ],
+      "endpoint": "adjusted partial Spearman correlation between the topological defect diagnostic and the damage rate, severity- and displacement-adjusted with block fixed effects",
+      "interval_includes_zero": true,
+      "mean_difference": -0.0549107200700943,
+      "n_paired_seeds": 8,
+      "per_seed": [
+        {
+          "baseline_adjusted_partial_spearman": 0.0838191154026076,
+          "candidate_adjusted_partial_spearman": -0.017434275064095336,
+          "candidate_minus_baseline": -0.10125339046670294,
+          "seed": 20260803,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.1650390625
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.013373034243950917,
+          "candidate_adjusted_partial_spearman": 0.02067050892397489,
+          "candidate_minus_baseline": 0.007297474680023973,
+          "seed": 20260804,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.85400390625
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.0017497446657886698,
+          "candidate_adjusted_partial_spearman": 0.08822480969788456,
+          "candidate_minus_baseline": 0.08647506503209589,
+          "seed": 20260805,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.04931640625
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.12503760072951933,
+          "candidate_adjusted_partial_spearman": -0.09285741928738492,
+          "candidate_minus_baseline": -0.21789502001690425,
+          "seed": 20260806,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.164794921875
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.0817408717022294,
+          "candidate_adjusted_partial_spearman": 0.033543945707707155,
+          "candidate_minus_baseline": -0.04819692599452225,
+          "seed": 20260807,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.45654296875
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.27458706003605604,
+          "candidate_adjusted_partial_spearman": 0.3274803609174213,
+          "candidate_minus_baseline": 0.052893300881365235,
+          "seed": 20260808,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.3623046875
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.08270481069841185,
+          "candidate_adjusted_partial_spearman": 0.007270482975006721,
+          "candidate_minus_baseline": -0.07543432772340512,
+          "seed": 20260809,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.419677734375
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.05753401331009666,
+          "candidate_adjusted_partial_spearman": -0.08563792364260829,
+          "candidate_minus_baseline": -0.14317193695270494,
+          "seed": 20260810,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.018798828125
+        }
+      ],
+      "sample_standard_deviation_of_differences": 0.10173450579998478,
+      "seeds_in_order": [
+        20260803,
+        20260804,
+        20260805,
+        20260806,
+        20260807,
+        20260808,
+        20260809,
+        20260810
+      ],
+      "sensitivity_sign_test": {
+        "candidate_favorable": 3,
+        "candidate_unfavorable": 5,
+        "definition": "exact two-sided binomial sign test on nonzero candidate-minus-baseline differences",
+        "minimum_attainable_pvalue_without_ties": 0.0078125,
+        "nonzero_trials": 8,
+        "pvalue_two_sided": 0.7265625,
+        "ties_discarded": 0
+      },
+      "student_t_95_ci": [
+        -0.13996289538518775,
+        0.030141455244999144
+      ],
+      "student_t_degrees_of_freedom": 7
+    },
+    "transport_rotation": {
+      "contrast": "candidate (gauge-plus-chain) minus baseline (gauge-task-only)",
+      "differences_in_seed_order": [
+        0.03505694704013104,
+        0.0684394640809865,
+        -0.028738967990483075,
+        0.11395632039698839,
+        -0.10292190260658385,
+        -0.006336639628625934,
+        0.3125701141495981,
+        0.012624785312949652
+      ],
+      "endpoint": "adjusted partial Spearman correlation between the topological defect diagnostic and the damage rate, severity- and displacement-adjusted with block fixed effects",
+      "interval_includes_zero": true,
+      "mean_difference": 0.05058126509437011,
+      "n_paired_seeds": 8,
+      "per_seed": [
+        {
+          "baseline_adjusted_partial_spearman": -0.03494518377636766,
+          "candidate_adjusted_partial_spearman": 0.0001117632637633818,
+          "candidate_minus_baseline": 0.03505694704013104,
+          "seed": 20260803,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.76513671875
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.024073014700287127,
+          "candidate_adjusted_partial_spearman": 0.09251247878127362,
+          "candidate_minus_baseline": 0.0684394640809865,
+          "seed": 20260804,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.424560546875
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.07438519439829386,
+          "candidate_adjusted_partial_spearman": 0.04564622640781078,
+          "candidate_minus_baseline": -0.028738967990483075,
+          "seed": 20260805,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.522216796875
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.03723931155648858,
+          "candidate_adjusted_partial_spearman": 0.15119563195347696,
+          "candidate_minus_baseline": 0.11395632039698839,
+          "seed": 20260806,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.1591796875
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.06070377120384901,
+          "candidate_adjusted_partial_spearman": -0.04221813140273483,
+          "candidate_minus_baseline": -0.10292190260658385,
+          "seed": 20260807,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.137939453125
+        },
+        {
+          "baseline_adjusted_partial_spearman": 0.1891212404164755,
+          "candidate_adjusted_partial_spearman": 0.18278460078784955,
+          "candidate_minus_baseline": -0.006336639628625934,
+          "seed": 20260808,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.77685546875
+        },
+        {
+          "baseline_adjusted_partial_spearman": -0.09754074599545254,
+          "candidate_adjusted_partial_spearman": 0.2150293681541456,
+          "candidate_minus_baseline": 0.3125701141495981,
+          "seed": 20260809,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.01171875
+        },
+        {
+          "baseline_adjusted_partial_spearman": -0.04813371154456822,
+          "candidate_adjusted_partial_spearman": -0.03550892623161857,
+          "candidate_minus_baseline": 0.012624785312949652,
+          "seed": 20260810,
+          "within_pair_randomization_mode": "exact",
+          "within_pair_randomization_pvalue_two_sided": 0.86474609375
+        }
+      ],
+      "sample_standard_deviation_of_differences": 0.12406780317477548,
+      "seeds_in_order": [
+        20260803,
+        20260804,
+        20260805,
+        20260806,
+        20260807,
+        20260808,
+        20260809,
+        20260810
+      ],
+      "sensitivity_sign_test": {
+        "candidate_favorable": 5,
+        "candidate_unfavorable": 3,
+        "definition": "exact two-sided binomial sign test on nonzero candidate-minus-baseline differences",
+        "minimum_attainable_pvalue_without_ties": 0.0078125,
+        "nonzero_trials": 8,
+        "pvalue_two_sided": 0.7265625,
+        "ties_discarded": 0
+      },
+      "student_t_95_ci": [
+        -0.05314201407824165,
+        0.15430454426698187
+      ],
+      "student_t_degrees_of_freedom": 7
+    }
+  },
+  "campaign": "gate3g gauge corruption, seed-matched chain/translator contrast",
+  "contrast_definition": {
+    "baseline": "gauge-task-only: translator_weight=0.0, chain_weight=0.0",
+    "candidate": "gauge-plus-chain: translator_weight=0.1, chain_weight=0.05",
+    "pairing": "one baseline and one candidate per training seed"
+  },
+  "decision": {
+    "kinds_with_interval_excluding_zero": [],
+    "rule": "a kind is called a difference only if its across-seed t interval excludes zero",
+    "structural_benefit_established": false
+  },
+  "interpretation_guardrail": "These are descriptive, unadjusted, seed-level summaries of a fixed-expert embedding diagnostic on synthetic gauge data. Intervals are Student-t summaries over eight training seeds and carry no multiplicity correction; the exact sign test cannot fall below p=0.0078125 at eight untied seeds. No representation-conversion, translator, or chain-map capability is evaluated here.",
+  "pairs": [
+    {
+      "baseline": {
+        "checkpoint": "artifacts/gate3g/gauge-task-only/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "72241ad0d8cbb04b6f31e7d98af475d6ff8d9c92ffd17395b2af2dd04207b391",
+        "config": "configs/gate3g/gauge-task-only.yaml",
+        "config_sha256": "737b2d744f940c1e807e67af5c05421ec6790b8ea9ad0d7519d3e7c205f3af93",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-task-only/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "f84a6f8eb58cc34660c9072cf31dd1bafcb08f5402ff07ac930676d4e3440e95",
+        "role": "baseline",
+        "run_name": "gauge-task-only",
+        "seed": 20260803,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-task-only/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-task-only.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-task-only/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "candidate": {
+        "checkpoint": "artifacts/gate3g/gauge-plus-chain/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "57a9469cd462d07d09422d01f195307771cdc603182d73b6ee48210372bb0761",
+        "config": "configs/gate3g/gauge-plus-chain.yaml",
+        "config_sha256": "91a3ff877edb1c195e9917721223f91c492af7aeaea4101bf0a303c31da62b50",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-plus-chain/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "99d8a7d02dbc54c7d80b8ee074bdd1a618a2e431c1ca13160c41b8b76aec0604",
+        "role": "candidate",
+        "run_name": "gauge-plus-chain",
+        "seed": 20260803,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-plus-chain/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-plus-chain.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-plus-chain/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "comparator_sha256": "699e33d6eedcecfa1ce89131a723f120442edc0d329f2c4fe51f4690e969b38b",
+      "paired_comparison": "artifacts/gate3g/gauge-task-only/paired_comparison_final.json",
+      "paired_comparison_sha256": "e164da8ec3a242406365c132610da45c6ff2cf6a14ea7d468aa62b90ac48fe5b",
+      "sampling_signature": {
+        "batch_size": 24,
+        "data_seed": 20260803,
+        "experiment_seed": 20260803,
+        "max_batches": 13,
+        "sampling_metadata": {
+          "data_seed": 20260803,
+          "experiment_seed": 20260803,
+          "pairing_contract": "Runs with equal data_seed, experiment_seed, split, batch size, kind, severity, block, and sample IDs receive identical draws.",
+          "protocol": "sha256-block-and-sample-v1"
+        },
+        "sampling_protocol": "sha256-block-and-sample-v1",
+        "topological_metric": {
+          "degree": 1,
+          "max_dim": 2,
+          "max_points": 24,
+          "name": "exact_srtd",
+          "normalization": "full-matrix-quantile",
+          "normalization_quantile": 0.9
+        }
+      },
+      "seed": 20260803
+    },
+    {
+      "baseline": {
+        "checkpoint": "artifacts/gate3g/gauge-task-only-s04/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "677d9bc92eeaea13bba095308d0fa1fd970875f1a0ccb6013d5bfbccf06b9176",
+        "config": "configs/gate3g/gauge-task-only-s04.yaml",
+        "config_sha256": "78daf0021a3c2861c8744b86c72ad49dafbead7a9a461a4f0c97dc2be9b398b6",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-task-only-s04/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "019c97234b0c7eced082e3704418c531cbb706463ee3b1c7b91a732abfd41d1f",
+        "role": "baseline",
+        "run_name": "gauge-task-only-s04",
+        "seed": 20260804,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-task-only-s04/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-task-only-s04.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-task-only-s04/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "candidate": {
+        "checkpoint": "artifacts/gate3g/gauge-plus-chain-s04/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "505ba77c9662c073f2e4eaee61fca8d9342eeb1b8718813708cdf12f6902fc4b",
+        "config": "configs/gate3g/gauge-plus-chain-s04.yaml",
+        "config_sha256": "240ad94df7cfb60bf3e91e7641de5f578c39e248bb66b340d51fc4e0450c1f5d",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-plus-chain-s04/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "9417beffe3a40b4f4a5abbcc373465910cdb5aa388c13fc104c3018d99c94223",
+        "role": "candidate",
+        "run_name": "gauge-plus-chain-s04",
+        "seed": 20260804,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-plus-chain-s04/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-plus-chain-s04.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-plus-chain-s04/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "comparator_sha256": "699e33d6eedcecfa1ce89131a723f120442edc0d329f2c4fe51f4690e969b38b",
+      "paired_comparison": "artifacts/gate3g/gauge-task-only-s04/paired_comparison_final.json",
+      "paired_comparison_sha256": "a498c804832bfb1a8bc56c71f51440f05da3eae54ec9e1fd7a1eeadece5ce3a1",
+      "sampling_signature": {
+        "batch_size": 24,
+        "data_seed": 20260804,
+        "experiment_seed": 20260804,
+        "max_batches": 13,
+        "sampling_metadata": {
+          "data_seed": 20260804,
+          "experiment_seed": 20260804,
+          "pairing_contract": "Runs with equal data_seed, experiment_seed, split, batch size, kind, severity, block, and sample IDs receive identical draws.",
+          "protocol": "sha256-block-and-sample-v1"
+        },
+        "sampling_protocol": "sha256-block-and-sample-v1",
+        "topological_metric": {
+          "degree": 1,
+          "max_dim": 2,
+          "max_points": 24,
+          "name": "exact_srtd",
+          "normalization": "full-matrix-quantile",
+          "normalization_quantile": 0.9
+        }
+      },
+      "seed": 20260804
+    },
+    {
+      "baseline": {
+        "checkpoint": "artifacts/gate3g/gauge-task-only-s05/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "c3eb116044b5d454697cb213b4e9849e640706a976fa241014af0f0e8d24b65b",
+        "config": "configs/gate3g/gauge-task-only-s05.yaml",
+        "config_sha256": "64ff116522b221fe6cf7d5cfb0d263422f2de2f730de07201e4d93624fae9c01",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-task-only-s05/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "5d27c394f291ecaac61c12d5baf860a5e945e5edd51611da4b5b0815f489eb85",
+        "role": "baseline",
+        "run_name": "gauge-task-only-s05",
+        "seed": 20260805,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-task-only-s05/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-task-only-s05.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-task-only-s05/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "candidate": {
+        "checkpoint": "artifacts/gate3g/gauge-plus-chain-s05/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "7885e38413c31bf6b476c021f933a7b66ce3df35d4e6c0b69ea50a8f35ead327",
+        "config": "configs/gate3g/gauge-plus-chain-s05.yaml",
+        "config_sha256": "9eed58854450e9af847d38d0d0d6b9ce43dd9d03a123efe71de042606357adfe",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-plus-chain-s05/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "03094feeefd377f5f790e1d24e9d664cfb463bec129a983f92f07ba88f0d942d",
+        "role": "candidate",
+        "run_name": "gauge-plus-chain-s05",
+        "seed": 20260805,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-plus-chain-s05/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-plus-chain-s05.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-plus-chain-s05/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "comparator_sha256": "699e33d6eedcecfa1ce89131a723f120442edc0d329f2c4fe51f4690e969b38b",
+      "paired_comparison": "artifacts/gate3g/gauge-task-only-s05/paired_comparison_final.json",
+      "paired_comparison_sha256": "65eb9d23f4d8d11e04a79432cd46763f1d6b6a544cb2c6a76c2fb01d6c02501a",
+      "sampling_signature": {
+        "batch_size": 24,
+        "data_seed": 20260805,
+        "experiment_seed": 20260805,
+        "max_batches": 13,
+        "sampling_metadata": {
+          "data_seed": 20260805,
+          "experiment_seed": 20260805,
+          "pairing_contract": "Runs with equal data_seed, experiment_seed, split, batch size, kind, severity, block, and sample IDs receive identical draws.",
+          "protocol": "sha256-block-and-sample-v1"
+        },
+        "sampling_protocol": "sha256-block-and-sample-v1",
+        "topological_metric": {
+          "degree": 1,
+          "max_dim": 2,
+          "max_points": 24,
+          "name": "exact_srtd",
+          "normalization": "full-matrix-quantile",
+          "normalization_quantile": 0.9
+        }
+      },
+      "seed": 20260805
+    },
+    {
+      "baseline": {
+        "checkpoint": "artifacts/gate3g/gauge-task-only-s06/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "4d63deeb1f9dfe740e2f528b2c79e6330f7d1142c91b7a9b60772743411bb5b5",
+        "config": "configs/gate3g/gauge-task-only-s06.yaml",
+        "config_sha256": "312620992b0e433ab3df1a2e1b5bf468e9b9cde0f01ac544d205c4a2da477198",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-task-only-s06/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "5aa52726d43649398645a94245f7b26128d8af2853328b912bf46e84cea25a64",
+        "role": "baseline",
+        "run_name": "gauge-task-only-s06",
+        "seed": 20260806,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-task-only-s06/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-task-only-s06.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-task-only-s06/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "candidate": {
+        "checkpoint": "artifacts/gate3g/gauge-plus-chain-s06/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "87a28780ccda06972b33173f840554a443fe4a189667cb5da6e0ba93bb59651d",
+        "config": "configs/gate3g/gauge-plus-chain-s06.yaml",
+        "config_sha256": "b0b7fd399e511169a361744b3de383dd2d043889ed0db017db68af803bf995a1",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-plus-chain-s06/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "5f394f3b372338d8efe27be14a5868f96fc4c217006050aa60c561cf6f453715",
+        "role": "candidate",
+        "run_name": "gauge-plus-chain-s06",
+        "seed": 20260806,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-plus-chain-s06/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-plus-chain-s06.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-plus-chain-s06/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "comparator_sha256": "699e33d6eedcecfa1ce89131a723f120442edc0d329f2c4fe51f4690e969b38b",
+      "paired_comparison": "artifacts/gate3g/gauge-task-only-s06/paired_comparison_final.json",
+      "paired_comparison_sha256": "feaea4636709538ed87716b9f9856019f05a96426774fef989f6d926218085b3",
+      "sampling_signature": {
+        "batch_size": 24,
+        "data_seed": 20260806,
+        "experiment_seed": 20260806,
+        "max_batches": 13,
+        "sampling_metadata": {
+          "data_seed": 20260806,
+          "experiment_seed": 20260806,
+          "pairing_contract": "Runs with equal data_seed, experiment_seed, split, batch size, kind, severity, block, and sample IDs receive identical draws.",
+          "protocol": "sha256-block-and-sample-v1"
+        },
+        "sampling_protocol": "sha256-block-and-sample-v1",
+        "topological_metric": {
+          "degree": 1,
+          "max_dim": 2,
+          "max_points": 24,
+          "name": "exact_srtd",
+          "normalization": "full-matrix-quantile",
+          "normalization_quantile": 0.9
+        }
+      },
+      "seed": 20260806
+    },
+    {
+      "baseline": {
+        "checkpoint": "artifacts/gate3g/gauge-task-only-s07/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "579a33da85f546788c7c4c502f1b6f2aedf441f1c004da5e383a6cf91dea2d64",
+        "config": "configs/gate3g/gauge-task-only-s07.yaml",
+        "config_sha256": "72fd07210e632c97d03f436dd32089133ce46e94d9498bcb77656064486220c4",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-task-only-s07/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "797f84e1ede99bae8cefe960df367e7f7e5eefd3d9fca193d41872de67175a64",
+        "role": "baseline",
+        "run_name": "gauge-task-only-s07",
+        "seed": 20260807,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-task-only-s07/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-task-only-s07.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-task-only-s07/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "candidate": {
+        "checkpoint": "artifacts/gate3g/gauge-plus-chain-s07/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "0a948b527f919ffba3aa70a48a70aa7acfb2f5170dc890eeee273d4b1ed5b352",
+        "config": "configs/gate3g/gauge-plus-chain-s07.yaml",
+        "config_sha256": "e84e6b07b6ea33adb651f5a37311a7fc8e0bec3789f830e73e375a6bc8057681",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-plus-chain-s07/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "eef9fbdb9185b4b50c1380c82741b12825d9fdc644932a219ef21a3652126c52",
+        "role": "candidate",
+        "run_name": "gauge-plus-chain-s07",
+        "seed": 20260807,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-plus-chain-s07/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-plus-chain-s07.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-plus-chain-s07/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "comparator_sha256": "699e33d6eedcecfa1ce89131a723f120442edc0d329f2c4fe51f4690e969b38b",
+      "paired_comparison": "artifacts/gate3g/gauge-task-only-s07/paired_comparison_final.json",
+      "paired_comparison_sha256": "2453bcf7dd95ec2d588c95d004878eb96f9aee0de1fde28c6a36f1137c66ed40",
+      "sampling_signature": {
+        "batch_size": 24,
+        "data_seed": 20260807,
+        "experiment_seed": 20260807,
+        "max_batches": 13,
+        "sampling_metadata": {
+          "data_seed": 20260807,
+          "experiment_seed": 20260807,
+          "pairing_contract": "Runs with equal data_seed, experiment_seed, split, batch size, kind, severity, block, and sample IDs receive identical draws.",
+          "protocol": "sha256-block-and-sample-v1"
+        },
+        "sampling_protocol": "sha256-block-and-sample-v1",
+        "topological_metric": {
+          "degree": 1,
+          "max_dim": 2,
+          "max_points": 24,
+          "name": "exact_srtd",
+          "normalization": "full-matrix-quantile",
+          "normalization_quantile": 0.9
+        }
+      },
+      "seed": 20260807
+    },
+    {
+      "baseline": {
+        "checkpoint": "artifacts/gate3g/gauge-task-only-s08/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "2893c7e1dada98380e92eb14acc458abd306b00b75a9a7385b114f8d6d82ef14",
+        "config": "configs/gate3g/gauge-task-only-s08.yaml",
+        "config_sha256": "97db58499370161789ccab450fbd35895be5e1427a0a603fa64493df21991228",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-task-only-s08/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "f1d505f8b263109fff8565398ee468bdc5dd477bc2c2307a2f948763f571ca21",
+        "role": "baseline",
+        "run_name": "gauge-task-only-s08",
+        "seed": 20260808,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-task-only-s08/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-task-only-s08.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-task-only-s08/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "candidate": {
+        "checkpoint": "artifacts/gate3g/gauge-plus-chain-s08/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "d701993faf6c6047a9157bb27c50ddf674f50ab77dcd0741fff9adca7b8782d8",
+        "config": "configs/gate3g/gauge-plus-chain-s08.yaml",
+        "config_sha256": "0fcb0f227fc729c6d4b0d7c917f532a4e7eae44bf04623126ea6762cedd9a793",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-plus-chain-s08/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "7271b1b519c2eb9d6a03aa9a44eebd486abc95bf2a18ee8481b8c402e93eac61",
+        "role": "candidate",
+        "run_name": "gauge-plus-chain-s08",
+        "seed": 20260808,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-plus-chain-s08/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-plus-chain-s08.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-plus-chain-s08/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "comparator_sha256": "699e33d6eedcecfa1ce89131a723f120442edc0d329f2c4fe51f4690e969b38b",
+      "paired_comparison": "artifacts/gate3g/gauge-task-only-s08/paired_comparison_final.json",
+      "paired_comparison_sha256": "bc2726513d84d75bdae8ee3c59dd7656641b49ff2ec1c1554ac50d83f702ce71",
+      "sampling_signature": {
+        "batch_size": 24,
+        "data_seed": 20260808,
+        "experiment_seed": 20260808,
+        "max_batches": 13,
+        "sampling_metadata": {
+          "data_seed": 20260808,
+          "experiment_seed": 20260808,
+          "pairing_contract": "Runs with equal data_seed, experiment_seed, split, batch size, kind, severity, block, and sample IDs receive identical draws.",
+          "protocol": "sha256-block-and-sample-v1"
+        },
+        "sampling_protocol": "sha256-block-and-sample-v1",
+        "topological_metric": {
+          "degree": 1,
+          "max_dim": 2,
+          "max_points": 24,
+          "name": "exact_srtd",
+          "normalization": "full-matrix-quantile",
+          "normalization_quantile": 0.9
+        }
+      },
+      "seed": 20260808
+    },
+    {
+      "baseline": {
+        "checkpoint": "artifacts/gate3g/gauge-task-only-s09/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "91439dce08579e2e5064be88462dce268a997374d3b14e9cbe16693b730a496b",
+        "config": "configs/gate3g/gauge-task-only-s09.yaml",
+        "config_sha256": "8c4a884864df1a3fa971aa75ca9a7c9e3d0ba90ecc57372a2f2b6e1119065193",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-task-only-s09/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "b64cf07a973cc158da5471c9baf4b51486bf87747a46154c8fab8cbb76af43a7",
+        "role": "baseline",
+        "run_name": "gauge-task-only-s09",
+        "seed": 20260809,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-task-only-s09/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-task-only-s09.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-task-only-s09/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "candidate": {
+        "checkpoint": "artifacts/gate3g/gauge-plus-chain-s09/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "54785f89c1f0801d41108537480c0a01e7adeaca5671ef7ede25c526d5485fea",
+        "config": "configs/gate3g/gauge-plus-chain-s09.yaml",
+        "config_sha256": "f8f762ba9f3f57e608a89fa67490ac96ce3a200b59b348ea41be8a870811755f",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-plus-chain-s09/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "e70f899ea42e57e77dd40daff0639b97e6818d9eba9723966406a8420cfdb77e",
+        "role": "candidate",
+        "run_name": "gauge-plus-chain-s09",
+        "seed": 20260809,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-plus-chain-s09/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-plus-chain-s09.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-plus-chain-s09/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "comparator_sha256": "699e33d6eedcecfa1ce89131a723f120442edc0d329f2c4fe51f4690e969b38b",
+      "paired_comparison": "artifacts/gate3g/gauge-task-only-s09/paired_comparison_final.json",
+      "paired_comparison_sha256": "5eefb88410819d70b09262379e8721380d649552e1acafc6a96327a6d887b78b",
+      "sampling_signature": {
+        "batch_size": 24,
+        "data_seed": 20260809,
+        "experiment_seed": 20260809,
+        "max_batches": 13,
+        "sampling_metadata": {
+          "data_seed": 20260809,
+          "experiment_seed": 20260809,
+          "pairing_contract": "Runs with equal data_seed, experiment_seed, split, batch size, kind, severity, block, and sample IDs receive identical draws.",
+          "protocol": "sha256-block-and-sample-v1"
+        },
+        "sampling_protocol": "sha256-block-and-sample-v1",
+        "topological_metric": {
+          "degree": 1,
+          "max_dim": 2,
+          "max_points": 24,
+          "name": "exact_srtd",
+          "normalization": "full-matrix-quantile",
+          "normalization_quantile": 0.9
+        }
+      },
+      "seed": 20260809
+    },
+    {
+      "baseline": {
+        "checkpoint": "artifacts/gate3g/gauge-task-only-s10/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "271c3ac6a0f6d11ac1685cc4d8a1cd81e69a7693e5ce74a5a63560158d50e66b",
+        "config": "configs/gate3g/gauge-task-only-s10.yaml",
+        "config_sha256": "2e8aaf48a279e136583edc2e1cd83fd2fc190f2b8cd49e1636dee5806e755d93",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-task-only-s10/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "87f2835efeee9bca74c1df60fa7f8c69115d6bea2ae37a500877ba8b425220f8",
+        "role": "baseline",
+        "run_name": "gauge-task-only-s10",
+        "seed": 20260810,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-task-only-s10/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-task-only-s10.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-task-only-s10/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "candidate": {
+        "checkpoint": "artifacts/gate3g/gauge-plus-chain-s10/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "bd4bbc69a1cf7c5ce529e868180a878115b173321c337f55510c796046af0773",
+        "config": "configs/gate3g/gauge-plus-chain-s10.yaml",
+        "config_sha256": "2bffb42ab74c6128d939927709583f3d07e686cf7f62b0eb01c1d00022a5d236",
+        "evaluator_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "git_commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "git_status_at_generation": "",
+        "report": "artifacts/gate3g/gauge-plus-chain-s10/corruption_report_final.json",
+        "report_schema_version": 3,
+        "report_sha256": "bf152d091f83a34cb63ce2e4701570dee8de7b984d8bfa4af28e83d2c3b5db93",
+        "role": "candidate",
+        "run_name": "gauge-plus-chain-s10",
+        "seed": 20260810,
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3g/gauge-plus-chain-s10/checkpoints/last.pt",
+          "--config",
+          "configs/gate3g/gauge-plus-chain-s10.yaml",
+          "--output",
+          "artifacts/gate3g/gauge-plus-chain-s10/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      "comparator_sha256": "699e33d6eedcecfa1ce89131a723f120442edc0d329f2c4fe51f4690e969b38b",
+      "paired_comparison": "artifacts/gate3g/gauge-task-only-s10/paired_comparison_final.json",
+      "paired_comparison_sha256": "a31d6d23d6f4ad7e14b02902e5a6c9dad117be63847f7701de7baf9e807c46e0",
+      "sampling_signature": {
+        "batch_size": 24,
+        "data_seed": 20260810,
+        "experiment_seed": 20260810,
+        "max_batches": 13,
+        "sampling_metadata": {
+          "data_seed": 20260810,
+          "experiment_seed": 20260810,
+          "pairing_contract": "Runs with equal data_seed, experiment_seed, split, batch size, kind, severity, block, and sample IDs receive identical draws.",
+          "protocol": "sha256-block-and-sample-v1"
+        },
+        "sampling_protocol": "sha256-block-and-sample-v1",
+        "topological_metric": {
+          "degree": 1,
+          "max_dim": 2,
+          "max_points": 24,
+          "name": "exact_srtd",
+          "normalization": "full-matrix-quantile",
+          "normalization_quantile": 0.9
+        }
+      },
+      "seed": 20260810
+    }
+  ],
+  "schema_version": 1,
+  "scope": "Fixed-expert embedding diagnostic only; this campaign does not evaluate representation conversion, a translator, or a learned chain map.",
+  "validation": {
+    "checkpoint_hashes_verified": true,
+    "clean_git_status_verified": true,
+    "comparator_hash_shared": true,
+    "complete_blocks_per_kind": 13,
+    "complete_blocks_required": true,
+    "config_hashes_verified": true,
+    "distinct_training_seeds": 8,
+    "evaluator_hash_shared": true,
+    "expected_pairs": 8,
+    "paired_batch_observations_per_kind": 65,
+    "pairing_equal_fields": [
+      "block_seed",
+      "num_examples",
+      "sigma_min",
+      "sigma_mean",
+      "sigma_max"
+    ],
+    "pairing_join_key": [
+      "kind",
+      "severity",
+      "block_id"
+    ],
+    "report_hashes_verified": true,
+    "sampling_protocol": "sha256-block-and-sample-v1",
+    "severity_grid": [
+      0.05,
+      0.1,
+      0.2,
+      0.4,
+      0.8
+    ],
+    "status": "passed",
+    "topological_metric": {
+      "degree": 1,
+      "max_dim": 2,
+      "max_points": 24,
+      "name": "exact_srtd",
+      "normalization": "full-matrix-quantile",
+      "normalization_quantile": 0.9
+    },
+    "validated_pairs": 8
+  }
+}

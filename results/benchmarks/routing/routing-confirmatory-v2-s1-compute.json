@@ -1,0 +1,102 @@
+{
+  "checkpoint": "/home/seanjazm27/HOMYMOLY/artifacts/routing-confirmatory-v2-s1/checkpoints/last.pt",
+  "checkpoint_sha256": "fb1b709aa658102fe491213e683f4a03e952bb6c160518128b4a01c89deb6fb7",
+  "config": "/home/seanjazm27/HOMYMOLY/configs/routing-confirmatory-v2-s1.yaml",
+  "config_sha256": "3295c825f19f28f5edc678d51be94cf7aa1eac5bf23b37b9994b4513e69f669e",
+  "dense_to_routed_speedup": 1.511614692016058,
+  "device": "cuda",
+  "environment": {
+    "command": [
+      "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+      "scripts/benchmark_compute.py",
+      "--config",
+      "configs/routing-confirmatory-v2-s1.yaml",
+      "--checkpoint",
+      "artifacts/routing-confirmatory-v2-s1/checkpoints/last.pt",
+      "--batch-size",
+      "64",
+      "--warmup",
+      "20",
+      "--iterations",
+      "100",
+      "--output",
+      "artifacts/benchmarks/routing-confirmatory-v2-s1-compute.json"
+    ],
+    "cuda": "13.0",
+    "device_name": "NVIDIA GB10",
+    "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+    "platform": "Linux-6.17.0-1026-nvidia-aarch64-with-glibc2.39",
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130"
+  },
+  "precision": "torch.bfloat16",
+  "results": [
+    {
+      "batch_size": 64,
+      "checksum": -54.78515625,
+      "examples_per_second": 1641.052471014818,
+      "iterations": 100,
+      "latency_ms_mean": 38.99936237896327,
+      "latency_ms_median": 38.50616549607366,
+      "latency_ms_p95": 43.33271901123226,
+      "latency_ms_stdev": 1.7365026856914154,
+      "path": "routed",
+      "peak_memory_bytes": 119415296
+    },
+    {
+      "batch_size": 64,
+      "checksum": -424.59716796875,
+      "examples_per_second": 3741.720307031909,
+      "iterations": 100,
+      "latency_ms_mean": 17.104431851767004,
+      "latency_ms_median": 16.90996650722809,
+      "latency_ms_p95": 18.50997901055962,
+      "latency_ms_stdev": 0.7968434364041238,
+      "path": "fixed_graph",
+      "peak_memory_bytes": 164400128
+    },
+    {
+      "batch_size": 64,
+      "checksum": 40.234375,
+      "examples_per_second": 3092.321990101452,
+      "iterations": 100,
+      "latency_ms_mean": 20.696421719621867,
+      "latency_ms_median": 20.392662001540884,
+      "latency_ms_p95": 22.48056000098586,
+      "latency_ms_stdev": 0.7941925763385179,
+      "path": "fixed_cell",
+      "peak_memory_bytes": 164400128
+    },
+    {
+      "batch_size": 64,
+      "checksum": -284.86328125,
+      "examples_per_second": 2946.4430747649058,
+      "iterations": 100,
+      "latency_ms_mean": 21.721105202450417,
+      "latency_ms_median": 21.395139512605965,
+      "latency_ms_p95": 23.128617031034082,
+      "latency_ms_stdev": 0.8759668342207986,
+      "path": "fixed_sheaf",
+      "peak_memory_bytes": 169857536
+    },
+    {
+      "batch_size": 64,
+      "checksum": -223.82831573486328,
+      "examples_per_second": 1083.9407858580855,
+      "iterations": 100,
+      "latency_ms_mean": 59.04381570930127,
+      "latency_ms_median": 58.20648549706675,
+      "latency_ms_p95": 63.95305600017309,
+      "latency_ms_stdev": 1.9890735577704926,
+      "path": "dense",
+      "peak_memory_bytes": 169401344
+    }
+  ],
+  "route_profile_on_benchmark_batch": {
+    "cell": 0.375,
+    "graph": 0.4375,
+    "sheaf": 0.1875
+  },
+  "routed_to_dense_latency_ratio": 0.6615442448937092,
+  "status": "completed"
+}
