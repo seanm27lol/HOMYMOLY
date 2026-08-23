@@ -13,24 +13,98 @@ foundation, three structured experts, graph-to-cell/sheaf translators, a
 cost-aware router, degree-specific RTD/SRTD references, exact finite chain-map
 layers, a corruption suite, and resumable GB10 experiments.
 
-Current status after the validity audit and protocol-aligned routing-v2
-campaign: the historical regime-distilled hard router beat the best fixed
-expert on all five valid seeds. The mean margin was **+0.1098** (sample SD
-0.0117; Student-t 95% CI [0.0953, 0.1243]), meeting the frozen numerical
-decision rule. This is a narrow result for routing over available structured
-views: training used privileged regime labels to distill utility targets, and
-inference used graph, active-face, and sheaf-transport summaries. It is not a
-graph-only conversion result. The campaign is protocol-aligned rather than a
-pristine preregistration because an aborted pre-commit seed-20260906 attempt
-exposed validation metrics under different code before the valid rerun; see
-[`docs/19`](docs/19-routing-confirmatory-v2-protocol.md). Corrected Gate-3
-reports now provide fixed-expert embedding diagnostics only and do not test a
-translator, learned map, or conversion claim. Each corruption kind has 13
-complete blocks, 65 batch observations, and 306 unique examples. Eleven of 12
-within-checkpoint bootstrap intervals include zero; the sole exception has
-within-block permutation p=0.115. All nine paired added-loss-versus-task-only
-intervals include zero (p≥0.32397). These checkpoint-conditional analyses have
-no multiplicity adjustment.
+## Current outcome
+
+The 40-run identifiable typed-map campaign is **complete and frozen**. Full
+record: [`docs/23`](docs/23-identifiable-results.md). Manuscript:
+[`docs/18-paper.md`](docs/18-paper.md).
+
+**The implementation recovers the planted map exactly.** On a synthetic
+six-sector cellular annulus (12 vertices, 18 edges, 6 faces, Betti (1, 1, 0))
+with a finite dihedral family of twelve exact three-term maps, every objective
+containing task or reconstruction supervision reached transformation accuracy
+1.000 and cell-face accuracy 1.000 on all five seeds, with map MSE at the 1e-16
+level. A prespecified engineering recovery gate passed **10 of 10** applicable
+runs. An analytic marker decoder also reaches 1.000, so this is recovery of a
+known-attainable ceiling, not evidence of a powerful model.
+
+**The structural results are negative, and they are the interesting part.**
+
+- Adding a mapping-cone term, an RTD term, or both changed nothing: all 21
+  declared continuous contrast intervals contain zero, against a saturated
+  accuracy ceiling.
+- Trained on structural losses *alone*, the model sits at chance —
+  transformation accuracy 0.0815 (cone-only) and 0.0833 (RTD-only) against a
+  0.0833 baseline — **while producing acyclic cones in 6,000 of 6,000 evaluated
+  examples.** Cone acyclicity certifies that the decoded map is invertible; it
+  does not certify that it is the correct map.
+
+**Routing** (frozen five-seed v2 campaign): hard-minus-best-fixed margin
+**+0.1098** (SD 0.0117; Student-t 95% CI [0.0953, 0.1243]), meeting the frozen
+decision rule. Training used privileged latent-regime distillation and inference
+used structured target views, so this is not a graph-only or conversion result;
+an aborted pre-commit seed-20260906 attempt makes it protocol-aligned rather
+than pristine preregistration. See
+[`docs/19`](docs/19-routing-confirmatory-v2-protocol.md).
+
+**Corruption diagnostics** are fixed-expert embedding diagnostics only and test
+no translator, learned map, or conversion. All nine Gate-3 base paired intervals
+contain zero, and all three eight-seed gauge intervals contain zero (exact sign
+tests p ≥ 0.727). No multiplicity adjustment is applied anywhere.
+
+**Trained compute** (GB10): routed inference is 1.532 ± 0.035× faster than dense
+three-expert evaluation and 2.269 ± 0.043× slower than the fastest fixed route.
+The identifiable and routing runners report p90 and p95 respectively and are
+never pooled.
+
+## What this does not show
+
+- Not a general graph neural network — the model is a flattened MLP over
+  explicit markers selecting from a hard-coded twelve-element basis.
+- Not a universal representation translator, and no conversion quality on real
+  or out-of-distribution data.
+- Not general equivalence between graphs, cellular complexes, and sheaves.
+- Not a learned quasi-isomorphism or exact sequence; the verified identity is
+  the chain-map law up to a fixed 1e-5 tolerance on one synthetic template.
+- Not any Langlands, eigensheaf, Fourier–Mukai, or category-theoretic machine
+  learning result. Those remain motivation, not results.
+- Not a benefit from cone or RTD losses, and not a matched-compute Pareto claim.
+
+## Five-minute smoke path
+
+No GPU required. Installs the package, runs the suite, checks the exact oracles,
+and verifies the tracked evidence bundle against its manifest:
+
+```bash
+python -m pip install -e '.[dev]'
+python -m pytest -q
+homymoly validate-foundation --config configs/stage1.yaml
+python scripts/export_publication_evidence.py --verify-only
+```
+
+The last command re-hashes all 48 tracked evidence files and reports
+`{"verified": true, ...}` when the bundle matches its manifest.
+
+## Where the evidence lives
+
+Tracked, checksummed, and readable without a GPU — 48 files, 2.85 MB:
+
+| path | contents |
+|---|---|
+| `results/MANIFEST.json` | path, byte count, SHA-256, generating commit, and command for every file |
+| `results/summaries/` | strict compact summaries: identifiable, gauge, compute, routing |
+| `results/gate3/`, `results/gate3g/` | gate decisions and per-batch corruption-report derivatives |
+| `results/benchmarks/` | ten identifiable and five routing trained benchmark records |
+
+Corruption reports are exported as per-batch derivatives: the `per_example`
+array is dropped and the `per_batch` array — the unit of analysis — is kept. This
+is lossless for every published statistic, verified by recomputing the adjusted
+partial Spearman from the retained rows and matching to 1e-15. Each derivative
+records the SHA-256 of the untruncated source.
+
+The 8.8 GB `artifacts/` tree (checkpoints, per-example dumps, histories,
+scheduler logs) is intentionally untracked and is not durable evidence by
+itself.
 
 ## Should HOMYMOLY use RTD?
 
@@ -69,6 +143,9 @@ RTD compares the Vietoris–Rips filtrations induced by two paired point-cloud r
 - [Paper: Typed Representation Routing with Homological Structure](docs/18-paper.md)
 - [Routing confirmatory v2 protocol](docs/19-routing-confirmatory-v2-protocol.md)
 - [Audit remediation and continuation record](docs/20-audit-remediation.md)
+- [Identifiable typed-map protocol](docs/21-identifiable-typed-map-protocol.md)
+- [Release handoff](docs/22-overnight-handoff.md)
+- [**Identifiable typed-map results record**](docs/23-identifiable-results.md)
 - [Bibliography](references.bib)
 
 ## Stage 1 foundation
@@ -104,10 +181,14 @@ The system keeps two claims separate:
   parameterizes degree maps in the nullspace of the chain-map equations and
   evaluates their mapping cones exactly.
 
-On the GB10, a 100-iteration architectural benchmark measured 38.3 ms median
-for selective hard routing and 67.8 ms for the dense three-expert path at batch
-64 (1.77× speedup). This is measured latency, not the earlier declared-cost
-proxy, and it does not by itself establish an accuracy/compute Pareto win.
+On the GB10, trained-checkpoint benchmarks over five seeds measure routed
+inference at 1.532 ± 0.035× the throughput of the dense three-expert path and
+2.269 ± 0.043× slower than the fastest single fixed route, at batch 64 in
+bfloat16. Routed peak allocated memory is below dense in every seed. These are
+descriptive medians from one runner on one machine with paths timed in a fixed
+order; they do not establish an accuracy/compute Pareto win. Earlier
+`compute-remediation*.json` benchmarks recorded `checkpoint: null` — they timed
+an untrained model and are excluded from all reported results.
 
 ## Contribution boundary
 
@@ -124,14 +205,24 @@ The candidate contribution is their disciplined intersection: dynamic, cost-awar
 
 ## Status
 
-Stage 1 and the fixed experts are implemented. The five-seed routing-v2 result
-supports only the scoped historical regime-distilled, structured-view routing
-endpoint described above; n=5 leaves distributional assumptions uncheckable,
-and the exact two-sided sign-test sensitivity is p=0.0625. The published scalar
-RTD convention is now degree 1 with full-matrix 0.9-quantile normalization;
-multi-degree results are returned explicitly rather than summed. A synthetic
-exact-chain-map recovery run reached test MSE 1.5e−14 with zero mapping-cone
-Betti numbers. Molecular results are exploratory because the official test
-split was consulted across architecture iterations. Literature and novelty
-conclusions are research judgments, not a patent search or guarantee of
-priority.
+Stage 1, the fixed experts, and the identifiable typed-map campaign are
+complete. No further large training run is planned; the remaining open work is
+scientific, not computational.
+
+- The identifiable campaign recovers its planted map exactly and passes its
+  recovery gate 10/10, but under a saturated ceiling that an analytic decoder
+  also reaches. The structural contrasts are therefore weak nulls, and the
+  informative next step is a harder benchmark where the correct map is *not*
+  analytically attainable — not more seeds on this one.
+- The five-seed routing-v2 result supports only the scoped historical
+  regime-distilled, structured-view routing endpoint; n=5 leaves distributional
+  assumptions uncheckable and the exact two-sided sign-test sensitivity floor is
+  p=0.0625.
+- The published scalar RTD convention is degree 1 with full-matrix 0.9-quantile
+  normalization; multi-degree results are returned explicitly rather than
+  summed. All pre-audit "exact SRTD" corruption scalars remain withdrawn.
+- Molecular results are exploratory because the official test split was
+  consulted across architecture iterations, and that split contains no acyclic
+  graphs.
+- Literature and novelty conclusions are research judgments, not a patent search
+  or a guarantee of priority.
