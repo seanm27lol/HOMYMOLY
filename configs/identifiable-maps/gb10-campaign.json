@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign_id": "identifiable-gb10-factorial-v1",
-  "execution_enabled": false,
+  "execution_enabled": true,
   "description": "Five paired seeds across eight identifiable-map ablations, followed by trained checkpoint GB10 compute benchmarks.",
   "idle_policy": {
     "gpu_index": 0,

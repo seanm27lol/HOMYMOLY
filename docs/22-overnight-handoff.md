@@ -56,17 +56,18 @@ Before activation, additionally require:
    config SHA-256, manifest SHA-256, protocol SHA-256, and launch fingerprint.
 
 First commit and push the entire frozen tree while the regenerated manifest is
-still disabled. Then make a second commit whose only change is
-`"execution_enabled": false` to `true`, validate it, push it, and require a
-clean worktree before launch. Do not reuse an enabled pre-audit manifest.
+still disabled. Then make a second, narrowly scoped activation commit changing
+`"execution_enabled": false` to `true` and updating its matching manifest-state
+test, validate it, push it, and require a clean worktree before launch. Do not
+reuse an enabled pre-audit manifest.
 
 ## Commit and publish the freeze
 
 Inspect the entire worktree first. Stage exact paths only; never use
 `git add .` or `git add -A`. Commit and push the disabled freeze, then commit
-and push the single manifest enablement described above. Open a draft pull
+and push the narrow activation change described above. Open a draft pull
 request from `agent/research-remediation` against `main`. The GitHub repository
-must remain private. After the enablement commit, do not edit tracked files
+must remain private. After the activation commit, do not edit tracked files
 until all 40 training provenance records have been written.
 
 ## Install and start the resumable campaign

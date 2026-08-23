@@ -370,11 +370,11 @@ def test_frozen_idle_policy_allows_measured_resident_contexts(monkeypatch) -> No
     assert sum(process.used_memory_mib for process in processes) == 45_086
 
 
-def test_provisional_gb10_manifest_has_complete_paired_matrix() -> None:
+def test_enabled_gb10_manifest_has_complete_paired_matrix() -> None:
     repository = Path(__file__).resolve().parents[1]
     path = repository / "configs" / "identifiable-maps" / "gb10-campaign.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
-    assert payload["execution_enabled"] is False
+    assert payload["execution_enabled"] is True
     assert payload["max_attempts_per_step"] == 3
     assert payload["idle_policy"] == {
         "gpu_index": 0,
