@@ -1,0 +1,493 @@
+{
+  "analysis_method": "paired-cross-model-corruption-v1",
+  "claim_boundary": "Fixed-expert embedding diagnostic only; this paired analysis does not evaluate representation conversion, a translator, or a learned chain map.",
+  "command": [
+    "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+    "scripts/compare_corruption_reports.py",
+    "--baseline",
+    "artifacts/gate3/task-only/corruption_report_final.json",
+    "--candidate",
+    "artifacts/gate3/plus-recon/corruption_report_final.json",
+    "artifacts/gate3/plus-chain/corruption_report_final.json",
+    "artifacts/gate3/full/corruption_report_final.json",
+    "--output",
+    "artifacts/gate3/paired_comparison_final.json",
+    "--bootstrap-replicates",
+    "2000",
+    "--randomization-replicates",
+    "10000"
+  ],
+  "comparisons": [
+    {
+      "by_kind": {
+        "edge_cochain_noise": {
+          "baseline_adjusted_partial_spearman": 0.15733929302274044,
+          "bootstrap_replicates": 2000,
+          "bootstrap_seed": 8228149642760008130,
+          "candidate_adjusted_partial_spearman": 0.1751414562972148,
+          "candidate_minus_baseline": 0.01780216327447437,
+          "counts": {
+            "complete_blocks": 13,
+            "paired_batch_observations": 65,
+            "severity_levels": 5
+          },
+          "paired_complete_block_bootstrap_95_ci": [
+            -0.3108723668109939,
+            0.3467395109053385
+          ],
+          "paired_whole_block_model_label_randomization": {
+            "assignments_evaluated": 8192,
+            "exceedances": 7396,
+            "mode": "exact",
+            "pvalue_two_sided": 0.90283203125,
+            "seed": null
+          }
+        },
+        "node_anchor_noise": {
+          "baseline_adjusted_partial_spearman": 0.10221411346597498,
+          "bootstrap_replicates": 2000,
+          "bootstrap_seed": 6839336093572962725,
+          "candidate_adjusted_partial_spearman": 0.1223416268366471,
+          "candidate_minus_baseline": 0.020127513370672118,
+          "counts": {
+            "complete_blocks": 13,
+            "paired_batch_observations": 65,
+            "severity_levels": 5
+          },
+          "paired_complete_block_bootstrap_95_ci": [
+            -0.234652519802533,
+            0.28404852856569907
+          ],
+          "paired_whole_block_model_label_randomization": {
+            "assignments_evaluated": 8192,
+            "exceedances": 7342,
+            "mode": "exact",
+            "pvalue_two_sided": 0.896240234375,
+            "seed": null
+          }
+        },
+        "transport_rotation": {
+          "baseline_adjusted_partial_spearman": 0.025759318469596507,
+          "bootstrap_replicates": 2000,
+          "bootstrap_seed": 6226898639309427369,
+          "candidate_adjusted_partial_spearman": 0.014329471057942423,
+          "candidate_minus_baseline": -0.011429847411654084,
+          "counts": {
+            "complete_blocks": 13,
+            "paired_batch_observations": 65,
+            "severity_levels": 5
+          },
+          "paired_complete_block_bootstrap_95_ci": [
+            -0.16660720051758765,
+            0.12022904383253884
+          ],
+          "paired_whole_block_model_label_randomization": {
+            "assignments_evaluated": 8192,
+            "exceedances": 7324,
+            "mode": "exact",
+            "pvalue_two_sided": 0.89404296875,
+            "seed": null
+          }
+        }
+      },
+      "candidate_number": 1,
+      "candidate_path": "/home/seanjazm27/HOMYMOLY/artifacts/gate3/plus-recon/corruption_report_final.json",
+      "candidate_sha256": "bf30f501e045e62f9b94141d2d5dd8dbf6555bd910ac0432f8c9d85f390f27e6",
+      "counts": {
+        "kinds": 3,
+        "paired_batch_observations": 195
+      }
+    },
+    {
+      "by_kind": {
+        "edge_cochain_noise": {
+          "baseline_adjusted_partial_spearman": 0.15733929302274044,
+          "bootstrap_replicates": 2000,
+          "bootstrap_seed": 7396271149441535172,
+          "candidate_adjusted_partial_spearman": 0.1348948023006533,
+          "candidate_minus_baseline": -0.02244449072208715,
+          "counts": {
+            "complete_blocks": 13,
+            "paired_batch_observations": 65,
+            "severity_levels": 5
+          },
+          "paired_complete_block_bootstrap_95_ci": [
+            -0.29483984355492265,
+            0.3337914040335001
+          ],
+          "paired_whole_block_model_label_randomization": {
+            "assignments_evaluated": 8192,
+            "exceedances": 7196,
+            "mode": "exact",
+            "pvalue_two_sided": 0.87841796875,
+            "seed": null
+          }
+        },
+        "node_anchor_noise": {
+          "baseline_adjusted_partial_spearman": 0.10221411346597498,
+          "bootstrap_replicates": 2000,
+          "bootstrap_seed": 8318693954176181063,
+          "candidate_adjusted_partial_spearman": 0.1324620515915393,
+          "candidate_minus_baseline": 0.03024793812556431,
+          "counts": {
+            "complete_blocks": 13,
+            "paired_batch_observations": 65,
+            "severity_levels": 5
+          },
+          "paired_complete_block_bootstrap_95_ci": [
+            -0.11803825856346108,
+            0.14673628988631376
+          ],
+          "paired_whole_block_model_label_randomization": {
+            "assignments_evaluated": 8192,
+            "exceedances": 5494,
+            "mode": "exact",
+            "pvalue_two_sided": 0.670654296875,
+            "seed": null
+          }
+        },
+        "transport_rotation": {
+          "baseline_adjusted_partial_spearman": 0.025759318469596507,
+          "bootstrap_replicates": 2000,
+          "bootstrap_seed": 7915498266254095961,
+          "candidate_adjusted_partial_spearman": 0.0050489782550646655,
+          "candidate_minus_baseline": -0.02071034021453184,
+          "counts": {
+            "complete_blocks": 13,
+            "paired_batch_observations": 65,
+            "severity_levels": 5
+          },
+          "paired_complete_block_bootstrap_95_ci": [
+            -0.16393306186179987,
+            0.0879786536636087
+          ],
+          "paired_whole_block_model_label_randomization": {
+            "assignments_evaluated": 8192,
+            "exceedances": 7000,
+            "mode": "exact",
+            "pvalue_two_sided": 0.8544921875,
+            "seed": null
+          }
+        }
+      },
+      "candidate_number": 2,
+      "candidate_path": "/home/seanjazm27/HOMYMOLY/artifacts/gate3/plus-chain/corruption_report_final.json",
+      "candidate_sha256": "54cc183d164f3bb74d11d32cb5b4efdbc9300a79525cbd5abaf7bd5c6887453b",
+      "counts": {
+        "kinds": 3,
+        "paired_batch_observations": 195
+      }
+    },
+    {
+      "by_kind": {
+        "edge_cochain_noise": {
+          "baseline_adjusted_partial_spearman": 0.15733929302274044,
+          "bootstrap_replicates": 2000,
+          "bootstrap_seed": 332926635205173629,
+          "candidate_adjusted_partial_spearman": 0.21441597566474474,
+          "candidate_minus_baseline": 0.0570766826420043,
+          "counts": {
+            "complete_blocks": 13,
+            "paired_batch_observations": 65,
+            "severity_levels": 5
+          },
+          "paired_complete_block_bootstrap_95_ci": [
+            -0.185221289464042,
+            0.363921540730551
+          ],
+          "paired_whole_block_model_label_randomization": {
+            "assignments_evaluated": 8192,
+            "exceedances": 5742,
+            "mode": "exact",
+            "pvalue_two_sided": 0.700927734375,
+            "seed": null
+          }
+        },
+        "node_anchor_noise": {
+          "baseline_adjusted_partial_spearman": 0.10221411346597498,
+          "bootstrap_replicates": 2000,
+          "bootstrap_seed": 4882923318024152020,
+          "candidate_adjusted_partial_spearman": 0.09107684511376354,
+          "candidate_minus_baseline": -0.011137268352211432,
+          "counts": {
+            "complete_blocks": 13,
+            "paired_batch_observations": 65,
+            "severity_levels": 5
+          },
+          "paired_complete_block_bootstrap_95_ci": [
+            -0.21722094104122433,
+            0.24072079299005414
+          ],
+          "paired_whole_block_model_label_randomization": {
+            "assignments_evaluated": 8192,
+            "exceedances": 7668,
+            "mode": "exact",
+            "pvalue_two_sided": 0.93603515625,
+            "seed": null
+          }
+        },
+        "transport_rotation": {
+          "baseline_adjusted_partial_spearman": 0.025759318469596507,
+          "bootstrap_replicates": 2000,
+          "bootstrap_seed": 4331505034808897309,
+          "candidate_adjusted_partial_spearman": -0.04651186511592902,
+          "candidate_minus_baseline": -0.07227118358552553,
+          "counts": {
+            "complete_blocks": 13,
+            "paired_batch_observations": 65,
+            "severity_levels": 5
+          },
+          "paired_complete_block_bootstrap_95_ci": [
+            -0.21367438737135258,
+            0.01884924850063302
+          ],
+          "paired_whole_block_model_label_randomization": {
+            "assignments_evaluated": 8192,
+            "exceedances": 2654,
+            "mode": "exact",
+            "pvalue_two_sided": 0.323974609375,
+            "seed": null
+          }
+        }
+      },
+      "candidate_number": 3,
+      "candidate_path": "/home/seanjazm27/HOMYMOLY/artifacts/gate3/full/corruption_report_final.json",
+      "candidate_sha256": "b2b119c2f7b164416f57a545b9249857ec9fec9e727a25f5b05c878feec5cb5b",
+      "counts": {
+        "kinds": 3,
+        "paired_batch_observations": 195
+      }
+    }
+  ],
+  "inputs": {
+    "baseline": {
+      "checkpoint": "/home/seanjazm27/HOMYMOLY/artifacts/gate3/task-only/checkpoints/last.pt",
+      "checkpoint_load": {
+        "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+        "strict": false,
+        "tolerated_missing_keys": [
+          "graph_to_sheaf.transport_angle.layers.0.bias",
+          "graph_to_sheaf.transport_angle.layers.0.weight",
+          "graph_to_sheaf.transport_angle.layers.3.bias",
+          "graph_to_sheaf.transport_angle.layers.3.weight"
+        ],
+        "unexpected_keys": []
+      },
+      "checkpoint_sha256": "8b8a58693b5bc2920123b9cfb1668151e86d735cbe1668c983315c12cbd9891f",
+      "config": "/home/seanjazm27/HOMYMOLY/configs/gate3/task-only.yaml",
+      "config_sha256": "8dcce837588bf27910c9233d33465892eb15149709742f45854af981f6a0b155",
+      "git": {
+        "commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+        "status": ""
+      },
+      "path": "/home/seanjazm27/HOMYMOLY/artifacts/gate3/task-only/corruption_report_final.json",
+      "schema_version": 3,
+      "script_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+      "sha256": "38936695304b92802410d82b43ae8c034337ef4e6d6e627f3793eb8cfed4dee8",
+      "source_command": [
+        "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+        "scripts/eval_corruption.py",
+        "--checkpoint",
+        "artifacts/gate3/task-only/checkpoints/last.pt",
+        "--config",
+        "configs/gate3/task-only.yaml",
+        "--output",
+        "artifacts/gate3/task-only/corruption_report_final.json",
+        "--batch-size",
+        "24",
+        "--max-batches",
+        "13",
+        "--bootstrap-replicates",
+        "2000",
+        "--permutation-replicates",
+        "10000"
+      ]
+    },
+    "candidates": [
+      {
+        "checkpoint": "/home/seanjazm27/HOMYMOLY/artifacts/gate3/plus-recon/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "b8ce0519eeb9716e82b490e1528be6c02badeba7d7b27ef5e3da8407c726d1f0",
+        "config": "/home/seanjazm27/HOMYMOLY/configs/gate3/plus-recon.yaml",
+        "config_sha256": "21a38b945fb929fe946eb85e8732a14927479214e96bd47e563d435dc3c07112",
+        "git": {
+          "commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+          "status": ""
+        },
+        "path": "/home/seanjazm27/HOMYMOLY/artifacts/gate3/plus-recon/corruption_report_final.json",
+        "schema_version": 3,
+        "script_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "sha256": "bf30f501e045e62f9b94141d2d5dd8dbf6555bd910ac0432f8c9d85f390f27e6",
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3/plus-recon/checkpoints/last.pt",
+          "--config",
+          "configs/gate3/plus-recon.yaml",
+          "--output",
+          "artifacts/gate3/plus-recon/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      {
+        "checkpoint": "/home/seanjazm27/HOMYMOLY/artifacts/gate3/plus-chain/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "269689c6349886cd4d484334352969fd85e6d61c89e0be4c432cea92a2e7b262",
+        "config": "/home/seanjazm27/HOMYMOLY/configs/gate3/plus-chain.yaml",
+        "config_sha256": "2297d58c3acae273810a7c92afc97a6b4d6f20652070ed48114b3c1aa1e38800",
+        "git": {
+          "commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+          "status": ""
+        },
+        "path": "/home/seanjazm27/HOMYMOLY/artifacts/gate3/plus-chain/corruption_report_final.json",
+        "schema_version": 3,
+        "script_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "sha256": "54cc183d164f3bb74d11d32cb5b4efdbc9300a79525cbd5abaf7bd5c6887453b",
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3/plus-chain/checkpoints/last.pt",
+          "--config",
+          "configs/gate3/plus-chain.yaml",
+          "--output",
+          "artifacts/gate3/plus-chain/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      },
+      {
+        "checkpoint": "/home/seanjazm27/HOMYMOLY/artifacts/gate3/full/checkpoints/last.pt",
+        "checkpoint_load": {
+          "justification": "Legacy checkpoints predate graph_to_sheaf.transport_angle; the fixed-expert evaluator never invokes that translator.",
+          "strict": false,
+          "tolerated_missing_keys": [
+            "graph_to_sheaf.transport_angle.layers.0.bias",
+            "graph_to_sheaf.transport_angle.layers.0.weight",
+            "graph_to_sheaf.transport_angle.layers.3.bias",
+            "graph_to_sheaf.transport_angle.layers.3.weight"
+          ],
+          "unexpected_keys": []
+        },
+        "checkpoint_sha256": "c7b48f41f437951ccc68ec7091b4edc0cdedf383a0ab02a59ba3f47ff3f85f27",
+        "config": "/home/seanjazm27/HOMYMOLY/configs/gate3/full.yaml",
+        "config_sha256": "21d5dcad0a89ccf3a9fdc25f1b499e2c3e9b3136569a395a06c16d1dbaa9558e",
+        "git": {
+          "commit": "8021292e97abfec91768f1b5437c883a42c29c60",
+          "status": ""
+        },
+        "path": "/home/seanjazm27/HOMYMOLY/artifacts/gate3/full/corruption_report_final.json",
+        "schema_version": 3,
+        "script_sha256": "6470798a9596bf238acf53435bfaa2470f396ddffb3230457bc42ee1218f7a50",
+        "sha256": "b2b119c2f7b164416f57a545b9249857ec9fec9e727a25f5b05c878feec5cb5b",
+        "source_command": [
+          "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+          "scripts/eval_corruption.py",
+          "--checkpoint",
+          "artifacts/gate3/full/checkpoints/last.pt",
+          "--config",
+          "configs/gate3/full.yaml",
+          "--output",
+          "artifacts/gate3/full/corruption_report_final.json",
+          "--batch-size",
+          "24",
+          "--max-batches",
+          "13",
+          "--bootstrap-replicates",
+          "2000",
+          "--permutation-replicates",
+          "10000"
+        ]
+      }
+    ]
+  },
+  "method": {
+    "analysis_seed": 20260813,
+    "contrast": "candidate adjusted statistic minus baseline adjusted statistic",
+    "inferential_scope": "Conditional on the two fixed trained checkpoints and sampled held-out blocks; this does not estimate variation across training seeds.",
+    "interval": "paired complete-block bootstrap; the same whole blocks are resampled for both reports",
+    "multiplicity": "No adjustment across candidates or corruption kinds; p-values are per candidate-kind contrast.",
+    "randomization_replicates_if_monte_carlo": 10000,
+    "report_statistic": "Pearson correlation of rank residuals for topological_defect and damage_rate, adjusted for ranked severity, ranked mean_embedding_displacement, and block fixed effects",
+    "test": "two-sided paired model-label randomization at the whole-block level; exact for at most 16 blocks, otherwise deterministic Monte Carlo with add-one correction"
+  },
+  "schema_version": 1,
+  "script_sha256": "699e33d6eedcecfa1ce89131a723f120442edc0d329f2c4fe51f4690e969b38b",
+  "validated_pairing_contract": {
+    "complete_blocks_required": true,
+    "equal_fields": [
+      "block_seed",
+      "num_examples",
+      "sigma_min",
+      "sigma_mean",
+      "sigma_max"
+    ],
+    "join_key": [
+      "kind",
+      "severity",
+      "block_id"
+    ],
+    "sampling_signature": {
+      "batch_size": 24,
+      "data_seed": 20260803,
+      "experiment_seed": 20260803,
+      "max_batches": 13,
+      "sampling_metadata": {
+        "data_seed": 20260803,
+        "experiment_seed": 20260803,
+        "pairing_contract": "Runs with equal data_seed, experiment_seed, split, batch size, kind, severity, block, and sample IDs receive identical draws.",
+        "protocol": "sha256-block-and-sample-v1"
+      },
+      "sampling_protocol": "sha256-block-and-sample-v1",
+      "topological_metric": {
+        "degree": 1,
+        "max_dim": 2,
+        "max_points": 24,
+        "name": "exact_srtd",
+        "normalization": "full-matrix-quantile",
+        "normalization_quantile": 0.9
+      }
+    },
+    "severities": [
+      0.05,
+      0.1,
+      0.2,
+      0.4,
+      0.8
+    ]
+  }
+}

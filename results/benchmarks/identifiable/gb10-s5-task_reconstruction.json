@@ -1,0 +1,71 @@
+{
+  "ablation": "task_reconstruction",
+  "batch_size": 192,
+  "best_epoch": 99,
+  "chain_residual_max": 1.4210854715202004e-14,
+  "device": "cuda",
+  "device_name": "NVIDIA GB10",
+  "experiment": "identifiable-map-checkpoint-inference-benchmark",
+  "iterations": 100,
+  "latency_ms": {
+    "maximum": 0.4635840058326721,
+    "mean": 0.2778009581565857,
+    "median": 0.27478399872779846,
+    "minimum": 0.266431987285614,
+    "p10": 0.2695199906826019,
+    "p90": 0.2822719901800156
+  },
+  "map_tolerance": 1e-05,
+  "materialization_checksum": 222.98288345336914,
+  "measurement_scope": "model forward only: graph encoder, exact-map mixture, typed signal outputs; excludes data loading, training losses, exact RTD, and exact cone rank oracles",
+  "parameters": 95448,
+  "peak_cuda_memory_allocated_bytes": 35069440,
+  "peak_cuda_memory_reserved_bytes": 35651584,
+  "provenance": {
+    "checkpoint": {
+      "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/checkpoint.pt",
+      "sha256": "92b370f1f2ad97340b9fc832fe7bdbe67dce87ebf0f9aa51245e85ef4373ac84"
+    },
+    "code_fingerprint": "8f05dd35916ed7050c578ff978cfeaa7fc0a800ef14778a564316de91554c87d",
+    "command": [
+      "/home/seanjazm27/HOMYMOLY/.venv/bin/python",
+      "scripts/benchmark_identifiable_maps.py",
+      "--config",
+      "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/effective_config.yaml",
+      "--checkpoint",
+      "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/checkpoint.pt",
+      "--output",
+      "artifacts/identifiable-maps/benchmarks/gb10-s5-task_reconstruction.json",
+      "--device",
+      "cuda",
+      "--batch-size",
+      "192",
+      "--warmup",
+      "20",
+      "--iterations",
+      "100"
+    ],
+    "config": {
+      "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/effective_config.yaml",
+      "sha256": "5776d869cc55b53030859a7fadb4f1051febb5c5537b383b5c2b2329e52b1cc1"
+    },
+    "created_unix": 1787453876.601493,
+    "cublas_workspace_config": ":4096:8",
+    "cuda": "13.0",
+    "deterministic_algorithms": true,
+    "effective_ablation": "task_reconstruction",
+    "effective_seed": 20260825,
+    "git_revision": "8021292e97abfec91768f1b5437c883a42c29c60",
+    "python": "3.12.3",
+    "runner": {
+      "path": "/home/seanjazm27/HOMYMOLY/scripts/benchmark_identifiable_maps.py",
+      "sha256": "81401fad96ee7eccfc7fdfa3ae6d249d0c520a0ee901a799bea7ffbdce2325e7"
+    },
+    "torch": "2.13.0+cu130"
+  },
+  "schema_version": 1,
+  "seed": 20260825,
+  "status": "completed",
+  "throughput_examples_per_second_at_median": 698730.6425735349,
+  "warmup": 20
+}
