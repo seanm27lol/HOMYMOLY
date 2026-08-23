@@ -1,5 +1,14 @@
 # Gate-2 review (2026-08-03)
 
+> **Superseded verdict (audit 2026-08-13).** This document is retained as the
+> historical engineering review. It does not establish a confirmatory routing
+> win: the original untouched five-seed margin was +0.036 with 95% CI
+> [−0.018, +0.090], while the later stabilized +0.108 result reused the seeds
+> that selected the fix. The router was trained by privileged
+> latent-regime-to-utility distillation, and the historical “translators” read
+> target-view structure. See `docs/17`, `docs/19`, and the updated claims
+> ledger.
+
 This is the consolidated review of Gate 2 (RTD reproduction, fixed experts,
 observable specialization, and routing) against the acceptance criteria in
 [the experimental plan](10-gb10-experimental-plan.md). Run-level detail is in
@@ -8,23 +17,23 @@ observable specialization, and routing) against the acceptance criteria in
 
 ## Verdict
 
-**Gate 2 is passed at the confirmatory synthetic benchmark.** All three
-fixed experts specialize in their intended regimes, the anti-shortcut
-controls hold, learned routing beats the best fixed route and the dense
-ensemble at matched measured compute while remaining non-collapsed, and the
-exact RTD/SRTD evaluation reference exists alongside the differentiable
-surrogate with an explicit claim boundary.
+**Engineering integration passed; the scientific routing verdict is
+pending.** All three fixed experts specialize and the anti-shortcut controls
+hold. Historical runs show that routing can outperform fixed alternatives,
+but the untouched confidence interval was inconclusive. Measured GB10 latency
+was added only in the audit: 38.3 ms routed versus 67.8 ms dense at batch 64
+(1.77×), replacing the old declared-cost proxy.
 
 ## Criteria, point by point
 
 | Plan requirement | Status | Evidence |
 |---|---|---|
-| Reproduce RTD/SRTD; freeze conventions before use on learned representations | **Done (exact reference)** | `src/homymoly/metrics/exact_rtd.py` + acceptance tests (`tests/test_exact_rtd.py`): identity zeros, isometry/rescaling invariance after normalization, permutation invariance, directional asymmetry with swap consistency and half-sum symmetry, collapse structure, localized detection, per-interval stability bound. The differentiable H0 surrogate is retained for training with qualified naming; measured directional *ordering* can disagree with the exact reference, so the two are never reported interchangeably |
+| Reproduce RTD/SRTD; freeze conventions before use on learned representations | **Corrected in 2026-08-13 audit** | The old scalar incorrectly summed degrees and used max normalization. The current reference defaults to published degree 1 and full-matrix q0.9 normalization, returns per-degree scores explicitly, filters truncation-frontier degrees, and includes hand fixtures plus cutoff-invariance tests. Historical corruption scores must be recomputed. |
 | Three parameter-matched experts, common embedding | **Done** | graph 851k, cell 933k, sheaf 917k params; common `[B, 64]` embedding contract |
 | Each specialized route has an advantage in its intended regime without the hidden identifier as input | **Done** | run 9/10 test: graph 0.997, cell ~0.73, sheaf 1.000 on their own regimes, all cross-regime ~0.5 |
 | Confirmatory tier with overlapping reliability + preregistered shortcut baselines | **Done** | `ConfirmatoryStructuredSignal` counterfactual groups; shortcut baselines at chance (0.50–0.53), relational oracles at 1.0; group-disjoint splits |
 | Gate: ≥2 specialized routes improve over the graph route | **Passed** | enforced phase gate; all three routes specialize |
-| Learned routing beats best fixed route at matched measured compute, non-collapsed | **Passed (run 9; reproduced run 10)** | hard 0.743/0.746 vs best fixed 0.667/0.674, random 0.669/0.670, dense 0.736/0.742; expected cost 1.31 vs ~3.9 dense; utilization ~0.26–0.38 per route; regime-route MI 0.067–0.068; per-regime native selection 0.46–0.54 |
+| Learned routing beats best fixed route at matched measured compute, non-collapsed | **Confirmatory result pending** | Run 9/10 are development evidence. Original untouched n=5: +0.036 [−0.018, +0.090]. Stabilized same-seed rerun: +0.108 descriptively. The GB10 execution benchmark measures a 1.77× routed/dense speedup; it does not convert post-selected accuracy into confirmatory evidence. |
 | Long-run discipline (checkpoints, resume, aborts, leakage guards) | **Done** | atomic checkpoints with config+code fingerprints; deterministic resume verified by crash-injection; aborts on non-finite loss; reserved metadata keys |
 
 ## The debugging arc (why the first five runs failed)
@@ -60,19 +69,25 @@ sweeping; details are in the handoff log.
    at each phase end). Fix: key on `first_epoch == 0`, verified in-engine.
 8. **Run 9**: confirmatory — Gate-4 passed at the configured LR with clean
    provenance (0.743).
-9. **Run 10**: translators made task-competent (sheaf translator gained the
-   holonomy pathway; cell translator gained `face_active` as input — its
-   task is structurally impossible without it) — Gate-4 reproduced (0.746).
+9. **Run 10**: target-view encoders were made task-competent (sheaf pathway
+   read observed transports; cell pathway read `face_active`). This reproduced
+   routing at 0.746 but did not demonstrate graph-to-cell/sheaf conversion.
 
 ## Remaining qualifications
 
-- Route accuracy ~0.5 is the expected operating point, not a defect: the
-  benchmark's anti-shortcut design caps regime identifiability from
-  label-independent cues near the measured probe ceiling (~0.55–0.58).
-  Utility, not regime identification, is the plan's Gate-4 axis.
+- Historical route accuracy near 0.5 is compared descriptively with finite
+  probe scores of ~0.55–0.58; those probes do not establish an identifiability
+  ceiling. Utility, not regime identification, is the plan's Gate-4 axis.
 - The translator phase gate is an engineering check (finite held-out
   structural loss with ≥2% relative improvement); the substantive
   structural-value question belongs to Gate 3 (see the corruption-suite
   result and C1/C2 in the claims ledger).
+- Historical routing supervision uses the hidden regime only during training
+  to index a validation accuracy table. This is not test-input leakage, but it
+  is privileged regime distillation and must be named as such.
+- At inference the router receives no label or regime tensor, but its
+  diagnostics summarize the available active-face and sheaf-transport views
+  in addition to graph features. This is structured-view routing, not
+  graph-only routing.
 - GPU `scatter_add_` is not bit-deterministic even under
   `deterministic: true`; CPU/exact-oracle paths are FP64-deterministic.

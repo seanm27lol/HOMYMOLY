@@ -2,6 +2,15 @@
 
 This plan turns the HOMYMOLY research specification into a sequence of falsifiable experiments on the local NVIDIA GB10 system. It deliberately separates mathematical correctness, fixed-route learning, and dynamic routing so a successful router cannot hide an invalid translator.
 
+> **Audit status (2026-08-13).** The plan remains prospective unless a result
+> is linked from a dated record. The exact RTD/SRTD reference and an isolated
+> exact-chain-map experiment are implemented. The historical Gate-3
+> corruption inference is invalid, the corrected corruption evaluation is a
+> fixed-expert embedding diagnostic, and no completed experiment yet tests C1
+> on a learned typed conversion. The current target-held-out translator
+> objectives need an identifiable benchmark before their downstream run can
+> establish conversion. The frozen five-seed routing campaign is pending.
+
 ## Execution principles
 
 - Use FP64 for incidence validation, numerical rank, Betti numbers, chain-map residuals, and exact mapping-cone oracles.
@@ -33,6 +42,13 @@ No learning claim is permitted at this gate.
 
 First reproduce RTD/SRTD behavior on published or independently hand-checkable paired-metric examples. Freeze this implementation and its distance-normalization conventions before it is used on learned representations.
 
+The frozen exact-reference convention is degree-specific: independently
+normalize each complete dissimilarity matrix by its full-matrix 0.9 quantile,
+including diagonal and symmetric entries; report scalar RTD in degree 1 and
+SRTD in an explicitly selected degree; never create a scalar by summing
+unrelated degrees or a truncation frontier. Training-time H0 distance
+surrogates are reported separately and are not called exact RTD/SRTD.
+
 Implement three parameter-matched experts that emit a common graph-level embedding:
 
 1. graph message passing;
@@ -63,9 +79,27 @@ Do not minimize total cone homology indiscriminately. The graph-to-cell route is
 
 Gate criterion: on held-out corruptions, a structural diagnostic must add predictive value for conversion damage after controlling for reconstruction error, or a structural regularizer must improve a matched-compute downstream result. Otherwise the central mechanism is not yet supported.
 
+A diagnostic test counts toward the first branch only if it actually executes
+a declared typed translator/map. Comparing a fixed expert's clean and
+corrupted embeddings can test whether representation topology predicts that
+expert's prediction damage beyond embedding displacement, but it is not a
+conversion test. In particular, the corrected evaluator's
+`mean_embedding_displacement` field is clean/corrupted fixed-expert embedding
+MSE, not translator reconstruction loss. Such a result is an exploratory
+diagnostic and cannot pass C1 by itself.
+
+Current audit state: the historical correlation report is invalid because it
+used a non-reference multi-degree scalar and pseudoreplicated severity rows.
+The corrected evaluator adds stable paired draws, degree-1 full-matrix-q0.9
+SRTD, severity and block controls, complete-block bootstrap intervals, and
+within-block residual permutation. Its rerun is pending, and even a positive
+rerun would leave the learned typed-conversion question untested. The isolated
+exact-chain-map experiment validates machinery on a synthetic paired
+permutation complex; it is not a matched downstream C2/C4 ablation.
+
 ### Gate 4: routing
 
-Pretrain the fixed experts and translators, freeze them, and produce per-example route utilities. Train a small router from cheap label-independent features against the oracle route, then jointly fine-tune with straight-through top-1 routing.
+Pretrain the fixed experts and translators, freeze them, and produce per-example route utilities. Train a small router from cheap observation summaries against the oracle route, then jointly fine-tune with straight-through top-1 routing. In the implemented benchmark these summaries include candidate/active-face and sheaf-transport statistics, although they exclude label and regime tensors; they are not graph-only features.
 
 Compare fixed, random, learned, oracle, and dense-ensemble routing. Report task metrics, measured latency, route utilization, route/regime mutual information, oracle regret, calibration, and accuracy-compute Pareto area.
 

@@ -37,7 +37,11 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - name: Install project
-        run: python -m pip install --disable-pip-version-check -e ".[${{ matrix.extras }}]"
+        run: |
+          python -m pip install --disable-pip-version-check \
+            --index-url https://download.pytorch.org/whl/cpu \
+            "torch>=2.8,<3"
+          python -m pip install --disable-pip-version-check -e ".[${{ matrix.extras }}]"
       - name: Validate molecular imports
         if: matrix.molecular
         run: python -c "import homymoly.data.molecular; import ogb, pandas, rdkit"

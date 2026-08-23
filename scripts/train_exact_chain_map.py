@@ -41,6 +41,12 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--cycle-weight", type=float, default=0.1)
     parser.add_argument("--cone-weight", type=float, default=1e-4)
     parser.add_argument("--cone-temperature", type=float, default=0.05)
+    parser.add_argument(
+        "--map-tolerance",
+        type=float,
+        default=1e-5,
+        help="fixed fail-fast tolerance for evaluated chain-map residuals",
+    )
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     parser.add_argument(
         "--output",
@@ -120,6 +126,8 @@ def main() -> int:
         raise ValueError("steps and learning rate must be positive")
     if args.cycle_weight < 0 or args.cone_weight < 0 or args.cone_temperature <= 0:
         raise ValueError("loss weights must be nonnegative and temperature positive")
+    if args.map_tolerance <= 0:
+        raise ValueError("map tolerance must be positive")
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     if device.type == "cuda":
@@ -244,7 +252,13 @@ def main() -> int:
         (target_cpu,),
         dtype=torch.float64,
     )
-    map_tolerance = max(1e-5, 2.0 * forward_residual)
+    map_tolerance = float(args.map_tolerance)
+    if max(forward_residual, reverse_residual) > map_tolerance:
+        raise RuntimeError(
+            "learned map exceeds the fixed chain-map tolerance: "
+            f"forward={forward_residual:.3e}, reverse={reverse_residual:.3e}, "
+            f"tolerance={map_tolerance:.3e}"
+        )
     evaluated_map = ChainMap(
         source_complex,
         target_complex,

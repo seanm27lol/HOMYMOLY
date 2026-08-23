@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import hashlib
 import json
 import os
 import platform
@@ -51,6 +52,14 @@ def _git_revision() -> str | None:
         ("git", "rev-parse", "HEAD"), check=False, capture_output=True, text=True
     )
     return process.stdout.strip() if process.returncode == 0 else None
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def _percentile(values: list[float], quantile: float) -> float:
@@ -110,11 +119,13 @@ def main() -> int:
         raise ValueError(
             "batch size/iterations must be positive and warmup nonnegative"
         )
-    config = load_gate2_config(args.config)
+    config_path = Path(args.config).resolve()
+    config = load_gate2_config(config_path)
     runtime = initialize_runtime(config.runtime, seed=config.experiment.seed)
     model = build_model(_build_model_config(config)).to(runtime.device).eval()
-    if args.checkpoint:
-        checkpoint = load_checkpoint(Path(args.checkpoint), map_location=runtime.device)
+    checkpoint_path = Path(args.checkpoint).resolve() if args.checkpoint else None
+    if checkpoint_path is not None:
+        checkpoint = load_checkpoint(checkpoint_path, map_location=runtime.device)
         model.load_state_dict(checkpoint["model"])
 
     selected_samples = max(6, ((args.batch_size + 5) // 6) * 6)
@@ -146,6 +157,15 @@ def main() -> int:
     def routed() -> Tensor:
         with autocast():
             return model(batch, hard=True).mixed_logits
+
+    with torch.inference_mode(), autocast():
+        route_profile_output = model(batch, hard=True)
+    route_profile = {
+        route.value: float(
+            (route_profile_output.selected_routes == route_index).float().mean()
+        )
+        for route_index, route in enumerate(ROUTE_ORDER)
+    }
 
     fixed_functions: dict[str, Callable[[], Tensor]] = {}
     for route in ROUTE_ORDER:
@@ -186,7 +206,13 @@ def main() -> int:
         "status": "completed",
         "device": str(runtime.device),
         "precision": str(runtime.neural_dtype),
-        "checkpoint": args.checkpoint,
+        "checkpoint": str(checkpoint_path) if checkpoint_path is not None else None,
+        "checkpoint_sha256": (
+            _sha256(checkpoint_path) if checkpoint_path is not None else None
+        ),
+        "config": str(config_path),
+        "config_sha256": _sha256(config_path),
+        "route_profile_on_benchmark_batch": route_profile,
         "results": results,
         "routed_to_dense_latency_ratio": routed_latency / dense_latency,
         "dense_to_routed_speedup": dense_latency / routed_latency,

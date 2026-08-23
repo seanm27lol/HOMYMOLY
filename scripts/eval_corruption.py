@@ -1,18 +1,17 @@
-"""Gate-3 corruption-suite evaluation.
+"""Fixed-expert representation-corruption diagnostic.
 
 Loads a trained Gate-2 checkpoint, applies graded structural corruptions to
 held-out samples, and measures for each corruption kind and severity:
 
-* conversion damage — the task-accuracy drop of the affected route's expert
-  and translator on that route's regime;
-* the translator's structural diagnostics (per-sample reconstruction and
-  consistency);
+* prediction damage for the affected route's fixed expert;
+* clean/corrupted fixed-expert embedding displacement and route diagnostics;
 * the exact SRTD between clean and corrupted expert embeddings per batch —
-  the topological conversion defect.
+  a topological representation-displacement diagnostic.
 
-The report answers the plan's Gate-3 question: does a structural diagnostic
-add predictive value for conversion damage after controlling for
-reconstruction error?  Usage:
+This program does not invoke a translator or learned chain map and therefore
+does not test damage during typed conversion. It asks only whether degree-one
+SRTD adds predictive value for fixed-expert prediction damage after controlling
+for ordinary embedding displacement. Usage:
 
     python scripts/eval_corruption.py \
         --checkpoint artifacts/gate2-run10-translators-competent/checkpoints/last.pt \
@@ -28,6 +27,8 @@ import json
 import math
 import random
 import statistics
+import subprocess
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -49,11 +50,6 @@ ROUTE_FOR_KIND = {
     "transport_rotation": "sheaf",
     "edge_cochain_noise": "cell",
     "node_anchor_noise": "graph",
-}
-TRANSLATOR_FOR_KIND = {
-    "transport_rotation": "graph_to_sheaf",
-    "edge_cochain_noise": "graph_to_cell",
-    "node_anchor_noise": None,
 }
 SEVERITIES = (0.05, 0.1, 0.2, 0.4, 0.8)
 _DRAW_PROTOCOL = "sha256-block-and-sample-v1"
@@ -149,6 +145,32 @@ def _stable_hash_seed(*parts: object) -> int:
         int.from_bytes(hashlib.sha256(encoded).digest()[:8], "big")
         & 0x7FFF_FFFF_FFFF_FFFF
     )
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _git_metadata(project_root: Path) -> dict[str, str | None]:
+    metadata: dict[str, str | None] = {}
+    for name, arguments in (
+        ("commit", ("git", "rev-parse", "HEAD")),
+        ("status", ("git", "status", "--short")),
+    ):
+        process = subprocess.run(
+            arguments,
+            cwd=project_root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        metadata[name] = process.stdout.strip() if process.returncode == 0 else None
+    return metadata
 
 
 def _corruption_sigmas(
@@ -288,9 +310,14 @@ def _repeated_measure_inference(
     }
 
 
-def _load_model_state_compatibly(model: torch.nn.Module, state: dict[str, Any]) -> None:
+def _load_model_state_compatibly(
+    model: torch.nn.Module, state: dict[str, Any]
+) -> dict[str, Any]:
     incompatible = model.load_state_dict(state, strict=False)
     allowed_prefix = "graph_to_sheaf.transport_angle."
+    tolerated_missing = [
+        key for key in incompatible.missing_keys if key.startswith(allowed_prefix)
+    ]
     missing = [
         key for key in incompatible.missing_keys if not key.startswith(allowed_prefix)
     ]
@@ -299,6 +326,15 @@ def _load_model_state_compatibly(model: torch.nn.Module, state: dict[str, Any]) 
         raise RuntimeError(
             f"incompatible checkpoint: missing={missing}, unexpected={unexpected}"
         )
+    return {
+        "strict": False,
+        "tolerated_missing_keys": sorted(tolerated_missing),
+        "unexpected_keys": [],
+        "justification": (
+            "Legacy checkpoints predate graph_to_sheaf.transport_angle; the "
+            "fixed-expert evaluator never invokes that translator."
+        ),
+    }
 
 
 def main() -> None:
@@ -306,15 +342,24 @@ def main() -> None:
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--config", default="configs/gate2.yaml")
     parser.add_argument("--output", default="artifacts/gate3/corruption_report.json")
-    parser.add_argument("--batch-size", type=int, default=64)
-    parser.add_argument("--max-batches", type=int, default=12)
+    parser.add_argument("--batch-size", type=int, default=24)
+    parser.add_argument("--max-batches", type=int, default=13)
     parser.add_argument("--bootstrap-replicates", type=int, default=2000)
     parser.add_argument("--permutation-replicates", type=int, default=10000)
     args = parser.parse_args()
     if args.bootstrap_replicates <= 0 or args.permutation_replicates <= 0:
         parser.error("inference replicate counts must be positive")
+    if args.batch_size < 8 or args.max_batches <= 0:
+        parser.error("--batch-size must be at least 8 and --max-batches positive")
 
-    config = load_gate2_config(args.config)
+    config_path = Path(args.config).resolve()
+    checkpoint_path = Path(args.checkpoint).resolve()
+    config = load_gate2_config(config_path)
+    if args.batch_size > config.loss.rtd_max_points:
+        parser.error(
+            "--batch-size must not exceed loss.rtd_max_points so SRTD and "
+            "damage use identical examples"
+        )
     runtime = initialize_runtime(config.runtime, seed=config.experiment.seed)
     dataset = engine._build_dataset(config, smoke=False)
     splits = dataset.split_indices(
@@ -324,9 +369,9 @@ def main() -> None:
     test_indices = splits["test"]
     model = build_model(engine._build_model_config(config)).to(runtime.device).eval()
     checkpoint = torch.load(
-        args.checkpoint, map_location=runtime.device, weights_only=False
+        checkpoint_path, map_location=runtime.device, weights_only=False
     )
-    _load_model_state_compatibly(model, checkpoint["model"])
+    checkpoint_load = _load_model_state_compatibly(model, checkpoint["model"])
 
     per_example_rows: list[dict] = []
     per_batch_rows: list[dict] = []
@@ -412,9 +457,16 @@ def main() -> None:
 
                 embedding_clean = _paired_distances(clean_out.embedding)
                 embedding_corrupted = _paired_distances(corrupted_out.embedding)
-                topological_defect = exact_srtd(embedding_clean, embedding_corrupted)
+                topological_defect = exact_srtd(
+                    embedding_clean,
+                    embedding_corrupted,
+                    degree=1,
+                    max_dim=2,
+                    normalization="quantile",
+                    normalization_quantile=0.9,
+                )
 
-                reconstruction = (
+                embedding_displacement = (
                     (corrupted_out.embedding.float() - clean_out.embedding.float())
                     .square()
                     .mean(dim=-1)
@@ -435,7 +487,9 @@ def main() -> None:
                         "damage_rate": float(damage.mean()),
                         "mean_ce_increase": float(ce_increase.mean()),
                         "topological_defect": float(topological_defect),
-                        "mean_reconstruction": float(reconstruction.mean()),
+                        "mean_embedding_displacement": float(
+                            embedding_displacement.mean()
+                        ),
                         "mean_diagnostic": float(diagnostic.mean()),
                     }
                 )
@@ -450,7 +504,7 @@ def main() -> None:
                             "sigma": sigmas[k],
                             "damage": float(damage[k]),
                             "ce_increase": float(ce_increase[k]),
-                            "reconstruction": float(reconstruction[k]),
+                            "embedding_displacement": float(embedding_displacement[k]),
                             "diagnostic": float(diagnostic[k]),
                         }
                     )
@@ -461,7 +515,9 @@ def main() -> None:
         batch_rows = [row for row in per_batch_rows if row["kind"] == kind]
         topology = [row["topological_defect"] for row in batch_rows]
         damage_rates = [row["damage_rate"] for row in batch_rows]
-        reconstruction = [row["mean_reconstruction"] for row in batch_rows]
+        embedding_displacement = [
+            row["mean_embedding_displacement"] for row in batch_rows
+        ]
         severities = [row["severity"] for row in batch_rows]
         blocks = [row["block_id"] for row in batch_rows]
         inference_seed = _stable_hash_seed(
@@ -473,7 +529,7 @@ def main() -> None:
         repeated = _repeated_measure_inference(
             topology,
             damage_rates,
-            (reconstruction, severities),
+            (embedding_displacement, severities),
             blocks,
             seed=inference_seed,
             bootstrap_replicates=args.bootstrap_replicates,
@@ -489,35 +545,45 @@ def main() -> None:
             "unique_blocks": len(set(blocks)),
             "severity_levels": len(set(severities)),
             "damage_rate": statistics.mean(row["damage"] for row in rows),
-            "spearman(diagnostic, damage)": _spearman(
-                [row["diagnostic"] for row in rows],
-                [row["damage"] for row in rows],
-            ),
-            "partial_spearman(diagnostic, damage | reconstruction)": _partial_spearman(
-                [row["diagnostic"] for row in rows],
-                [row["damage"] for row in rows],
-                [row["reconstruction"] for row in rows],
-            ),
             "batch_spearman(topological_defect, damage_rate)": _spearman(
                 topology,
                 damage_rates,
             ),
-            "batch_partial(topological_defect, damage_rate | reconstruction)": (
-                _partial_spearman(topology, damage_rates, reconstruction)
-            ),
-            "batch_partial(topological_defect, damage_rate | reconstruction, severity, block)": repeated[
+            "batch_partial(topological_defect, damage_rate | embedding_displacement, severity, block)": repeated[
                 "estimate"
             ],
             "repeated_measures_inference": repeated,
-            "batch_spearman(reconstruction, damage_rate)": _spearman(
-                [row["mean_reconstruction"] for row in batch_rows],
-                [row["damage_rate"] for row in batch_rows],
+            "batch_spearman(embedding_displacement, damage_rate)": _spearman(
+                embedding_displacement,
+                damage_rates,
             ),
         }
 
     report = {
-        "schema_version": 2,
-        "checkpoint": args.checkpoint,
+        "schema_version": 3,
+        "checkpoint": str(checkpoint_path),
+        "checkpoint_sha256": _file_sha256(checkpoint_path),
+        "checkpoint_load": checkpoint_load,
+        "config": str(config_path),
+        "config_sha256": _file_sha256(config_path),
+        "script_sha256": _file_sha256(Path(__file__).resolve()),
+        "git": _git_metadata(config.project_root),
+        "command": [sys.executable, *sys.argv],
+        "execution": {
+            "batch_size": args.batch_size,
+            "max_batches": args.max_batches,
+            "device": str(runtime.device),
+            "torch_version": torch.__version__,
+            "python_version": sys.version,
+        },
+        "topological_metric": {
+            "name": "exact_srtd",
+            "degree": 1,
+            "max_dim": 2,
+            "normalization": "full-matrix-quantile",
+            "normalization_quantile": 0.9,
+            "max_points": config.loss.rtd_max_points,
+        },
         "severities": list(SEVERITIES),
         "sampling": {
             "protocol": _DRAW_PROTOCOL,
@@ -530,8 +596,21 @@ def main() -> None:
         },
         "analysis_protocol": {
             "method": _ANALYSIS_METHOD,
-            "numeric_controls": ["mean_reconstruction", "severity"],
+            "numeric_controls": ["mean_embedding_displacement", "severity"],
             "repeated_measure_block": "batch block across severity levels",
+            "inferential_scope": (
+                "Conditional on this fixed trained checkpoint and sampled "
+                "held-out blocks; this does not estimate variation across "
+                "training seeds."
+            ),
+            "multiplicity": (
+                "No adjustment across corruption kinds; intervals and p-values "
+                "are per-kind diagnostics."
+            ),
+            "claim_boundary": (
+                "Fixed-expert embedding diagnostic only; no translator or "
+                "learned chain map is evaluated."
+            ),
         },
         "analysis": analysis,
         "per_batch": per_batch_rows,

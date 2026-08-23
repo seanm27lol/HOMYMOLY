@@ -1,11 +1,63 @@
 # Gate-2 confirmatory campaign (2026-08-04)
 
+> **Validity correction (updated 2026-08-22).** The first five-seed campaign
+> had mean margin +0.036, 95% CI [−0.018, +0.090], and was inconclusive. The
+> stabilization was designed after inspecting weak seeds s2/s5 and then
+> evaluated on those same seeds; its +0.108 interval is post-selection
+> development evidence. The protocol-aligned v2 campaign below met its frozen
+> numerical decision rule, with a disclosed procedural deviation that prevents
+> calling it pristine preregistration. All of these historical routers distilled
+> targets from validation latent-regime labels. Regime was not an inference
+> input, but this is privileged training supervision. At inference, the router
+> also summarizes available cell and sheaf observations, including active-face
+> and transport statistics; it is not graph-only.
+
+## Protocol-aligned routing-v2 result
+
+The five valid runs used seeds 20260906–20260910 and the immutable config
+hashes recorded in [the v2 protocol](19-routing-confirmatory-v2-protocol.md).
+All completed with no failed gate. Their environment records agree on commit
+`e69b07707950b6abe332366c51fe8c94254899f3`, executable fingerprint
+`473fb0f6714798274c38949107221df3bd941e89273a6eef76e54394d6c1f1d8`,
+PyTorch 2.13.0+cu130, CUDA 13.0, and NVIDIA GB10. Later runs started from a
+dirty worktree, but the recorded executable fingerprint was identical.
+
+| seed | hard | best fixed | margin | dense | hard−dense | route acc | MI | utilization (g/c/s) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| s1 | 0.8028 | 0.6743 | +0.1285 | 0.7723 | +0.0305 | 0.6100 | 0.1622 | .327/.344/.329 |
+| s2 | 0.7745 | 0.6754 | +0.0991 | 0.7571 | +0.0174 | 0.5468 | 0.0972 | .305/.344/.351 |
+| s3 | 0.7680 | 0.6667 | +0.1013 | 0.7582 | +0.0098 | 0.5381 | 0.0934 | .318/.390/.292 |
+| s4 | 0.7789 | 0.6667 | +0.1122 | 0.7342 | +0.0447 | 0.5752 | 0.1264 | .381/.329/.290 |
+| s5 | 0.7745 | 0.6667 | +0.1078 | 0.7505 | +0.0240 | 0.5501 | 0.1006 | .350/.340/.310 |
+
+The primary hard-minus-best-fixed margin is **+0.1098039216** across n=5
+(sample SD 0.0116918587; two-sided Student-t 95% CI
+[0.0952865615, 0.1243212816]). Its lower endpoint is above zero, so the
+campaign **supports the frozen, scoped endpoint under its decision rule**.
+All five margins are positive; an exact two-sided sign-test sensitivity gives
+p=0.0625. With only five seeds, normality, independence, and
+representativeness assumptions cannot be checked empirically.
+
+This is not an unrestricted claim that routing is graph-only, input-only, or
+necessary across tasks. It concerns the historical regime-distilled router
+over available structured views on this synthetic benchmark. It does not test
+a graph-to-cell/sheaf translator, learned chain map, mapping cone, or
+representation conversion.
+
+There was one protocol-integrity deviation: an aborted pre-commit attempt for
+seed 20260906 exposed validation metrics under a different executable before
+the valid frozen-config rerun. The core endpoint, seed list, decision rule, and
+config hashes were committed before the valid campaign, but the earlier
+observation means “genuinely untouched” and “preregistered” overstate the
+evidence. The appropriate label is **protocol-aligned with a disclosed
+procedural deviation**.
+
 Per the plan's confirmatory rule ("at least five fresh seeds for the
 primary synthetic comparison… report confidence intervals and all failed
 or collapsed runs"), five independent full Gate-2 runs (seeds
 20260901–20260905, configs `configs/confirmatory-s{1..5}.yaml`, artifacts
 `artifacts/confirmatory-s{1..5}/`) were executed after the run-9/10
-pilot. This is the statistical verdict on the routing claim (C3).
+pilot. This is the original statistical verdict on the routing claim (C3).
 
 ## Results (official test split per seed)
 
@@ -25,8 +77,9 @@ improvement) passed on every seed; no run crashed.
 - **Margin over best fixed route**: per-seed margins +0.099, −0.011,
   +0.028, +0.058, +0.007 → mean **+0.036**, 95% CI [−0.018, +0.090]
   (t(4)) — positive trend, but the five-seed interval crosses zero.
-  Including the two pilot runs (runs 9–10, n=7): mean **+0.046**, 95% CI
-  **[+0.010, +0.082]** (t(6)) — statistically positive.
+  Pooling the two earlier pilot runs gives +0.046 [ +0.010, +0.082 ], but
+  mixes development and confirmatory evidence and is not a valid
+  confirmatory interval.
 - **Routing is regime-informative on every seed**: MI 0.029–0.097
   (mean 0.052 ± 0.038), route accuracy 0.378–0.546 — always above the
   1/3 baseline, consistent with the measured ~0.55–0.58 identifiability
@@ -36,24 +89,22 @@ improvement) passed on every seed; no run crashed.
   partial route collapse toward cell with the graph route at 8%
   utilization; s5 is a marginal pass (0.687 vs 0.680) with the same
   tilt. Weak seeds correlate with under-use of the graph route.
-- **Interpretation**: the routing claim holds on average across seven
-  independent runs with a small but statistically significant margin,
-  and fails on roughly one in five draws. The honest characterization
-  for the ledger is *supported with material seed variance* — the
-  mechanism works, and the router's weak-seed failure mode (partial
-  collapse to cell) is now the most interesting open stability question
-  in the system.
+- **Interpretation**: the point estimate is positive, but the prespecified
+  five-seed interval crosses zero and one seed loses to the best fixed route.
+  The confirmatory characterization is *inconclusive with material seed
+  variance*.
 
-## Consequences
+## Consequences of the original campaign
 
-- C3 updated in the claims ledger: supported with the n=7 confirmatory
-  interval above; seed variance and the s2 collapse mode recorded.
+- The original campaign is inconclusive. Pilot runs remain development history
+  and are not added to its confidence interval. The later v2 campaign supports
+  its separately frozen, narrowly scoped endpoint with the qualification above.
 - Follow-up candidates, in priority order: (a) stabilize weak-seed
   routing (longer warmup, lower entropy weight, or oracle-target
   smoothing to reduce collapse-to-cell draws); (b) the
   molecularly-informed cell architecture (Gate-5 redesign direction).
 
-## Stabilization pilot (2026-08-04): the collapse mode is fixed
+## Adaptive stabilization study (2026-08-04; exploratory)
 
 Diagnosis first: the s2 collapse is an optimization basin failure, not
 supervision — its oracle table and experts are statistically identical
@@ -71,7 +122,9 @@ on the two weak seeds and one strong seed against their own baselines:
 
 The weak-seed uniform-output mode disappears entirely: both weak seeds
 now beat the best fixed route by wide margins and exceed the strong
-baseline, while the strong seed is unchanged. ## Stabilized five-seed campaign (2026-08-04): the canonical routing result
+baseline, while the strong seed is unchanged.
+
+## Stabilized same-seed rerun (2026-08-04; post-selection)
 
 With the stabilization applied to all five seeds (`configs/stabilized-s{1..5}.yaml`):
 
@@ -83,18 +136,22 @@ With the stabilization applied to all five seeds (`configs/stabilized-s{1..5}.ya
 | s4 | 0.782 | 0.678 | 0.736 | 0.976 | 0.576 | 0.126 | .36/.34/.30 |
 | s5 | 0.781 | 0.667 | 0.764 | 0.999 | 0.564 | 0.118 | .28/.42/.29 |
 
-- **Margin over best fixed: mean +0.108, 95% CI [+0.096, +0.119]** (t(4))
+- **Descriptive margin over best fixed: mean +0.108, interval
+  [+0.096, +0.119]** (the t calculation is descriptive only because the
+  configuration was chosen using these seeds)
   — against +0.036 [−0.018, +0.090] unstabilized. All five seeds beat
   the best fixed route *and* the dense ensemble.
-- **Variance collapsed 4×**: hard accuracy 0.777 ± 0.010 (was
+- **Observed variance fell 4×**: hard accuracy 0.777 ± 0.010 (was
   0.723 ± 0.043); no seed exhibits the uniform-output or
   collapse-to-cell mode; utilization is balanced on every seed.
-- Routing is strongly regime-informative: MI mean 0.113 (was 0.052),
-  route accuracy mean 0.559 — at the measured ~0.55–0.58 identifiability
-  ceiling of the anti-shortcut design. With oracle accuracy ~0.999, the
-  remaining hard-accuracy gap to 0.777 is the design's intentional
-  route-reliability overlap, not router error.
+- Routing is strongly regime-informative on these reused seeds: MI mean 0.113
+  (was 0.052), route accuracy mean 0.559. Prior finite benchmark classifiers
+  scored approximately 0.55–0.58; that is a descriptive range, not a proven
+  identifiability ceiling, so the residual gap cannot be attributed entirely
+  to intentional overlap.
 - **Config change**: `router_learning_rate: 0.001` and
   `router_warmup_epochs: 12` are now the canonical settings in
   `configs/gate2.yaml` (measured better on every axis: same-or-better
-  accuracy on every seed, no failed seeds, tighter interval).
+  accuracy on every reused seed, no failed seeds, tighter descriptive
+  interval). Its generalization is supported by the protocol-aligned v2
+  campaign only within the scope and procedural qualifications stated above.

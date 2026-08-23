@@ -132,7 +132,12 @@ def test_checkpoint_compatibility_allows_only_legacy_transport_angle_gap() -> No
         for key, value in complete.items()
         if not key.startswith("graph_to_sheaf.transport_angle.")
     }
-    evaluation._load_model_state_compatibly(model, legacy)
+    metadata = evaluation._load_model_state_compatibly(model, legacy)
+    assert metadata["unexpected_keys"] == []
+    assert metadata["tolerated_missing_keys"] == [
+        "graph_to_sheaf.transport_angle.bias",
+        "graph_to_sheaf.transport_angle.weight",
+    ]
 
     missing_other = {key: value for key, value in legacy.items() if key != "other.bias"}
     with pytest.raises(RuntimeError, match="other.bias"):
@@ -141,3 +146,8 @@ def test_checkpoint_compatibility_allows_only_legacy_transport_angle_gap() -> No
     unexpected = {**complete, "surprise.weight": torch.ones(1)}
     with pytest.raises(RuntimeError, match="surprise.weight"):
         evaluation._load_model_state_compatibly(model, unexpected)
+
+
+def test_evaluator_declares_fixed_expert_claim_boundary() -> None:
+    assert "does not invoke a translator" in evaluation.__doc__.lower()
+    assert not hasattr(evaluation, "TRANSLATOR_FOR_KIND")

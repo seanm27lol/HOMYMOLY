@@ -4,7 +4,29 @@
 
 The broad intuition is supported, but its ingredients have different novelty statuses. Mapping-cone topology discrepancies, trainable persistent-topology losses, learned higher-order liftings, learned sheaf maps, categorical coherence, and dynamic routing all exist independently. The open intersection is a dynamically routed system whose experts inhabit genuinely different structured domains and whose translators are assessed both categorically and homologically.
 
-This is a targeted review of primary literature checked through 2026-08-02. It is not a systematic review, patent search, or guarantee of priority.
+This is a targeted review of primary literature checked through 2026-08-13. It is not a systematic review, patent search, or guarantee of priority. The search emphasized combinations of representation topology, mapping cones, differentiable graph lifting, cellular/sheaf learning, graph mixtures of experts, multi-view routing, and conditional computation.
+
+## Review method and scope
+
+The audit searched primary conference/journal pages and author papers across
+PMLR, OpenReview, NeurIPS, ICLR, ICML, and TMLR. Query families combined
+“representation topology divergence,” “mapping cone neural representation,”
+“differentiable graph lifting cell complex,” “learned cellular sheaf,” “graph
+mixture of experts,” “multi-view graph routing,” and “per-example conditional
+computation.” Backward and forward citation links around RTD, differentiable
+lifting, and graph MoE papers were used for snowballing. Secondary surveys
+helped discover terms but are not the basis of the novelty boundary below.
+The inclusion criterion was a primary method that overlaps at least one of:
+paired-representation topology, learned change of structured domain,
+chain/coherence constraints, or dynamic expert selection.
+
+| HOMYMOLY ingredient | closest established precedent | remaining empirical question |
+|---|---|---|
+| paired topology discrepancy | RTD, RTD-AE, SRTD | does a degree-specific diagnostic add value for an actual typed learned map? |
+| learned graph-to-higher-order structure | DCM, DiffLift | can held-out cell/sheaf targets be identified and reconstructed without target-view shortcuts? |
+| local transport/sheaf learning | Neural Sheaf Diffusion, Knowledge Sheaves | when does a sheaf route beat graph/cell alternatives under one controlled task? |
+| categorical path/coherence constraints | Learning Functors, Categorical Deep Learning | does an enforced diagram law improve task or conversion fidelity? |
+| conditional structured computation | DeepMoE, GMoE, GraphMETRO, MvCGE | can routing among genuinely different domains beat fixed experts at measured matched accuracy/compute? |
 
 ## Direct precedent: representation topology divergence
 
@@ -46,9 +68,11 @@ The [ICML Topological Deep Learning Challenge 2024](https://arxiv.org/abs/2409.0
 
 Mixture-of-experts systems such as [Switch Transformers](https://www.jmlr.org/papers/v23/21-0998.html) learn input-conditioned gates over computational experts. Modular and routing networks similarly select computation paths. Their modules generally expose compatible tensor interfaces; they do not treat a graph-to-sheaf transition as a typed functor, enforce unit/counit or naturality constraints, or compute an obstruction object for structural loss.
 
+The graph-routing neighborhood is considerably closer than that broad comparison suggests. [DeepMoE](https://proceedings.mlr.press/v115/wang20d.html) uses per-example dynamic routing to adaptively sparsify a deep network and reduce computation. [Graph Mixture of Experts](https://papers.nips.cc/paper_files/paper/2023/hash/9f4064d145bad5e361206c3303bda7b8-Abstract-Conference.html) routes graph nodes among specialized aggregation experts. [GraphMETRO](https://papers.nips.cc/paper_files/paper/2024/hash/11c892a9fcc430cc0f4c7d457e5d60ea-Abstract-Conference.html) composes aligned experts for graph distribution shifts. [Multi-view Collaborative Graph Expert Learning](https://openreview.net/forum?id=dsp8dUlZFq) dynamically activates graph-aware experts across multiple graph views with discrepancy and load-balancing objectives. These works substantially overlap HOMYMOLY's routing and multi-view system design; they do not, in their stated methods, evaluate graph/cell/sheaf conversions with degree-specific mapping-cone defects.
+
 ## Novelty boundary
 
-No primary source was found that jointly:
+In this targeted search, no primary source was located that jointly:
 
 1. exposes several mathematical representation types;
 2. learns typed translators and reverse or adjoint-like mates;
@@ -56,4 +80,4 @@ No primary source was found that jointly:
 4. enforces chain, path, or unit–counit coherence; and
 5. quantifies irreversible structural loss using map-aware kernels, cokernels, or derived obstruction objects.
 
-This intersection—not any individual component—is HOMYMOLY's candidate contribution.
+This is a narrow candidate intersection, not a priority claim. The current implementation must still demonstrate that its branches are genuine typed conversions and that its homological diagnostic is valid before the intersection can be claimed as an empirical contribution.

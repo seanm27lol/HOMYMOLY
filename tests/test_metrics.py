@@ -130,6 +130,18 @@ def test_paired_surrogate_has_finite_nonzero_gradients() -> None:
     assert second_points.grad.abs().sum() > 0
 
 
+def test_float32_pairwise_distances_have_exact_zero_diagonal_at_training_scale() -> (
+    None
+):
+    generator = torch.Generator().manual_seed(20260821)
+    points = torch.randn((192, 256), generator=generator, dtype=torch.float32)
+    distances = pairwise_euclidean_distances(points)
+
+    assert torch.count_nonzero(torch.diagonal(distances)) == 0
+    canonical = validate_dissimilarity_matrix(distances)
+    torch.testing.assert_close(canonical, distances)
+
+
 @pytest.mark.parametrize("size", [0, 1, 4])
 def test_degenerate_collapsed_spaces_are_finite(size: int) -> None:
     collapsed = torch.zeros((size, size), dtype=torch.float64, requires_grad=True)

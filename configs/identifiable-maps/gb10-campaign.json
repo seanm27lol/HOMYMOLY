@@ -1,0 +1,4617 @@
+{
+  "schema_version": 1,
+  "campaign_id": "identifiable-gb10-factorial-v1",
+  "execution_enabled": false,
+  "description": "Five paired seeds across eight identifiable-map ablations, followed by trained checkpoint GB10 compute benchmarks.",
+  "idle_policy": {
+    "gpu_index": 0,
+    "max_utilization": 10,
+    "max_background_processes": 2,
+    "max_background_memory_mib": 49152,
+    "samples": 3,
+    "interval_seconds": 2.0
+  },
+  "fingerprint_inputs": [
+    "configs/identifiable-maps/gb10-full.yaml",
+    "scripts/train_identifiable_maps.py",
+    "scripts/benchmark_identifiable_maps.py",
+    "scripts/benchmark_compute.py",
+    "configs/routing-confirmatory-v2-s1.yaml",
+    "configs/routing-confirmatory-v2-s2.yaml",
+    "configs/routing-confirmatory-v2-s3.yaml",
+    "configs/routing-confirmatory-v2-s4.yaml",
+    "configs/routing-confirmatory-v2-s5.yaml",
+    "artifacts/routing-confirmatory-v2-s1/checkpoints/last.pt",
+    "artifacts/routing-confirmatory-v2-s2/checkpoints/last.pt",
+    "artifacts/routing-confirmatory-v2-s3/checkpoints/last.pt",
+    "artifacts/routing-confirmatory-v2-s4/checkpoints/last.pt",
+    "artifacts/routing-confirmatory-v2-s5/checkpoints/last.pt",
+    "src/homymoly/experiments/identifiable_maps.py",
+    "scripts/summarize_identifiable_campaign.py",
+    "docs/21-identifiable-typed-map-protocol.md"
+  ],
+  "steps": [
+    {
+      "id": "train-s1-task_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260821",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260821
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_only",
+            "seed": 20260821,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s1-reconstruction_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260821",
+        "--device",
+        "cuda",
+        "--ablation",
+        "reconstruction_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260821
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "reconstruction_only",
+            "seed": 20260821,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s1-task_reconstruction",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260821",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260821
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction",
+            "seed": 20260821,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s1-task_reconstruction_cone",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260821",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction_cone",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260821
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction_cone",
+            "seed": 20260821,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s1-task_reconstruction_rtd",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260821",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction_rtd",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260821
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction_rtd",
+            "seed": 20260821,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s1-cone_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260821",
+        "--device",
+        "cuda",
+        "--ablation",
+        "cone_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260821/cone_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260821
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "cone_only",
+            "seed": 20260821,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s1-rtd_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260821",
+        "--device",
+        "cuda",
+        "--ablation",
+        "rtd_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260821
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "rtd_only",
+            "seed": 20260821,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s1-combined",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260821",
+        "--device",
+        "cuda",
+        "--ablation",
+        "combined",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/combined/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/combined/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260821
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/combined/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/combined/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/combined/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/combined/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "combined",
+            "seed": 20260821,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260821/combined/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s2-task_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260822",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260822
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_only",
+            "seed": 20260822,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s2-reconstruction_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260822",
+        "--device",
+        "cuda",
+        "--ablation",
+        "reconstruction_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260822
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "reconstruction_only",
+            "seed": 20260822,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s2-task_reconstruction",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260822",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260822
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction",
+            "seed": 20260822,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s2-task_reconstruction_cone",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260822",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction_cone",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260822
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction_cone",
+            "seed": 20260822,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s2-task_reconstruction_rtd",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260822",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction_rtd",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260822
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction_rtd",
+            "seed": 20260822,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s2-cone_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260822",
+        "--device",
+        "cuda",
+        "--ablation",
+        "cone_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260822/cone_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260822
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "cone_only",
+            "seed": 20260822,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s2-rtd_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260822",
+        "--device",
+        "cuda",
+        "--ablation",
+        "rtd_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260822
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "rtd_only",
+            "seed": 20260822,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s2-combined",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260822",
+        "--device",
+        "cuda",
+        "--ablation",
+        "combined",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/combined/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/combined/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260822
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/combined/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/combined/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/combined/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/combined/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "combined",
+            "seed": 20260822,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260822/combined/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s3-task_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260823",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260823
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_only",
+            "seed": 20260823,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s3-reconstruction_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260823",
+        "--device",
+        "cuda",
+        "--ablation",
+        "reconstruction_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260823
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "reconstruction_only",
+            "seed": 20260823,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s3-task_reconstruction",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260823",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260823
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction",
+            "seed": 20260823,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s3-task_reconstruction_cone",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260823",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction_cone",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260823
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction_cone",
+            "seed": 20260823,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s3-task_reconstruction_rtd",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260823",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction_rtd",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260823
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction_rtd",
+            "seed": 20260823,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s3-cone_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260823",
+        "--device",
+        "cuda",
+        "--ablation",
+        "cone_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260823/cone_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260823
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "cone_only",
+            "seed": 20260823,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s3-rtd_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260823",
+        "--device",
+        "cuda",
+        "--ablation",
+        "rtd_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260823
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "rtd_only",
+            "seed": 20260823,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s3-combined",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260823",
+        "--device",
+        "cuda",
+        "--ablation",
+        "combined",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/combined/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/combined/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260823
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/combined/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/combined/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/combined/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/combined/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "combined",
+            "seed": 20260823,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260823/combined/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s4-task_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260824",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260824
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_only",
+            "seed": 20260824,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s4-reconstruction_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260824",
+        "--device",
+        "cuda",
+        "--ablation",
+        "reconstruction_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260824
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "reconstruction_only",
+            "seed": 20260824,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s4-task_reconstruction",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260824",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260824
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction",
+            "seed": 20260824,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s4-task_reconstruction_cone",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260824",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction_cone",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260824
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction_cone",
+            "seed": 20260824,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s4-task_reconstruction_rtd",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260824",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction_rtd",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260824
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction_rtd",
+            "seed": 20260824,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s4-cone_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260824",
+        "--device",
+        "cuda",
+        "--ablation",
+        "cone_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260824/cone_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260824
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "cone_only",
+            "seed": 20260824,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s4-rtd_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260824",
+        "--device",
+        "cuda",
+        "--ablation",
+        "rtd_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260824
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "rtd_only",
+            "seed": 20260824,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s4-combined",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260824",
+        "--device",
+        "cuda",
+        "--ablation",
+        "combined",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/combined/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/combined/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260824
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/combined/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/combined/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/combined/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/combined/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "combined",
+            "seed": 20260824,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260824/combined/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s5-task_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260825",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260825
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_only",
+            "seed": 20260825,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s5-reconstruction_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260825",
+        "--device",
+        "cuda",
+        "--ablation",
+        "reconstruction_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260825
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "reconstruction_only",
+            "seed": 20260825,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s5-task_reconstruction",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260825",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260825
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction",
+            "seed": 20260825,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s5-task_reconstruction_cone",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260825",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction_cone",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260825
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction_cone",
+            "seed": 20260825,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s5-task_reconstruction_rtd",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260825",
+        "--device",
+        "cuda",
+        "--ablation",
+        "task_reconstruction_rtd",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260825
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction_rtd",
+            "seed": 20260825,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s5-cone_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260825",
+        "--device",
+        "cuda",
+        "--ablation",
+        "cone_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260825/cone_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260825
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "cone_only",
+            "seed": 20260825,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s5-rtd_only",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260825",
+        "--device",
+        "cuda",
+        "--ablation",
+        "rtd_only",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260825
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "rtd_only",
+            "seed": 20260825,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "train-s5-combined",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/train_identifiable_maps.py",
+        "--config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--seed",
+        "20260825",
+        "--device",
+        "cuda",
+        "--ablation",
+        "combined",
+        "--output",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/combined/effective_config.yaml",
+          "minimum_bytes": 500
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/combined/provenance.json",
+          "minimum_bytes": 500,
+          "json_equals": {
+            "schema_version": 1,
+            "device": "cuda",
+            "seed": 20260825
+          },
+          "json_required_keys": [
+            "command",
+            "code_fingerprint",
+            "working_directory",
+            "output_directory",
+            "git",
+            "files",
+            "gpu",
+            "deterministic_algorithms",
+            "cublas_workspace_config"
+          ]
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/combined/checkpoint.pt",
+          "minimum_bytes": 1024
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/combined/history.json",
+          "minimum_bytes": 100
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/combined/test_predictions.jsonl",
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/combined/summary.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "combined",
+            "seed": 20260825,
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "test",
+            "environment",
+            "basis_chain_residual_max",
+            "dataset",
+            "declared_chain_map_equations",
+            "engineering_recovery_gate"
+          ],
+          "minimum_bytes": 1000
+        },
+        {
+          "path": "artifacts/identifiable-maps/campaign/seed-20260825/combined/manifest.json",
+          "minimum_bytes": 200,
+          "json_equals": {
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "source_git_revision",
+            "artifacts"
+          ]
+        }
+      ],
+      "inputs": [
+        "scripts/train_identifiable_maps.py",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "src/homymoly/experiments/identifiable_maps.py"
+      ]
+    },
+    {
+      "id": "summarize-identifiable-campaign",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/summarize_identifiable_campaign.py",
+        "--campaign-root",
+        "artifacts/identifiable-maps/campaign",
+        "--source-config",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "--output",
+        "artifacts/identifiable-maps/campaign-summary.json"
+      ],
+      "inputs": [
+        "scripts/summarize_identifiable_campaign.py",
+        "docs/21-identifiable-typed-map-protocol.md",
+        "configs/identifiable-maps/gb10-full.yaml",
+        "scripts/train_identifiable_maps.py",
+        "src/homymoly/experiments/identifiable_maps.py",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/reconstruction_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_cone/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction_rtd/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/cone_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/rtd_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/reconstruction_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_cone/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction_rtd/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/cone_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/rtd_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/reconstruction_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_cone/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction_rtd/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/cone_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/rtd_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/reconstruction_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_cone/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction_rtd/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/cone_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/rtd_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/reconstruction_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_cone/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction_rtd/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/cone_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/rtd_only/manifest.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined/provenance.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined/checkpoint.pt",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined/history.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined/test_predictions.jsonl",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined/summary.json",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined/manifest.json"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/campaign-summary.json",
+          "minimum_bytes": 5000,
+          "json_equals": {
+            "schema_version": 1,
+            "protocol": "docs/21-identifiable-typed-map-protocol.md"
+          },
+          "json_required_keys": [
+            "frozen_design",
+            "validation",
+            "engineering_recovery_gate",
+            "shared_provenance",
+            "analysis_provenance",
+            "runs",
+            "by_ablation",
+            "paired_contrasts",
+            "interpretation_guardrail"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "benchmark-identifiable-s1-task_reconstruction",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_identifiable_maps.py",
+        "--config",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/effective_config.yaml",
+        "--checkpoint",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/checkpoint.pt",
+        "--output",
+        "artifacts/identifiable-maps/benchmarks/gb10-s1-task_reconstruction.json",
+        "--device",
+        "cuda",
+        "--batch-size",
+        "192",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/benchmarks/gb10-s1-task_reconstruction.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction",
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "latency_ms",
+            "throughput_examples_per_second_at_median",
+            "chain_residual_max",
+            "provenance",
+            "peak_cuda_memory_allocated_bytes",
+            "peak_cuda_memory_reserved_bytes"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_identifiable_maps.py",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260821/task_reconstruction/checkpoint.pt"
+      ]
+    },
+    {
+      "id": "benchmark-identifiable-s1-combined",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_identifiable_maps.py",
+        "--config",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined/effective_config.yaml",
+        "--checkpoint",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined/checkpoint.pt",
+        "--output",
+        "artifacts/identifiable-maps/benchmarks/gb10-s1-combined.json",
+        "--device",
+        "cuda",
+        "--batch-size",
+        "192",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/benchmarks/gb10-s1-combined.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "combined",
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "latency_ms",
+            "throughput_examples_per_second_at_median",
+            "chain_residual_max",
+            "provenance",
+            "peak_cuda_memory_allocated_bytes",
+            "peak_cuda_memory_reserved_bytes"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_identifiable_maps.py",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260821/combined/checkpoint.pt"
+      ]
+    },
+    {
+      "id": "benchmark-identifiable-s2-task_reconstruction",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_identifiable_maps.py",
+        "--config",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/effective_config.yaml",
+        "--checkpoint",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/checkpoint.pt",
+        "--output",
+        "artifacts/identifiable-maps/benchmarks/gb10-s2-task_reconstruction.json",
+        "--device",
+        "cuda",
+        "--batch-size",
+        "192",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/benchmarks/gb10-s2-task_reconstruction.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction",
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "latency_ms",
+            "throughput_examples_per_second_at_median",
+            "chain_residual_max",
+            "provenance",
+            "peak_cuda_memory_allocated_bytes",
+            "peak_cuda_memory_reserved_bytes"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_identifiable_maps.py",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260822/task_reconstruction/checkpoint.pt"
+      ]
+    },
+    {
+      "id": "benchmark-identifiable-s2-combined",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_identifiable_maps.py",
+        "--config",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined/effective_config.yaml",
+        "--checkpoint",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined/checkpoint.pt",
+        "--output",
+        "artifacts/identifiable-maps/benchmarks/gb10-s2-combined.json",
+        "--device",
+        "cuda",
+        "--batch-size",
+        "192",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/benchmarks/gb10-s2-combined.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "combined",
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "latency_ms",
+            "throughput_examples_per_second_at_median",
+            "chain_residual_max",
+            "provenance",
+            "peak_cuda_memory_allocated_bytes",
+            "peak_cuda_memory_reserved_bytes"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_identifiable_maps.py",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260822/combined/checkpoint.pt"
+      ]
+    },
+    {
+      "id": "benchmark-identifiable-s3-task_reconstruction",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_identifiable_maps.py",
+        "--config",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/effective_config.yaml",
+        "--checkpoint",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/checkpoint.pt",
+        "--output",
+        "artifacts/identifiable-maps/benchmarks/gb10-s3-task_reconstruction.json",
+        "--device",
+        "cuda",
+        "--batch-size",
+        "192",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/benchmarks/gb10-s3-task_reconstruction.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction",
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "latency_ms",
+            "throughput_examples_per_second_at_median",
+            "chain_residual_max",
+            "provenance",
+            "peak_cuda_memory_allocated_bytes",
+            "peak_cuda_memory_reserved_bytes"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_identifiable_maps.py",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260823/task_reconstruction/checkpoint.pt"
+      ]
+    },
+    {
+      "id": "benchmark-identifiable-s3-combined",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_identifiable_maps.py",
+        "--config",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined/effective_config.yaml",
+        "--checkpoint",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined/checkpoint.pt",
+        "--output",
+        "artifacts/identifiable-maps/benchmarks/gb10-s3-combined.json",
+        "--device",
+        "cuda",
+        "--batch-size",
+        "192",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/benchmarks/gb10-s3-combined.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "combined",
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "latency_ms",
+            "throughput_examples_per_second_at_median",
+            "chain_residual_max",
+            "provenance",
+            "peak_cuda_memory_allocated_bytes",
+            "peak_cuda_memory_reserved_bytes"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_identifiable_maps.py",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260823/combined/checkpoint.pt"
+      ]
+    },
+    {
+      "id": "benchmark-identifiable-s4-task_reconstruction",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_identifiable_maps.py",
+        "--config",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/effective_config.yaml",
+        "--checkpoint",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/checkpoint.pt",
+        "--output",
+        "artifacts/identifiable-maps/benchmarks/gb10-s4-task_reconstruction.json",
+        "--device",
+        "cuda",
+        "--batch-size",
+        "192",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/benchmarks/gb10-s4-task_reconstruction.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction",
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "latency_ms",
+            "throughput_examples_per_second_at_median",
+            "chain_residual_max",
+            "provenance",
+            "peak_cuda_memory_allocated_bytes",
+            "peak_cuda_memory_reserved_bytes"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_identifiable_maps.py",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260824/task_reconstruction/checkpoint.pt"
+      ]
+    },
+    {
+      "id": "benchmark-identifiable-s4-combined",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_identifiable_maps.py",
+        "--config",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined/effective_config.yaml",
+        "--checkpoint",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined/checkpoint.pt",
+        "--output",
+        "artifacts/identifiable-maps/benchmarks/gb10-s4-combined.json",
+        "--device",
+        "cuda",
+        "--batch-size",
+        "192",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/benchmarks/gb10-s4-combined.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "combined",
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "latency_ms",
+            "throughput_examples_per_second_at_median",
+            "chain_residual_max",
+            "provenance",
+            "peak_cuda_memory_allocated_bytes",
+            "peak_cuda_memory_reserved_bytes"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_identifiable_maps.py",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260824/combined/checkpoint.pt"
+      ]
+    },
+    {
+      "id": "benchmark-identifiable-s5-task_reconstruction",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_identifiable_maps.py",
+        "--config",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/effective_config.yaml",
+        "--checkpoint",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/checkpoint.pt",
+        "--output",
+        "artifacts/identifiable-maps/benchmarks/gb10-s5-task_reconstruction.json",
+        "--device",
+        "cuda",
+        "--batch-size",
+        "192",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/benchmarks/gb10-s5-task_reconstruction.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "task_reconstruction",
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "latency_ms",
+            "throughput_examples_per_second_at_median",
+            "chain_residual_max",
+            "provenance",
+            "peak_cuda_memory_allocated_bytes",
+            "peak_cuda_memory_reserved_bytes"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_identifiable_maps.py",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260825/task_reconstruction/checkpoint.pt"
+      ]
+    },
+    {
+      "id": "benchmark-identifiable-s5-combined",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_identifiable_maps.py",
+        "--config",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined/effective_config.yaml",
+        "--checkpoint",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined/checkpoint.pt",
+        "--output",
+        "artifacts/identifiable-maps/benchmarks/gb10-s5-combined.json",
+        "--device",
+        "cuda",
+        "--batch-size",
+        "192",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/identifiable-maps/benchmarks/gb10-s5-combined.json",
+          "json_equals": {
+            "status": "completed",
+            "ablation": "combined",
+            "device": "cuda",
+            "schema_version": 1
+          },
+          "json_required_keys": [
+            "latency_ms",
+            "throughput_examples_per_second_at_median",
+            "chain_residual_max",
+            "provenance",
+            "peak_cuda_memory_allocated_bytes",
+            "peak_cuda_memory_reserved_bytes"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_identifiable_maps.py",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined/effective_config.yaml",
+        "artifacts/identifiable-maps/campaign/seed-20260825/combined/checkpoint.pt"
+      ]
+    },
+    {
+      "id": "benchmark-routing-v2-s1",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_compute.py",
+        "--config",
+        "configs/routing-confirmatory-v2-s1.yaml",
+        "--checkpoint",
+        "artifacts/routing-confirmatory-v2-s1/checkpoints/last.pt",
+        "--batch-size",
+        "64",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100",
+        "--output",
+        "artifacts/benchmarks/routing-confirmatory-v2-s1-compute.json"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/benchmarks/routing-confirmatory-v2-s1-compute.json",
+          "json_equals": {
+            "status": "completed"
+          },
+          "json_required_keys": [
+            "checkpoint_sha256",
+            "config_sha256",
+            "results",
+            "route_profile_on_benchmark_batch",
+            "environment"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_compute.py",
+        "configs/routing-confirmatory-v2-s1.yaml",
+        "artifacts/routing-confirmatory-v2-s1/checkpoints/last.pt"
+      ]
+    },
+    {
+      "id": "benchmark-routing-v2-s2",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_compute.py",
+        "--config",
+        "configs/routing-confirmatory-v2-s2.yaml",
+        "--checkpoint",
+        "artifacts/routing-confirmatory-v2-s2/checkpoints/last.pt",
+        "--batch-size",
+        "64",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100",
+        "--output",
+        "artifacts/benchmarks/routing-confirmatory-v2-s2-compute.json"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/benchmarks/routing-confirmatory-v2-s2-compute.json",
+          "json_equals": {
+            "status": "completed"
+          },
+          "json_required_keys": [
+            "checkpoint_sha256",
+            "config_sha256",
+            "results",
+            "route_profile_on_benchmark_batch",
+            "environment"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_compute.py",
+        "configs/routing-confirmatory-v2-s2.yaml",
+        "artifacts/routing-confirmatory-v2-s2/checkpoints/last.pt"
+      ]
+    },
+    {
+      "id": "benchmark-routing-v2-s3",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_compute.py",
+        "--config",
+        "configs/routing-confirmatory-v2-s3.yaml",
+        "--checkpoint",
+        "artifacts/routing-confirmatory-v2-s3/checkpoints/last.pt",
+        "--batch-size",
+        "64",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100",
+        "--output",
+        "artifacts/benchmarks/routing-confirmatory-v2-s3-compute.json"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/benchmarks/routing-confirmatory-v2-s3-compute.json",
+          "json_equals": {
+            "status": "completed"
+          },
+          "json_required_keys": [
+            "checkpoint_sha256",
+            "config_sha256",
+            "results",
+            "route_profile_on_benchmark_batch",
+            "environment"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_compute.py",
+        "configs/routing-confirmatory-v2-s3.yaml",
+        "artifacts/routing-confirmatory-v2-s3/checkpoints/last.pt"
+      ]
+    },
+    {
+      "id": "benchmark-routing-v2-s4",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_compute.py",
+        "--config",
+        "configs/routing-confirmatory-v2-s4.yaml",
+        "--checkpoint",
+        "artifacts/routing-confirmatory-v2-s4/checkpoints/last.pt",
+        "--batch-size",
+        "64",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100",
+        "--output",
+        "artifacts/benchmarks/routing-confirmatory-v2-s4-compute.json"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/benchmarks/routing-confirmatory-v2-s4-compute.json",
+          "json_equals": {
+            "status": "completed"
+          },
+          "json_required_keys": [
+            "checkpoint_sha256",
+            "config_sha256",
+            "results",
+            "route_profile_on_benchmark_batch",
+            "environment"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_compute.py",
+        "configs/routing-confirmatory-v2-s4.yaml",
+        "artifacts/routing-confirmatory-v2-s4/checkpoints/last.pt"
+      ]
+    },
+    {
+      "id": "benchmark-routing-v2-s5",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/benchmark_compute.py",
+        "--config",
+        "configs/routing-confirmatory-v2-s5.yaml",
+        "--checkpoint",
+        "artifacts/routing-confirmatory-v2-s5/checkpoints/last.pt",
+        "--batch-size",
+        "64",
+        "--warmup",
+        "20",
+        "--iterations",
+        "100",
+        "--output",
+        "artifacts/benchmarks/routing-confirmatory-v2-s5-compute.json"
+      ],
+      "outputs": [
+        {
+          "path": "artifacts/benchmarks/routing-confirmatory-v2-s5-compute.json",
+          "json_equals": {
+            "status": "completed"
+          },
+          "json_required_keys": [
+            "checkpoint_sha256",
+            "config_sha256",
+            "results",
+            "route_profile_on_benchmark_batch",
+            "environment"
+          ],
+          "minimum_bytes": 1000
+        }
+      ],
+      "inputs": [
+        "scripts/benchmark_compute.py",
+        "configs/routing-confirmatory-v2-s5.yaml",
+        "artifacts/routing-confirmatory-v2-s5/checkpoints/last.pt"
+      ]
+    }
+  ],
+  "max_attempts_per_step": 3
+}

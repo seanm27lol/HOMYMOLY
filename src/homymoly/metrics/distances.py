@@ -88,9 +88,15 @@ def pairwise_euclidean_distances(points: MatrixLike) -> Tensor:
     if value.shape[0] == 0:
         return value.new_zeros((0, 0))
     distances = torch.cdist(value, value, p=2)
-    # The arithmetic average removes insignificant backend asymmetry while
-    # preserving gradients. The diagonal of cdist is already exactly zero.
-    return (distances + distances.mT) * 0.5
+    # The arithmetic average removes insignificant backend asymmetry. Some
+    # float32 cdist kernels accumulate a small positive self-distance for
+    # larger batches, so impose the mathematical zero diagonal explicitly.
+    # ``where`` preserves every off-diagonal gradient.
+    distances = (distances + distances.mT) * 0.5
+    diagonal_mask = torch.eye(
+        distances.shape[0], dtype=torch.bool, device=distances.device
+    )
+    return torch.where(diagonal_mask, torch.zeros_like(distances), distances)
 
 
 def normalize_dissimilarity(

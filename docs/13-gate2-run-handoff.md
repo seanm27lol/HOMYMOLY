@@ -1,14 +1,17 @@
 # Gate-2 run handoff (2026-08-03)
 
-**STATUS: Gate 2 passed; Gate 3 recorded as a measured null** —
-structural-loss terms are inert on this benchmark (see
-[`15-gate3-record.md`](15-gate3-record.md)). The routing contribution
-stands.
-see "Run 8 outcome". Earlier history: runs 4–7 below.
-gates but its router collapsed to always-cell (graph expert broken). Run 5
-fixed the graph expert; run 6 gave the router regime-informative features;
-both still failed the Gate-4 utility bar for reasons traced to the routing
-oracle. See the run sections below.
+> **Audit correction (2026-08-13).** This is a chronological debugging log,
+> not the current scientific verdict. Its historical Gate-3 correlations are
+> invalid, its “exact SRTD” scalar used the wrong normalization and summed
+> unrelated degrees, its “translators” consumed target-view structure, its
+> router used privileged regime-distilled targets during training, and its
+> compute values were declared costs rather than matched measurements. The
+> first untouched five-seed routing interval later crossed zero. See
+> [`14-gate2-review.md`](14-gate2-review.md),
+> [`15-gate3-record.md`](15-gate3-record.md),
+> [`17-gate2-confirmatory.md`](17-gate2-confirmatory.md), and
+> [`20-audit-remediation.md`](20-audit-remediation.md). Historical artifact
+> directory names such as `gate4-confirmed` are retained only for provenance.
 
 This note records exactly what was done so any person or tool picking this
 up has full context. It supplements
@@ -77,51 +80,28 @@ ring is represented as a cell.
 
 ## Gate-3 corruption-suite result (2026-08-03)
 
-The suite (`src/homymoly/data/corruptions.py`,
-`scripts/eval_corruption.py`, report at
-`artifacts/gate3/corruption_report_full.json`) corrupts the held-out split
-at graded severities along three channels (transport rotations, edge
-cochain noise, node-anchor noise; 60 batches per kind, 1530 examples) and
-compares conversion damage against diagnostics:
+**Withdrawn.** The report reused five blocks at five severities (25 repeated
+batch observations per kind, not 60 independent batches), used process-salted
+draws and invalid repeated-measures inference, and scored a non-reference
+multi-degree quantity. Moreover, the script evaluates fixed-expert embeddings
+and never invokes a translator. None of the historical ρ or partial-ρ values
+answers C1. See the corrected record in `docs/15-gate3-record.md`.
 
-- Exact SRTD between clean and corrupted expert embeddings tracks damage
-  strongly: Spearman ρ = 0.918 (sheaf), 0.823 (cell), 0.807 (graph).
-- **But** plain embedding displacement (reconstruction error) tracks
-  damage equally well (ρ 0.812–0.960), and the topological defect's
-  partial correlation controlling for it is ≈ 0 (−0.156 / +0.159 /
-  +0.238).  Per-example expert diagnostics are uninformative (|ρ| ≤ 0.16).
-- Recorded per the falsification discipline: **C1 (structural defects
-  predict damage beyond reconstruction) is not supported on this suite.**
-  The remaining mechanism test is the intervention question — does
-  structural regularization improve matched-compute downstream results —
-  which is the C2 ablation ladder, not a correlation study.
-
-## Run 10 outcome (2026-08-03): translators competent; Gate-3 needs a corruption dimension
+## Run 10 outcome (2026-08-03): target-view encoders were task-competent
 
 Status `completed`; both engineering gates passed.
 
-- **Routing holds with competent translators**: hard accuracy 0.746 vs
+- **Development routing result**: hard accuracy 0.746 vs
   best fixed 0.674, random 0.670, dense 0.742, oracle 0.987; route
   accuracy 0.505, MI 0.068 — statistically identical to run 9, so the
   Gate-4 result is robust to the translator changes.
-- **Translators now learn in-pipeline**: `translated_ce` 0.683 → 0.62
+- **Target-view encoders learn in-pipeline**: `translated_ce` 0.683 → 0.62
   (was flat at ln 2 in every earlier run); graph_to_cell 0.671 and
-  graph_to_sheaf 0.667 — each perfect on its intended regime.
-- **Gate-3 predictive-value analysis (first competent test):** across 918
-  test examples per translator, correlations between structural
-  diagnostics (per-sample consistency, reconstruction) and conversion
-  damage are all ~0 (|ρ| ≤ 0.066).  But this is *uninformative as
-  designed*, not a falsification of the mechanism: damage variance is
-  dominated by intended-vs-non-intended regime (non-intended translation
-  is meaningless by construction → ~0.5 damage), and within intended
-  regimes there is almost no damage to predict (sheaf 0.000, cell 0.186).
-  The plan's Gate-3 criterion is explicit that the test needs *held-out
-  corruptions* — the confirmatory generator currently produces clean
-  samples only.  **Next build item: a corruption-augmented evaluation
-  suite** (gauge rotations / transport noise / edge perturbations at
-  graded intensities) so damage varies continuously and the
-  predictive-value question becomes measurable; then the ablation ladder
-  (task-only → +recon → +chain → +RTD) per the protocol docs.
+  graph_to_sheaf 0.667 — each perfect on its intended regime. The cell module
+  reads ground-truth `face_active`, and the sheaf module reads target
+  transports; these scores do not demonstrate graph-to-cell/sheaf conversion.
+- The associated diagnostic correlations do not answer Gate 3 and are
+  withdrawn from the current claim record.
 
 Artifacts archived at `artifacts/gate2-run10-translators-competent/`.
 
@@ -129,20 +109,12 @@ Artifacts archived at `artifacts/gate2-run10-translators-competent/`.
 
 Two queued items landed after run 9:
 
-1. **Exact RTD/SRTD reference** (`src/homymoly/metrics/exact_rtd.py`,
-   tests in `tests/test_exact_rtd.py`): ordinary persistent homology of the
-   filtered mapping cone over GF(2) in float64 — directional
-   R-Cross-Barcode semantics both ways, the published half-sum, and the
-   symmetric union/intersection cone. Acceptance coverage per the
-   RTD-integration doc: identity zeros, isometry/rescaling zero after
-   normalization, permutation invariance, directional asymmetry with exact
-   swap consistency and half-sum symmetry, structured collapse, localized
-   detection, per-interval stability bound, SRTD degree-1 = sum of
-   directionals. Measured reconciliation: the differentiable H0 surrogate
-   and the exact reference can disagree even in directional *ordering* —
-   the surrogate stays a training signal; the exact module is the
-   evaluation oracle. ~0.2 s per comparison at 24 points.
-2. **Task-competent translators** (`src/homymoly/models/translators.py`):
+1. **Exact RTD/SRTD reference** (`src/homymoly/metrics/exact_rtd.py`): the
+   2026-08-13 audit corrected this later implementation to full-matrix q0.9
+   normalization and explicit degree-specific outputs (degree 1 for the
+   scalar published convention), excluding truncation-frontier generators.
+   Pre-audit numerical outputs are invalid.
+2. **Task-competent target-view encoders** (`src/homymoly/models/translators.py`):
    every prior run had `translated_ce` flat at ln 2. `GraphToSheafTranslator`
    gained the observed-transport face-holonomy pathway (same defect the
    sheaf expert had); `GraphToCellTranslator` gained `face_active` as an
@@ -153,31 +125,24 @@ Two queued items landed after run 9:
    face_active-invariance test encoded the broken contract and was
    replaced.
 
-**Run 10** is the first full pipeline with working translators; its
-translated-path metrics make the Gate-3 ablation questions (structural
-defects vs conversion damage) measurable.
+**Run 10** demonstrates target-view encoder integration only. It does not make
+graph-only conversion damage measurable.
 
-## Run 9 outcome (2026-08-03): Gate-4 confirmed at the configured LR
+## Run 9 outcome (2026-08-03): historical development routing pass
 
-Status `completed`; both engineering gates passed. **The confirmatory run
-with the corrected per-phase scheduler reproduces the Gate-4 pass with
-clean provenance:**
+Status `completed`; both engineering gates passed. This is a development run,
+not the later five-seed confirmatory result:
 
 - hard accuracy **0.743** vs best fixed route 0.667, random 0.669, dense
-  ensemble 0.736 (at ~3× the compute), oracle 0.973;
+  ensemble 0.736, oracle 0.973;
 - route accuracy 0.503, regime-route MI 0.067, utilization
   0.26/0.38/0.36 — non-collapsed;
 - expected cost 1.31 vs ~3.9 for always evaluating all three experts.
 
-**Gate-4 criterion met**: learned routing beats the best fixed route at
-matched measured compute and remains non-collapsed for a defensible reason
-(routing is regime-informative). Run 8's stronger 0.788 was obtained at an
-unplanned ~10× LR and is recorded as supporting evidence; run 9 is the
-canonical Gate-2 routing result. The remaining gap to oracle (0.973) is
-bounded by the benchmark's anti-shortcut design: regime identifiability
-from label-independent amplitude cues caps near the measured probe ceiling
-(~0.55–0.58), so route accuracy ~0.5 is the expected operating point, and
-utility — not route identification — is the plan's Gate-4 axis.
+The run met the development utility threshold but did not measure matched
+compute. Its router targets came from a validation regime-by-expert table.
+Finite probes near 0.55–0.58 do not establish a universal identifiability
+ceiling or explain the entire oracle gap.
 
 **Debugging arc that got here (runs 4–9):** sheaf expert blind to
 holonomy → exact holonomy pathway; graph expert blind to pairwise
@@ -194,7 +159,8 @@ Status `completed`; both engineering gates passed; **the router cleared
 the Gate-4 criterion for the first time**:
 
 - hard accuracy **0.788** vs best fixed route 0.667, random 0.672, dense
-  ensemble 0.734 (the dense ensemble also runs ~3× the compute);
+  ensemble 0.734 (one expert was evaluated per hard-routed example versus
+  three in the dense path; latency was not measured in this run);
   `oracle_accuracy` 0.999, route accuracy 0.574 (at the linear probe
   ceiling), regime-route MI 0.124 (was ≤0.012), utilization
   293/312/313 — non-collapsed with per-regime accuracies 0.78–0.79.
@@ -272,8 +238,8 @@ Status `completed`; both engineering gates passed again.
   across regimes are 0.00 (densities, active-face fraction), 0.56–0.70
   (sheaf residual/deviation), 3.74 (edge energy). The generator exposes
   route reliability through *overlapping amplitude ranges* (the intended
-  label-independent cue, capped at ~0.80 identifiability by the
-  anti-shortcut design), and every shipped diagnostic is a mean or count
+  label-independent cue; the historical ~0.80 estimate came from finite
+  probes, not a proved ceiling), and every shipped diagnostic is a mean or count
   that dilutes exactly those amplitude cues — the same dilution failure
   class as the sheaf and graph experts, one level up.
 - **Gate-3 prep finding:** both translators sit at chance task accuracy
@@ -295,8 +261,8 @@ ch1 max-abs 8.8 (cell), stalk norm 2.3 (sheaf, weak by design). A linear
 regime probe reaches 0.573 held-out (chance 0.333); the router MLP has
 more capacity. Success looks like: regime-route MI substantially above
 zero, utilization tracking regime frequencies, hard accuracy approaching
-oracle (0.907) rather than the best fixed route, and route accuracy toward
-the ~0.80 identifiability ceiling. If MI stays near zero, the next suspect
+oracle (0.907) rather than the best fixed route, and improved route accuracy.
+If MI stays near zero, the next suspect
 is the router training dynamics (entropy/load-balance terms vs
 supervision), not the features — the probe already shows the information
 is present.
