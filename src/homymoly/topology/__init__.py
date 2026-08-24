@@ -33,6 +33,7 @@ from .screening import (
     NOT_SATISFIED,
     SATISFIED,
     ScreeningResult,
+    boundary_compatibility_term,
     exactness_term,
     screen_structural_term,
 )
@@ -49,6 +50,7 @@ __all__ = [
     "Face",
     "OrientedIncidence",
     "ScreeningResult",
+    "boundary_compatibility_term",
     "build_boundary_1",
     "build_boundary_2",
     "build_oriented_incidence",

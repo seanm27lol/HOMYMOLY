@@ -26,7 +26,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
+import statistics
 import sys
 from pathlib import Path
 from typing import Any, NamedTuple
@@ -34,6 +36,32 @@ from typing import Any, NamedTuple
 SCHEMA_VERSION = 1
 BUNDLE_ROOT = "results"
 MANIFEST_NAME = "MANIFEST.json"
+HISTORICAL_CONVERSION_RESULT = "results/campaigns/conversion-campaign-v1.json"
+CORRECTED_CONVERSION_RESULT = "results/campaigns/conversion-campaign-v1-corrected.json"
+CORRECTED_CONVERSION_RECORD_ID = "conversion-campaign-v1-correction-1"
+CORRECTION_ID = "conversion-campaign-analysis-correction-1"
+FROZEN_PROTOCOL_PATH = "docs/27-conversion-campaign-protocol.md"
+FROZEN_PROTOCOL_SHA256 = (
+    "503cc282f40d118ba1739c2afe1bfc77eaf2b1733baaddb91c0c3363e75ae2b8"
+)
+FROZEN_GENERATOR_PATH = "src/homymoly/data/conversion.py"
+FROZEN_GENERATOR_SHA256 = (
+    "c37ab1c725aa2101e88c1a0ad8fa3b279d72330feba35077e23fec930a4df69d"
+)
+HISTORICAL_CONVERSION_SHA256 = (
+    "836914d251db8d381aef9a2dcb0ac14a14562652f3e323dc840108b5f24d5ee1"
+)
+BONFERRONI_T_DF28 = 2.546465223
+T95_DF28 = 2.048407
+UNAFFECTED_NUMERIC_FIELDS = [
+    "primary.*.per_topology fit endpoints",
+    "primary.*.mean_log10_ratio",
+    "primary.*.median_log10_ratio",
+    "primary.*.sample_standard_deviation",
+    "primary.*.interval_95",
+    "primary.*.sensitivity_sign_test.pvalue_two_sided",
+    "routing numeric fields",
+]
 
 # Suffixes and directory names that must never reach a tracked results bundle.
 DENIED_SUFFIXES = frozenset(
@@ -106,11 +134,26 @@ def specifications() -> list[Spec]:
             "Strict trained GB10 compute-benchmark summary.",
         ),
         Spec(
-            "results/campaigns/conversion-campaign-v1.json",
+            HISTORICAL_CONVERSION_RESULT,
             "campaigns/conversion-campaign-v1.json",
             "compact-summary",
             "in-place",
-            "Frozen conversion campaign v1, preregistered in docs/27.",
+            (
+                "Historical frozen conversion campaign v1 with the original, "
+                "mis-scaled C1 correlations and incorrectly calibrated adjusted "
+                "intervals retained for auditability; not the canonical source "
+                "for current claims."
+            ),
+        ),
+        Spec(
+            CORRECTED_CONVERSION_RESULT,
+            "campaigns/conversion-campaign-v1-corrected.json",
+            "compact-summary",
+            "in-place",
+            (
+                "Canonical corrected analysis of frozen conversion campaign v1; "
+                "schema v2 records the Pearson and Bonferroni-interval corrections."
+            ),
         ),
         Spec(
             "artifacts/identifiable-maps/campaign-summary.json",
@@ -211,7 +254,362 @@ def _reject_denied(relative: Path, label: str) -> None:
         raise ValueError(f"{label} has an excluded suffix: {relative}")
     denied = DENIED_PARTS.intersection(relative.parts)
     if denied:
-        raise ValueError(f"{label} lives under an excluded directory {sorted(denied)}: {relative}")
+        raise ValueError(
+            f"{label} lives under an excluded directory {sorted(denied)}: {relative}"
+        )
+
+
+def _student_t_interval(values: list[float], critical: float) -> list[float]:
+    if len(values) != 29:
+        raise ValueError(
+            "corrected conversion analysis must retain 29 topologies (df=28)"
+        )
+    centre = statistics.mean(values)
+    margin = critical * statistics.stdev(values) / math.sqrt(len(values))
+    return [centre - margin, centre + margin]
+
+
+def _same_interval(observed: Any, expected: list[float], *, atol: float = 1e-9) -> bool:
+    return (
+        isinstance(observed, list)
+        and len(observed) == 2
+        and all(
+            math.isclose(float(actual), target, rel_tol=0.0, abs_tol=atol)
+            for actual, target in zip(observed, expected, strict=True)
+        )
+    )
+
+
+def _pearson(values_a: list[float], values_b: list[float]) -> float:
+    if len(values_a) != len(values_b) or not values_a:
+        raise ValueError("Pearson inputs must have the same nonzero length")
+    mean_a = statistics.mean(values_a)
+    mean_b = statistics.mean(values_b)
+    centred_a = [value - mean_a for value in values_a]
+    centred_b = [value - mean_b for value in values_b]
+    denominator = math.sqrt(
+        sum(value * value for value in centred_a)
+        * sum(value * value for value in centred_b)
+    )
+    if denominator <= 0.0:
+        raise ValueError("Pearson inputs must both have positive variance")
+    return sum(a * b for a, b in zip(centred_a, centred_b, strict=True)) / denominator
+
+
+def _validate_corrected_primary_intervals(
+    corrected: dict[str, Any], historical: dict[str, Any]
+) -> None:
+    """Recompute df=28 Bonferroni intervals from unchanged fit endpoints."""
+
+    corrected_primary = corrected.get("primary")
+    historical_primary = historical.get("primary")
+    if not isinstance(corrected_primary, dict) or not isinstance(
+        historical_primary, dict
+    ):
+        raise TypeError("conversion evidence has no primary contrast records")
+    for term in ("exact", "cone", "rtd"):
+        current = corrected_primary.get(term)
+        previous = historical_primary.get(term)
+        if not isinstance(current, dict) or not isinstance(previous, dict):
+            raise TypeError(f"conversion evidence has no {term} primary contrast")
+        current_rows = current.get("per_topology")
+        previous_rows = previous.get("per_topology")
+        if not isinstance(current_rows, list) or not isinstance(previous_rows, list):
+            raise TypeError(f"{term} contrast has no per-topology endpoints")
+        if not all(isinstance(row, dict) for row in [*current_rows, *previous_rows]):
+            raise TypeError(f"{term} per-topology endpoints must be records")
+        current_by_seed = {row.get("seed"): row for row in current_rows}
+        previous_by_seed = {row.get("seed"): row for row in previous_rows}
+        if (
+            len(current_rows) != 29
+            or len(current_by_seed) != 29
+            or set(current_by_seed) != set(previous_by_seed)
+        ):
+            raise ValueError(f"{term} contrast does not retain the 29 historical seeds")
+
+        ratios: list[float] = []
+        for seed in sorted(current_by_seed):
+            row = current_by_seed[seed]
+            old_row = previous_by_seed[seed]
+            held_out = float(row["held_out_mse"])
+            baseline = float(row["baseline_held_out_mse"])
+            if held_out != float(old_row["held_out_mse"]) or baseline != float(
+                old_row["baseline_held_out_mse"]
+            ):
+                raise ValueError(
+                    f"{term} fit endpoints changed during analysis correction"
+                )
+            ratios.append(math.log10(held_out / baseline))
+
+        expected = _student_t_interval(ratios, BONFERRONI_T_DF28)
+        observed = current.get("interval_bonferroni_98_33")
+        if not _same_interval(observed, expected):
+            raise ValueError(
+                f"{term} adjusted interval was not recomputed with df=28 "
+                f"t={BONFERRONI_T_DF28}"
+            )
+        if _same_interval(previous.get("interval_bonferroni_98_33"), expected):
+            raise ValueError(
+                f"historical {term} interval unexpectedly already uses the corrected quantile"
+            )
+        improves = expected[1] < 0.0
+        harms = expected[0] > 0.0
+        if current.get("improves_confirmatory") is not improves:
+            raise ValueError(f"{term} improvement decision disagrees with its interval")
+        if current.get("harms_confirmatory") is not harms:
+            raise ValueError(f"{term} harm decision disagrees with its interval")
+        if (
+            previous.get("improves_confirmatory") is not improves
+            or previous.get("harms_confirmatory") is not harms
+        ):
+            raise ValueError(f"{term} decision changed after the interval correction")
+
+
+def _validate_corrected_c1(
+    corrected: dict[str, Any], historical: dict[str, Any]
+) -> None:
+    """Recompute every Pearson coefficient from seed-keyed raw fit endpoints."""
+
+    c1 = corrected.get("c1")
+    historical_c1 = historical.get("c1")
+    if not isinstance(c1, dict) or not isinstance(historical_c1, dict):
+        raise TypeError("conversion evidence has no C1 record")
+    weights = c1.get("weights_swept")
+    rows = c1.get("per_topology")
+    if not isinstance(weights, list) or not isinstance(rows, list):
+        raise TypeError("corrected C1 must retain weights and per-topology raw fits")
+    if c1.get("n") != 29 or len(weights) != 9 or len(rows) != 29:
+        raise ValueError("corrected C1 must retain nine weights for each of 29 seeds")
+    primary = corrected.get("primary")
+    exact = primary.get("exact") if isinstance(primary, dict) else None
+    primary_rows = exact.get("per_topology") if isinstance(exact, dict) else None
+    if not isinstance(primary_rows, list):
+        raise TypeError("corrected C1 cannot be matched to primary topology seeds")
+    primary_seeds = {row.get("seed") for row in primary_rows}
+
+    correlations: list[float] = []
+    seen_seeds: set[Any] = set()
+    for row in rows:
+        if not isinstance(row, dict) or row.get("seed") in seen_seeds:
+            raise ValueError("corrected C1 rows must have unique seed keys")
+        seen_seeds.add(row.get("seed"))
+        fits = row.get("fits")
+        if not isinstance(fits, list) or len(fits) != len(weights):
+            raise ValueError("each corrected C1 row must retain all nine raw fits")
+        if not all(isinstance(fit, dict) for fit in fits):
+            raise TypeError("corrected C1 raw fits must be records")
+        if [fit.get("weight") for fit in fits] != weights:
+            raise ValueError("corrected C1 fit weights do not match the frozen sweep")
+        defects: list[float] = []
+        held_out_errors: list[float] = []
+        for fit in fits:
+            defect = float(fit["boundary_compatibility_defect_frobenius"])
+            held_out = float(fit["held_out_mse"])
+            if not math.isfinite(defect) or not math.isfinite(held_out):
+                raise ValueError("corrected C1 raw fits must be finite")
+            defects.append(math.log10(max(defect, 1e-30)))
+            held_out_errors.append(math.log10(max(held_out, 1e-300)))
+        correlation = _pearson(defects, held_out_errors)
+        if not math.isclose(
+            float(row.get("correlation")), correlation, rel_tol=0.0, abs_tol=1e-12
+        ):
+            raise ValueError(
+                "corrected C1 correlation is not Pearson r of its raw fits"
+            )
+        correlations.append(correlation)
+
+    if seen_seeds != primary_seeds:
+        raise ValueError("corrected C1 seeds do not match the primary topology seeds")
+    if c1.get("per_topology_correlation") != [row["correlation"] for row in rows]:
+        raise ValueError(
+            "corrected C1 correlation vector does not match its seed-keyed rows"
+        )
+    if not math.isclose(
+        float(c1.get("mean_within_topology_correlation")),
+        statistics.mean(correlations),
+        rel_tol=0.0,
+        abs_tol=1e-12,
+    ):
+        raise ValueError("corrected C1 mean does not match its raw-fit correlations")
+    interval = _student_t_interval(correlations, T95_DF28)
+    if not _same_interval(c1.get("interval_95"), interval):
+        raise ValueError(
+            "corrected C1 interval does not match its raw-fit correlations"
+        )
+    if c1.get("positive_topologies") != sum(value > 0.0 for value in correlations):
+        raise ValueError("corrected C1 positive-topology count is inconsistent")
+    supported = interval[0] > 0.0
+    if c1.get("supported") is not supported:
+        raise ValueError("corrected C1 decision disagrees with its interval")
+    if historical_c1.get("supported") is not supported:
+        raise ValueError("C1 support decision changed after correcting Pearson r")
+
+
+def validate_corrected_conversion_record(
+    project_root: Path, document: dict[str, Any]
+) -> None:
+    """Reject a canonical correction that cannot prove its frozen lineage."""
+
+    schema = document.get("schema")
+    if document.get("schema_version") != 2 or schema != {
+        "name": "homymoly.conversion-campaign-result",
+        "version": 2,
+        "record_id": CORRECTED_CONVERSION_RECORD_ID,
+    }:
+        raise ValueError(
+            "corrected conversion campaign has an unexpected schema-v2 identity"
+        )
+    if document.get("campaign") != "conversion-campaign-v1":
+        raise ValueError(
+            "corrected conversion campaign has an unexpected campaign identity"
+        )
+
+    correction = document.get("correction")
+    if not isinstance(correction, dict) or correction.get("id") != CORRECTION_ID:
+        raise ValueError(
+            "corrected conversion campaign has no recognized correction record"
+        )
+    if correction.get("protocol_modified") is not False:
+        raise ValueError(
+            "analysis correction must not claim that the frozen protocol changed"
+        )
+    if correction.get("data_or_fit_settings_modified") is not False:
+        raise ValueError(
+            "analysis correction must not claim that data or fit settings changed"
+        )
+    reasons = correction.get("reasons")
+    if not isinstance(reasons, list) or not all(
+        isinstance(reason, dict) for reason in reasons
+    ):
+        raise TypeError("analysis correction reasons must be a list of records")
+    by_id = {reason.get("id"): reason for reason in reasons}
+    if len(reasons) != 2 or set(by_id) != {
+        "c1-pearson-normalisation",
+        "bonferroni-critical-value",
+    }:
+        raise ValueError("analysis correction does not identify both corrected issues")
+    if by_id["c1-pearson-normalisation"].get("corrected_estimator") != (
+        "sum((x-x_bar)*(y-y_bar)) / sqrt(sum((x-x_bar)^2)*sum((y-y_bar)^2))"
+    ):
+        raise ValueError(
+            "C1 correction does not name the conventional Pearson estimator"
+        )
+    if by_id["bonferroni-critical-value"].get("corrected_quantile") != (
+        "t.ppf(1 - (0.05 / 3) / 2, df) = t.ppf(0.991666..., df)"
+    ):
+        raise ValueError(
+            "interval correction does not name the frozen Bonferroni quantile"
+        )
+    if correction.get("decision_changes") != {
+        "exact": False,
+        "cone": False,
+        "rtd": False,
+        "c1": False,
+    }:
+        raise ValueError("analysis correction must record that no decisions changed")
+    if correction.get("unaffected_numeric_fields") != UNAFFECTED_NUMERIC_FIELDS:
+        raise ValueError(
+            "analysis correction does not enumerate the granular unchanged fields"
+        )
+
+    supersedes = correction.get("supersedes")
+    if not isinstance(supersedes, dict):
+        raise TypeError(
+            "analysis correction does not identify the superseded schema-v1 record"
+        )
+    if supersedes.get("path") != HISTORICAL_CONVERSION_RESULT:
+        raise ValueError(
+            "analysis correction points to an unexpected historical result"
+        )
+    if supersedes.get("schema_version") != 1:
+        raise ValueError("analysis correction does not supersede schema version 1")
+    if supersedes.get("sha256") != HISTORICAL_CONVERSION_SHA256:
+        raise ValueError(
+            "analysis correction records the wrong historical result SHA-256"
+        )
+    historical = project_root / HISTORICAL_CONVERSION_RESULT
+    if not historical.is_file() or _sha256(historical) != HISTORICAL_CONVERSION_SHA256:
+        raise ValueError("historical conversion result is missing or has changed")
+    historical_document = json.loads(historical.read_text(encoding="utf-8"))
+
+    protocol = document.get("protocol")
+    if not isinstance(protocol, dict):
+        raise TypeError("corrected conversion campaign has no protocol provenance")
+    if (
+        protocol.get("path") != FROZEN_PROTOCOL_PATH
+        or protocol.get("sha256") != FROZEN_PROTOCOL_SHA256
+        or protocol.get("frozen_sha256") != FROZEN_PROTOCOL_SHA256
+        or protocol.get("document_hash_matches_frozen") is not True
+        or protocol.get("execution_matches_frozen_text") is not False
+    ):
+        raise ValueError(
+            "corrected conversion campaign does not distinguish frozen text from execution"
+        )
+    deviations = protocol.get("implementation_deviations")
+    if not isinstance(deviations, list) or len(deviations) != 1:
+        raise ValueError(
+            "corrected conversion campaign must disclose one protocol deviation"
+        )
+    deviation = deviations[0]
+    if not isinstance(deviation, dict) or deviation.get("id") != (
+        "compatibility-mean-normalisation"
+    ):
+        raise ValueError(
+            "corrected conversion campaign omits the known execution deviation"
+        )
+    if (
+        deviation.get("frozen_text") != "squared Frobenius norm ||B1 @ W.T||_F^2"
+        or deviation.get("executed_objective") != "elementwise mean((B1 @ W.T)^2)"
+        or deviation.get("fit_implementation_changed_in_correction") is not False
+    ):
+        raise ValueError(
+            "protocol deviation does not faithfully describe the executed fit"
+        )
+    frozen_protocol = project_root / FROZEN_PROTOCOL_PATH
+    if (
+        not frozen_protocol.is_file()
+        or _sha256(frozen_protocol) != FROZEN_PROTOCOL_SHA256
+    ):
+        raise ValueError("frozen conversion protocol is missing or has changed")
+
+    provenance = document.get("provenance")
+    generator = provenance.get("generator") if isinstance(provenance, dict) else None
+    if not isinstance(generator, dict):
+        raise TypeError("corrected conversion campaign has no generator provenance")
+    if (
+        generator.get("class") != "homymoly.data.conversion.ConversionDataset"
+        or generator.get("path") != FROZEN_GENERATOR_PATH
+        or generator.get("sha256") != FROZEN_GENERATOR_SHA256
+        or generator.get("frozen_campaign_sha256") != FROZEN_GENERATOR_SHA256
+        or generator.get("matches_frozen_campaign") is not True
+    ):
+        raise ValueError(
+            "corrected conversion campaign does not pin the frozen generator"
+        )
+    frozen_generator = project_root / FROZEN_GENERATOR_PATH
+    if (
+        not frozen_generator.is_file()
+        or _sha256(frozen_generator) != FROZEN_GENERATOR_SHA256
+    ):
+        raise ValueError("frozen conversion generator is missing or has changed")
+
+    design = document.get("design")
+    definitions = (
+        design.get("objective_definitions") if isinstance(design, dict) else None
+    )
+    compatibility = definitions.get("exact") if isinstance(definitions, dict) else None
+    if compatibility != {
+        "display_name": "boundary-compatibility penalty",
+        "formula": "mean((B1 @ W.T)^2)",
+        "frozen_key_is_historical_shorthand": True,
+        "is_exactness_of_a_sequence": False,
+    }:
+        raise ValueError(
+            "frozen key 'exact' is not explicitly identified as boundary compatibility"
+        )
+
+    _validate_corrected_primary_intervals(document, historical_document)
+    _validate_corrected_c1(document, historical_document)
 
 
 # Where each evidence shape records the revision that generated it. The first
@@ -253,7 +651,11 @@ def compact_corruption_report(document: dict[str, Any]) -> dict[str, Any]:
 
     if "per_batch" not in document:
         raise ValueError("corruption report has no per_batch rows to retain")
-    compact = {key: value for key, value in document.items() if key not in DROPPED_CORRUPTION_KEYS}
+    compact = {
+        key: value
+        for key, value in document.items()
+        if key not in DROPPED_CORRUPTION_KEYS
+    }
     compact["_derivative"] = {
         "derivation": "per-batch-lossless-v1",
         "dropped_keys": {
@@ -321,7 +723,10 @@ def export(
         else:
             raise ValueError(f"unknown export mode: {spec.mode}")
 
-        entry["evidence_revision"] = evidence_revision(json.loads(payload))
+        document = json.loads(payload)
+        if spec.destination == "campaigns/conversion-campaign-v1-corrected.json":
+            validate_corrected_conversion_record(project_root, document)
+        entry["evidence_revision"] = evidence_revision(document)
 
         if len(payload) > max_file_bytes:
             raise ValueError(
@@ -334,7 +739,9 @@ def export(
 
         if spec.mode != "in-place":
             destination.parent.mkdir(parents=True, exist_ok=True)
-            temporary = destination.with_suffix(destination.suffix + f".{os.getpid()}.tmp")
+            temporary = destination.with_suffix(
+                destination.suffix + f".{os.getpid()}.tmp"
+            )
             try:
                 temporary.write_bytes(payload)
                 temporary.replace(destination)
@@ -494,7 +901,7 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({"verified": True, "bundle": str(output_root)}))
             return 0
         manifest = export(project_root=project_root, output_root=output_root)
-    except (OSError, ValueError) as exc:
+    except (OSError, TypeError, ValueError) as exc:
         print(f"publication evidence export failed: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(manifest["summary"], sort_keys=True))

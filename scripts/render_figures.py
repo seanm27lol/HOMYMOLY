@@ -33,12 +33,7 @@ MONO = "Consolas, 'DejaVu Sans Mono', monospace"
 
 
 def _escape(text: str) -> str:
-    return (
-        str(text)
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
+    return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 def _text(
@@ -60,7 +55,13 @@ def _text(
 
 
 def _line(
-    x1: float, y1: float, x2: float, y2: float, *, stroke: str, width: float = 1.0,
+    x1: float,
+    y1: float,
+    x2: float,
+    y2: float,
+    *,
+    stroke: str,
+    width: float = 1.0,
     dash: str | None = None,
 ) -> str:
     dash_attribute = f' stroke-dasharray="{dash}"' if dash else ""
@@ -85,7 +86,7 @@ def _document(width: float, height: float, body: Iterable[str], title: str) -> s
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" '
         f'height="{height:.0f}" viewBox="0 0 {width:.0f} {height:.0f}" '
         f'role="img" aria-label="{_escape(title)}">\n'
-        f'  <title>{_escape(title)}</title>\n'
+        f"  <title>{_escape(title)}</title>\n"
         f'  <rect width="{width:.0f}" height="{height:.0f}" fill="{SURFACE}"/>\n'
         f"  {parts}\n</svg>\n"
     )
@@ -96,9 +97,7 @@ def _legend(x: float, y: float, entries: list[tuple[str, str]]) -> list[str]:
     cursor = x
     for colour, label in entries:
         marks.append(_rect(cursor, y - 7, 9, 9, fill=colour, radius=2))
-        marks.append(
-            _text(cursor + 14, y, label, size=10.5, fill=INK_SECONDARY)
-        )
+        marks.append(_text(cursor + 14, y, label, size=10.5, fill=INK_SECONDARY))
         cursor += 20 + 6.6 * len(label)
     return marks
 
@@ -142,7 +141,11 @@ def figure_recovery(summary: dict[str, Any]) -> str:
     rows = [
         (
             name,
-            float(summary["by_ablation"][name]["endpoints"]["transformation_accuracy"]["mean"]),
+            float(
+                summary["by_ablation"][name]["endpoints"]["transformation_accuracy"][
+                    "mean"
+                ]
+            ),
             float(summary["by_ablation"][name]["endpoints"]["map_mse"]["mean"]),
         )
         for name in order
@@ -320,7 +323,13 @@ def figure_contrasts(gate3: dict[str, Any], gauge: dict[str, Any]) -> str:
         return label_width + (value - lo) / (hi - lo) * plot_width
 
     body: list[str] = [
-        _text(0, 20, "Every corruption contrast interval contains zero", size=13, weight="bold"),
+        _text(
+            0,
+            20,
+            "Every corruption contrast interval contains zero",
+            size=13,
+            weight="bold",
+        ),
         _text(
             0,
             36,
@@ -374,7 +383,14 @@ def figure_contrasts(gate3: dict[str, Any], gauge: dict[str, Any]) -> str:
         body.append(_line(scale(low), y, scale(high), y, stroke=colour, width=2))
         for endpoint in (low, high):
             body.append(
-                _line(scale(endpoint), y - 3.5, scale(endpoint), y + 3.5, stroke=colour, width=2)
+                _line(
+                    scale(endpoint),
+                    y - 3.5,
+                    scale(endpoint),
+                    y + 3.5,
+                    stroke=colour,
+                    width=2,
+                )
             )
         body.append(
             f'<circle cx="{scale(estimate):.1f}" cy="{y:.1f}" r="4" fill="{colour}" '
@@ -399,7 +415,13 @@ def figure_contrasts(gate3: dict[str, Any], gauge: dict[str, Any]) -> str:
 # --------------------------------------------------------------------------
 
 PATH_ORDER = ("routed", "fixed_graph", "fixed_cell", "fixed_sheaf", "dense")
-PATH_SLOT = {"routed": 0, "fixed_graph": 1, "fixed_cell": 1, "fixed_sheaf": 1, "dense": 2}
+PATH_SLOT = {
+    "routed": 0,
+    "fixed_graph": 1,
+    "fixed_cell": 1,
+    "fixed_sheaf": 1,
+    "dense": 2,
+}
 
 
 def figure_compute(compute: dict[str, Any]) -> str:
@@ -409,7 +431,8 @@ def figure_compute(compute: dict[str, Any]) -> str:
         for name in PATH_ORDER
     }
     p95s = {
-        name: [float(run["p95_latency_ms"][name]) for run in runs] for name in PATH_ORDER
+        name: [float(run["p95_latency_ms"][name]) for run in runs]
+        for name in PATH_ORDER
     }
 
     width, height = 680.0, 300.0
@@ -421,7 +444,9 @@ def figure_compute(compute: dict[str, Any]) -> str:
     hi = max(max(values) for values in p95s.values()) * 1.04
 
     body: list[str] = [
-        _text(0, 20, "Trained routing inference latency on GB10", size=13, weight="bold"),
+        _text(
+            0, 20, "Trained routing inference latency on GB10", size=13, weight="bold"
+        ),
         _text(
             0,
             36,
@@ -440,7 +465,9 @@ def figure_compute(compute: dict[str, Any]) -> str:
 
     for tick in range(0, int(hi) + 10, 10):
         x = label_width + tick / hi * plot_width
-        body.append(_line(x, top - 6, x, top + len(PATH_ORDER) * row_height, stroke=GRID))
+        body.append(
+            _line(x, top - 6, x, top + len(PATH_ORDER) * row_height, stroke=GRID)
+        )
         body.append(
             _text(
                 x,
@@ -474,7 +501,14 @@ def figure_compute(compute: dict[str, Any]) -> str:
         body.append(_rect(label_width, y + 2, span, bar_height, fill=colour, radius=3))
         whisker = label_width + p95 / hi * plot_width
         body.append(
-            _line(label_width + span, y + 9.5, whisker, y + 9.5, stroke=INK_MUTED, width=1.2)
+            _line(
+                label_width + span,
+                y + 9.5,
+                whisker,
+                y + 9.5,
+                stroke=INK_MUTED,
+                width=1.2,
+            )
         )
         body.append(_line(whisker, y + 4, whisker, y + 15, stroke=INK_MUTED, width=1.2))
         body.append(
@@ -500,9 +534,21 @@ def figure_compute(compute: dict[str, Any]) -> str:
 # --------------------------------------------------------------------------
 
 TERM_LABEL = {
-    "exact": ("exact", "the implied complex satisfies d∘d = 0", 0),
-    "cone": ("cone", "no implied 2-cell collapses", 1),
-    "rtd": ("rtd", "edge geometry survives the lift", 2),
+    "exact": (
+        "boundary compatibility",
+        "B₁Wᵀ = 0 (frozen key: exact)",
+        0,
+    ),
+    "cone": (
+        "singular-value cone surrogate",
+        "exp(-2·σ_min(W)); not mapping-cone homology",
+        1,
+    ),
+    "rtd": (
+        "RTD-inspired distance surrogate",
+        "normalized pairwise-distance MSE",
+        2,
+    ),
 }
 
 
@@ -511,7 +557,7 @@ def figure_campaign(campaign: dict[str, Any]) -> str:
     rows = [(name, campaign["primary"][name]) for name in order]
 
     width = 680.0
-    label_width = 210.0
+    label_width = 235.0
     # Reserve room on the right for the verdict and the printed interval.
     plot_width = width - label_width - 136.0
     top = 92.0
@@ -528,12 +574,18 @@ def figure_campaign(campaign: dict[str, Any]) -> str:
         return label_width + (value - lo) / (hi - lo) * plot_width
 
     body: list[str] = [
-        _text(0, 20, "Which homological term improves a learned conversion?", size=13, weight="bold"),
+        _text(
+            0,
+            20,
+            "Boundary compatibility improves a learned conversion",
+            size=13,
+            weight="bold",
+        ),
         _text(
             0,
             37,
-            "Paired log10(held-out error with term / without), one value per topology. "
-            "Negative means the term helps.",
+            "Paired log10(held-out error with objective / without), one value per topology. "
+            "Negative means the objective helps.",
             size=10.5,
             fill=INK_SECONDARY,
         ),
@@ -571,7 +623,14 @@ def figure_campaign(campaign: dict[str, Any]) -> str:
         )
     zero = scale(0.0)
     body.append(
-        _line(zero, top - 8, zero, top + len(rows) * row_height, stroke=INK_SECONDARY, width=1.4)
+        _line(
+            zero,
+            top - 8,
+            zero,
+            top + len(rows) * row_height,
+            stroke=INK_SECONDARY,
+            width=1.4,
+        )
     )
     body.append(
         _text(
@@ -591,15 +650,19 @@ def figure_campaign(campaign: dict[str, Any]) -> str:
         verdict = (
             "improves"
             if row["improves_confirmatory"]
-            else ("harms" if row["harms_confirmatory"] else "inert")
+            else ("harms" if row["harms_confirmatory"] else "no detected improvement")
         )
-        body.append(_text(label_width - 12, y + 1, label, size=11, anchor="end", family=MONO))
+        body.append(
+            _text(label_width - 12, y + 1, label, size=11, anchor="end", family=MONO)
+        )
         body.append(
             _text(label_width - 12, y + 15, gloss, size=9, anchor="end", fill=INK_MUTED)
         )
         adjusted = row["interval_bonferroni_98_33"]
         plain = row["interval_95"]
-        body.append(_line(scale(plain[0]), y, scale(plain[1]), y, stroke=colour, width=2))
+        body.append(
+            _line(scale(plain[0]), y, scale(plain[1]), y, stroke=colour, width=2)
+        )
         body.append(
             _line(scale(adjusted[0]), y, scale(adjusted[1]), y, stroke=colour, width=6)
         )
@@ -612,7 +675,9 @@ def figure_campaign(campaign: dict[str, Any]) -> str:
         # few pixels. Print the adjusted interval beside each row so the decision
         # is legible even where the bar is not.
         anchor_x = scale(adjusted[1]) + 8
-        body.append(_text(anchor_x, y + 1, verdict, size=10, fill=colour, weight="bold"))
+        body.append(
+            _text(anchor_x, y + 1, verdict, size=10, fill=colour, weight="bold")
+        )
         body.append(
             _text(
                 anchor_x,
@@ -628,7 +693,11 @@ def figure_campaign(campaign: dict[str, Any]) -> str:
         _legend(
             0,
             height - 14,
-            [(SERIES[0], "improves"), (SERIES[1], "harms"), (SERIES[2], "inert")],
+            [
+                (SERIES[0], "improves"),
+                (SERIES[1], "harms"),
+                (SERIES[2], "no detected improvement"),
+            ],
         )
     )
     return _document(width, height, body, "Conversion campaign primary contrasts")
@@ -638,7 +707,9 @@ def main(argv: list[str] | None = None) -> int:
     project_root = Path(__file__).resolve().parent.parent
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results-root", type=Path, default=project_root / "results")
-    parser.add_argument("--output-dir", type=Path, default=project_root / "docs" / "figures")
+    parser.add_argument(
+        "--output-dir", type=Path, default=project_root / "docs" / "figures"
+    )
     args = parser.parse_args(argv)
 
     results = args.results_root.expanduser().resolve()
@@ -658,12 +729,14 @@ def main(argv: list[str] | None = None) -> int:
         ),
         "fig-compute.svg": figure_compute(load("summaries/compute-campaign.json")),
         "fig-campaign.svg": figure_campaign(
-            load("campaigns/conversion-campaign-v1.json")
+            load("campaigns/conversion-campaign-v1-corrected.json")
         ),
     }
     for name, markup in figures.items():
         (output / name).write_text(markup, encoding="utf-8")
-    print(json.dumps({"figures": sorted(figures), "output": str(output)}, sort_keys=True))
+    print(
+        json.dumps({"figures": sorted(figures), "output": str(output)}, sort_keys=True)
+    )
     return 0
 
 

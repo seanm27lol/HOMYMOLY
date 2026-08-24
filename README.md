@@ -1,61 +1,84 @@
 # HOMYMOLY
 
-**Algebraic exactness as a prior on learned representation conversions.**
+**Boundary compatibility as a prior on learned representation conversions.**
 
 ## Thesis
 
 Revised 2026-08-24 to state what survived testing rather than what was originally
-hoped for. The previous thesis — that mapping-cone defects would quantify
-topology lost during routing, and that routing would select views by that
-measurement — was tested across two campaign families and **did not survive**.
-See [`docs/28`](docs/28-conversion-campaign-results.md) for the confirmatory run
+hoped for. The previous thesis — that cone- or RTD-inspired defects would improve
+conversion and select views during routing — was tested across two campaign
+families and **did not survive as stated**. See
+[`docs/28`](docs/28-conversion-campaign-results.md) for the prospectively locked
+same-generator-family replication
 and [`docs/00`](docs/00-original-idea.md) for how this relates to the original
 idea.
 
 > **When a conversion between structured representations is learned from scarce
-> paired data, an exactness constraint derived from the input is a strong prior
-> on that conversion, and the resulting exactness violation is a calibrated
-> measure of the damage the conversion does.**
+> paired data, a boundary-of-boundary penalty derived from the input is a
+> strong prior on that conversion. Along the prespecified penalty path, the
+> resulting compatibility defect covaries with held-out damage within the
+> studied synthetic family.**
 
-Both halves are confirmed on one synthetic family under a preregistered protocol:
+The first claim comes from a prospectively specified primary analysis in a
+same-family replication, with a disclosed sum-versus-mean implementation
+deviation. It is not independent confirmation: the hypotheses, directions,
+endpoint, training size, and weights were informed by exploration on the same
+generator family, and the exploratory seeds were not retained, so overlap with
+the frozen seed block cannot be audited. The second is a prespecified secondary
+regularization-path association with an unadjusted interval:
 
 | claim | evidence |
 |---|---|
-| exactness improves a learned conversion | Bonferroni-adjusted interval **[−2.802, −1.458]** on `log10` held-out error |
-| the exactness violation predicts damage (**C1**) | within-topology correlation **+0.854**, CI [+0.831, +0.877], **29/29** topologies |
+| boundary compatibility improves a learned conversion | Bonferroni-adjusted interval **[−2.802, −1.458]** on `log10` held-out error |
+| compatibility defect covaries with damage along the penalty path (**C1**) | within-topology Pearson correlation **+0.854**, unadjusted CI [+0.831, +0.877], **29/29** topologies |
 
-The constraint is `‖W·B1ᵀ‖²` — the learned conversion must annihilate
-coboundaries, so the complex it implies satisfies `d∘d = 0`. It is not leaked
-supervision: `B1` *is* the graph and the model observes it, while the answer `B2`
-is withheld.
+For C1, the nine fits within each topology reuse the same data and initialization
+and differ in the common driver `lambda`; they are not independent observations.
+The result does not establish independent predictive information or off-path
+calibration.
+
+The executed penalty is `mean((W·B1ᵀ)²)`. Its zero set annihilates
+coboundaries, so the implied operators satisfy `d∘d = 0`; at finite weight it
+encourages rather than enforces that set, and all `F×E` entries remain
+trainable. The
+frozen key `exact` is historical shorthand: this is **not exactness of a
+sequence**, because `W = 0` also has zero defect without
+`im Wᵀ = ker B1`. It is not leaked supervision: `B1` is the graph and the
+model observes it, while the answer `B2` is withheld. Frozen protocol 27 wrote
+the Frobenius sum rather than the executed elementwise mean; the difference is
+disclosed and the protocol file remains immutable.
 
 ## What did not survive
 
-- **The mapping cone fails as a training term**, in every configuration tried
-  across two campaign families. Confirmatorily it does not merely fail to help —
-  it **harms**, adjusted interval [+0.102, +0.277].
-- **RTD is inert as a training term**, adjusted interval [−0.003, +0.039].
-- Both remain useful as **diagnostics** and as explanatory contrast. Neither
-  should be tested as a loss again without first passing the screening gate
-  below.
-- **Routing does not select views by measured defect.** Confirmatory interval
-  [−0.111, +0.382] contains zero. The one real routing result is a **compute**
-  claim, not an accuracy one: routed inference is 1.532 ± 0.035× faster than
-  dense three-expert evaluation, while being 2.269 ± 0.043× slower than the
-  fastest single fixed route.
+- A **singular-value cone surrogate**,
+  `exp(−2·σ_min(W))`, harms held-out conversion error at the tested weight;
+  this is not a test of mapping-cone homology.
+- An **RTD-inspired normalized pairwise-distance surrogate** shows no detected
+  improvement. This is not an equivalence result and is not a test of published
+  RTD/SRTD.
+- Exact mapping-cone homology and the corrected RTD/SRTD implementation remain
+  useful as **diagnostics**. Their mathematical names are not transferred to the
+  conversion surrogates.
+- The defect-routing H5 result is **non-informative**: its frozen per-trial
+  oracle denominator forces every endpoint observation to be nonnegative, while
+  support required an interval below zero. The defensible routing result is a
+  **compute** comparison: routed inference is 1.532 ± 0.035× faster than dense
+  three-expert evaluation and 2.269 ± 0.043× slower than the fastest fixed route.
 
-## Screening gate for any future structural term
+## Pre-fit diagnostics for future structural terms
 
-Every structural term this project tested failed for one of exactly two reasons,
-and both are checkable in seconds before a protocol is written:
+Two checks can expose obvious problems before a protocol is written:
 
-1. the ground truth does not satisfy the term, so it pulls away from the answer;
+1. the proposed objective is not minimized near the ground truth and therefore
+   introduces target-misaligned bias;
 2. the term is constant over the hypothesis class, so it carries no information
    at any weight.
 
-`homymoly.topology.screen_structural_term` implements both checks. Run it before
-freezing any campaign around a new term — it reproduces every outcome in
-`docs/26` and `docs/28` without running a single fit.
+`homymoly.topology.screen_structural_term` implements these diagnostics. They
+are heuristics, not necessary or sufficient conditions for improved
+generalization: bias can help finite-sample prediction, and a nonconstant,
+target-aligned loss can still fail. Use the screen to inspect a proposal, then
+test it with held-out data.
 
 This repository contains the research specification, the executable Stage 1
 foundation, three structured experts, graph-to-cell/sheaf translators, a
@@ -80,19 +103,19 @@ known-attainable ceiling, not evidence of a powerful model.
 
 **The structural results are negative, and they are the interesting part.**
 
-- Adding a mapping-cone term, an RTD term, or both changed nothing: all 21
-  declared continuous contrast intervals contain zero, against a saturated
-  accuracy ceiling.
-- Trained on structural losses *alone*, the model sits at chance —
+- Adding the annulus cone proxy, the RTD-style training surrogate, or both
+  changed nothing: all 21 declared continuous contrast intervals contain zero,
+  against a saturated accuracy ceiling.
+- Under the two single-loss controls, the model sits at chance —
   transformation accuracy 0.0815 (cone-only) and 0.0833 (RTD-only) against a
   0.0833 baseline — **while producing acyclic cones in 6,000 of 6,000 evaluated
-  examples.** This is not an optimization failure. Every candidate map is a
-  signed permutation, hence an invertible isometry, so cone acyclicity and RTD
-  are both *constant* across the hypothesis space and carry exactly zero
-  information about which map was planted. Cone acyclicity certifies that the
-  decoded map is invertible; it does not certify that it is the correct map —
-  and the same degeneracy holds for **any** hypothesis class of invertible maps,
-  which is the setting where a cone objective looks most attractive.
+  examples.** Every hard decoded candidate is a signed permutation, so exact cone
+  acyclicity cannot distinguish the twelve decoded vertices. This does not make
+  the differentiable `cone_soft_betti` objective constant over soft mixtures.
+  The RTD-only loss also varies and consumes target batch geometry, so it is not
+  an unsupervised control and has no analogous constancy proof. The chance
+  accuracies are empirical negative results, not consequences of a theorem about
+  the soft training losses.
 
 **Routing** (frozen five-seed v2 campaign): hard-minus-best-fixed margin
 **+0.1098** (SD 0.0117; Student-t 95% CI [0.0953, 0.1243]), meeting the frozen
@@ -123,7 +146,9 @@ never pooled.
   the chain-map law up to a fixed 1e-5 tolerance on one synthetic template.
 - Not any Langlands, eigensheaf, Fourier–Mukai, or category-theoretic machine
   learning result. Those remain motivation, not results.
-- Not a benefit from cone or RTD losses, and not a matched-compute Pareto claim.
+- Not a benefit from mapping-cone homology or published RTD/SRTD losses: the
+  conversion campaign tested two explicitly narrower surrogates. Also not a
+  matched-compute Pareto claim.
 
 ## Five-minute smoke path
 
@@ -161,19 +186,34 @@ The 8.8 GB `artifacts/` tree (checkpoints, per-example dumps, histories,
 scheduler logs) is intentionally untracked and is not durable evidence by
 itself.
 
+The read-only reviewer snapshot contains the source and this compact evidence
+bundle. It can rehash and trace every reported value, rerun the CPU conversion
+campaign, run the tests, and regenerate the paper. It cannot independently rerun
+the GB10 annulus campaign or trained-checkpoint benchmarks without separately
+supplied raw artifacts/checkpoints and compatible GPU hardware.
+
 ## Should HOMYMOLY use RTD?
 
-**Yes.** Representation Topology Divergence (RTD) is one of the strongest foundations for the project, but it is a component and baseline rather than the novelty claim.
+**Yes as a diagnostic and reference; not as an established training loss.**
+Representation Topology Divergence (RTD) remains an important foundation for
+the project, but it is a component and baseline rather than the novelty claim.
 
 HOMYMOLY will use RTD in four roles:
 
 1. as an independently implemented, hand-validated diagnostic for paired
    metric representations;
-2. as an auxiliary topology-preservation loss when two views have one-to-one sample correspondence;
-3. as a baseline against which a map-aware mapping-cone loss is tested;
+2. as a reference against which narrower distance-preservation surrogates are
+   identified honestly;
+3. as a possible future auxiliary loss only when the published construction is
+   actually implemented and passes held-out evaluation;
 4. as a source of established constructions, tests, and differentiation strategies.
 
-RTD compares the Vietoris–Rips filtrations induced by two paired point-cloud representations. HOMYMOLY's proposed extension operates on explicit typed transformations between graph, cell, and sheaf complexes and combines structural defects with task utility and compute-aware routing. Directional RTD remains useful for asymmetric diagnosis; SRTD is a natural symmetric comparison.
+RTD compares the Vietoris–Rips filtrations induced by two paired point-cloud
+representations. HOMYMOLY's broader research program considers explicit typed
+transformations between graph, cell, and sheaf complexes, structural diagnostics,
+task utility, and compute-aware routing. The present paper establishes only the
+narrow boundary-compatibility result stated above. Directional RTD remains useful
+for asymmetric diagnosis; SRTD is a natural symmetric comparison.
 
 ## Repository map
 
@@ -195,12 +235,18 @@ RTD compares the Vietoris–Rips filtrations induced by two paired point-cloud r
 - [Gate 3 record](docs/15-gate3-record.md)
 - [Gate 5 record: molecular transfer](docs/16-gate5-record.md)
 - [Gate 2 confirmatory campaign](docs/17-gate2-confirmatory.md)
-- [Paper: Typed Representation Routing with Homological Structure](docs/18-paper.md)
+- [Paper: Boundary Compatibility, Not Acyclicity](docs/18-paper.md)
 - [Routing confirmatory v2 protocol](docs/19-routing-confirmatory-v2-protocol.md)
 - [Audit remediation and continuation record](docs/20-audit-remediation.md)
 - [Identifiable typed-map protocol](docs/21-identifiable-typed-map-protocol.md)
 - [Release handoff](docs/22-overnight-handoff.md)
 - [**Identifiable typed-map results record**](docs/23-identifiable-results.md)
+- [Continuous-map probe](docs/24-continuous-map-probe.md)
+- [Conversion generator specification](docs/25-conversion-generator-spec.md)
+- [Exploratory boundary-compatibility study](docs/26-exactness-as-a-prior.md)
+- [Frozen conversion protocol](docs/27-conversion-campaign-protocol.md)
+- [Corrected conversion-campaign results](docs/28-conversion-campaign-results.md)
+- [Post-campaign audit corrections](docs/29-audit-corrections.md)
 - [Bibliography](references.bib)
 
 ## Stage 1 foundation
@@ -227,14 +273,20 @@ The system keeps two claims separate:
   training to distill a regime-by-expert utility table. The canonical config
   exposes a per-example utility mode that removes that training privilege,
   but the reported v2 result does not use that mode.
-- The conversion experiment holds target cell activity and sheaf transports
-  out of translator inputs and predicts them from the graph view, while
+- Historical graph-to-cell/sheaf translators hold target cell activity and sheaf
+  transports out of translator inputs and predict them from the graph view, while
   supplying candidate face incidence. In the current synthetic generator,
   those held-out targets are not identifiable from the graph inputs, so this
-  is an implemented reconstruction objective awaiting an identifiable
-  benchmark—not conversion evidence. A separate exact-chain-map layer
-  parameterizes degree maps in the nullspace of the chain-map equations and
-  evaluates their mapping cones exactly.
+  remains an implemented reconstruction objective, not conversion evidence.
+- The continuous conversion campaign is separate. For each topology it fits a
+  full `F×E` matrix `W` from 16 paired observations, observes `B1`, withholds
+  the NetworkX-chosen cycle basis `B2`, and evaluates on held-out pairs from
+  that same topology. A finite boundary-compatibility penalty encourages rows
+  toward the cycle subspace; it does not hard-constrain `W`, identify sequence
+  exactness, or learn a shared converter for unseen topologies.
+- The annulus experiment uses a distinct finite twelve-map architecture whose
+  chain-map equations hold by construction and whose hard mapping cones are
+  evaluated exactly.
 
 On the GB10, trained-checkpoint benchmarks over five seeds measure routed
 inference at 1.532 ± 0.035× the throughput of the dense three-expert path and
@@ -255,8 +307,13 @@ HOMYMOLY does **not** claim to introduce:
 - neural cellular sheaves;
 - categorical descriptions of neural architectures; or
 - mixture-of-experts routing.
+- equality-constrained least squares, cycle-space projection, or Hodge theory.
 
-The candidate contribution is their disciplined intersection: dynamic, cost-aware routing among genuinely different structured representations, using typed transformations, categorical coherence, and map-aware homological defects.
+The supported contribution is narrower: an auditable empirical evaluation of an
+input-derived boundary-compatibility penalty on one deterministic synthetic
+conversion family, plus carefully bounded negative and compute results. Classical
+constrained least squares and Hodge theory explain the subspace mechanism; the
+paper does not claim a new theorem.
 
 ## Status
 
@@ -269,6 +326,16 @@ scientific, not computational.
   also reaches. The structural contrasts are therefore weak nulls, and the
   informative next step is a harder benchmark where the correct map is *not*
   analytically attainable — not more seeds on this one.
+- The continuous conversion campaign supports a boundary-compatibility penalty
+  over the unpenalized fit, subject to the disclosed sum-versus-mean protocol
+  deviation. It is a prospectively locked same-family replication, not
+  independent confirmation: design choices were outcome-informed, and
+  exploratory seed overlap is unverifiable. Its compatibility/error result is a
+  prespecified, unadjusted regularization-path association; `lambda` is a common
+  driver, so independent prediction and off-path calibration remain open.
+- The frozen defect-routing H5 endpoint is non-informative because success was
+  mathematically impossible under its per-trial oracle denominator. It requires
+  a redesigned follow-up rather than reinterpretation.
 - The five-seed routing-v2 result supports only the scoped historical
   regime-distilled, structured-view routing endpoint; n=5 leaves distributional
   assumptions uncheckable and the exact two-sided sign-test sensitivity floor is

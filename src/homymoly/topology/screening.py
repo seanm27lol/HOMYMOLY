@@ -1,26 +1,24 @@
-"""Screen a structural term before writing a frozen protocol around it.
+"""Heuristically screen a structural term before freezing a training campaign.
 
-Every structural term this project has tested failed for one of exactly two
-reasons, and both are checkable analytically in seconds:
+Two inexpensive checks can expose an objective that is poorly matched to the
+task:
 
-1. **The ground truth does not satisfy it.** Then the term pulls away from the
-   answer and can only hurt. The mapping cone in the conversion campaign is this
-   case: penalising near-collapse biases a learned map away from the true one.
-2. **It is constant over the hypothesis class.** Then it carries no information,
-   whatever its weight. Cone acyclicity on the identifiable annulus is this case
-   -- all twelve candidates are invertible, so every one is acyclic.
+1. **The ground truth is not near a minimum of the term.** The objective then
+   imposes bias away from the answer. This is a warning, not a proof of harm:
+   biased regularisation can still improve finite-sample prediction.
+2. **The term is constant over the supplied candidate class.** It then provides
+   no differential signal for selecting among those candidates, whatever its
+   weight.
 
-A term is worth a campaign only when the truth satisfies it *and* it separates
-good candidates from bad ones. Run :func:`screen_structural_term` before
-committing a protocol; it would have predicted every result in
-``docs/26`` and ``docs/28`` without running anything.
-
-This is a screening gate, not a guarantee. Passing means the term is not
-obviously useless, not that it will help.
+A term passes this conservative screen only when the truth is near a minimum and
+the term separates at least some supplied candidates. Passing is neither
+necessary nor sufficient for better generalisation, and this screen does not
+replace an experiment.
 """
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, TypeVar
@@ -29,8 +27,8 @@ import torch
 
 Candidate = TypeVar("Candidate")
 
-SATISFIED = "satisfied-and-varies"
-NOT_SATISFIED = "ground-truth-violates-the-term"
+SATISFIED = "truth-near-minimum-and-varies"
+NOT_SATISFIED = "truth-not-near-minimum"
 CONSTANT = "constant-over-the-hypothesis-class"
 
 
@@ -53,18 +51,21 @@ class ScreeningResult:
     def explain(self) -> str:
         if self.verdict == NOT_SATISFIED:
             return (
-                "the ground truth does not satisfy this term "
-                f"(value {self.truth_value:.3e}); it will pull away from the answer"
+                "the ground truth is not near a minimum of this term "
+                f"(truth {self.truth_value:.3e}, supplied-candidate minimum "
+                f"{self.candidate_minimum:.3e}); the objective imposes bias, "
+                "but this screen alone does not predict held-out harm"
             )
         if self.verdict == CONSTANT:
             return (
-                "the term is effectively constant across the hypothesis class "
-                f"(relative spread {self.relative_spread:.3e}); it carries no "
-                "information at any weight"
+                "the term is effectively constant across the supplied candidates "
+                f"(relative spread {self.relative_spread:.3e}); it provides no "
+                "differential selection signal there"
             )
         return (
-            "the truth satisfies the term and it separates candidates "
-            f"(relative spread {self.relative_spread:.3e})"
+            "the truth is near a minimum and the term separates supplied candidates "
+            f"(relative spread {self.relative_spread:.3e}); this passes the "
+            "heuristic screen but does not guarantee a training benefit"
         )
 
 
@@ -76,14 +77,20 @@ def screen_structural_term(
     satisfied_atol: float = 1e-8,
     minimum_relative_spread: float = 1e-3,
 ) -> ScreeningResult:
-    """Check that a structural term is satisfied by the truth and varies.
+    """Check whether a loss is minimised near the truth and varies over candidates.
 
     ``term`` maps a candidate to a nonnegative scalar that a training objective
     would minimise. ``truth`` is the correct answer, and ``candidates`` are other
     members of the hypothesis class the model could reach.
 
-    Relative spread is measured against the largest candidate value, so it does
-    not depend on the term's units.
+    The truth is treated as near-minimal when its value is no larger than the
+    smallest supplied alternative up to ``satisfied_atol`` times the values'
+    scale. Relative spread is measured over the truth *and* alternatives. Including
+    the truth is essential: a term can perfectly separate a low-valued truth from
+    wrong alternatives even when all those alternatives share one value.
+
+    The result is a task-alignment diagnostic, not an estimator of generalisation
+    benefit and not a substitute for a controlled experiment.
     """
 
     if not candidates:
@@ -91,11 +98,17 @@ def screen_structural_term(
 
     truth_value = float(term(truth))
     values = [float(term(candidate)) for candidate in candidates]
-    lowest, highest = min(values), max(values)
-    scale = max(abs(highest), abs(truth_value))
-    spread = 0.0 if scale == 0.0 else (highest - lowest) / scale
+    all_values = [truth_value, *values]
+    if not all(math.isfinite(value) for value in all_values):
+        raise ValueError("screening term values must be finite")
 
-    satisfied = truth_value <= satisfied_atol
+    lowest, highest = min(values), max(values)
+    overall_lowest, overall_highest = min(all_values), max(all_values)
+    scale = max(abs(value) for value in all_values)
+    spread = 0.0 if scale == 0.0 else (overall_highest - overall_lowest) / scale
+
+    alignment_scale = max(1.0, abs(truth_value), abs(lowest))
+    satisfied = truth_value <= lowest + satisfied_atol * alignment_scale
     varies = spread >= minimum_relative_spread
     if not satisfied:
         verdict = NOT_SATISFIED
@@ -114,14 +127,28 @@ def screen_structural_term(
     )
 
 
-def exactness_term(boundary: torch.Tensor) -> Callable[[torch.Tensor], torch.Tensor]:
-    """Return ``W -> ||boundary @ W^T||^2``, the term confirmed in docs/28.
+def boundary_compatibility_term(
+    boundary: torch.Tensor,
+) -> Callable[[torch.Tensor], torch.Tensor]:
+    """Return ``W -> ||boundary @ W^T||^2``, a compatibility diagnostic.
 
     The learned ``W`` implies a next boundary ``W^T``; this measures how far the
-    implied complex is from satisfying ``d . d = 0``.
+    implied complex is from satisfying ``d . d = 0``.  It does not measure
+    exactness of a sequence: a zero candidate has zero defect regardless of
+    whether its image equals the kernel of ``boundary``.
     """
 
     def term(candidate: torch.Tensor) -> torch.Tensor:
         return (boundary.to(candidate.dtype) @ candidate.mT).pow(2).sum()
 
     return term
+
+
+def exactness_term(boundary: torch.Tensor) -> Callable[[torch.Tensor], torch.Tensor]:
+    """Compatibility alias for the historical, mathematically imprecise name.
+
+    New code should use :func:`boundary_compatibility_term`.  The alias remains
+    available because early HOMYMOLY releases exported ``exactness_term``.
+    """
+
+    return boundary_compatibility_term(boundary)

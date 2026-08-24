@@ -49,8 +49,11 @@ def test_snapshot_contains_the_source_and_the_evidence_bundle(tmp_path: Path) ->
     assert summary["evidence_files"] == 2
     assert summary["sha256"]
     with tarfile.open(output, "r:gz") as archive:
-        names = {Path(name).relative_to(Path(name).parts[0]).as_posix()
-                 for name in archive.getnames() if "/" in name}
+        names = {
+            Path(name).relative_to(Path(name).parts[0]).as_posix()
+            for name in archive.getnames()
+            if "/" in name
+        }
     assert "results/MANIFEST.json" in names
     assert "scripts/thing.py" in names
     assert "LICENSE" in names
@@ -78,10 +81,19 @@ def test_review_note_records_the_commit_and_the_manifest_hash(tmp_path: Path) ->
     with tarfile.open(output, "r:gz") as archive:
         member = next(n for n in archive.getnames() if n.endswith("REVIEW.md"))
         note = archive.extractfile(member).read().decode()
+    prose = " ".join(note.split())
     assert summary["revision"] in note
     assert summary["manifest_sha256"] in note
     assert "peer review only" in note
     assert "--verify-only" in note
+    assert "Every reported number can be verified" in note
+    assert (
+        "Integrity verification itself requires neither network access nor a GPU"
+        in note
+    )
+    assert "tests and CPU campaign also require no GPU" in prose
+    assert "cannot be rerun from this snapshot alone" in prose
+    assert "Every number in the manuscript is recomputable" not in note
 
 
 def test_a_dirty_worktree_is_refused(tmp_path: Path) -> None:

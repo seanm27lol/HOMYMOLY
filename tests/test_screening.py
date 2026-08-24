@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import pytest
 import torch
 
@@ -11,6 +13,7 @@ from homymoly.topology import (
     SATISFIED,
     ChainComplex,
     ChainMap,
+    boundary_compatibility_term,
     cone_betti_numbers,
     exactness_term,
     screen_structural_term,
@@ -32,25 +35,29 @@ def _conversion_case() -> tuple[torch.Tensor, torch.Tensor, list[torch.Tensor]]:
     return sample.boundary_1, truth, candidates
 
 
-def test_the_gate_passes_the_term_that_was_confirmed() -> None:
-    """Exactness is satisfied by the truth and separates candidates."""
+def test_the_gate_passes_the_boundary_compatibility_term() -> None:
+    """Boundary compatibility is satisfied by truth and separates candidates."""
 
     boundary_1, truth, candidates = _conversion_case()
 
-    result = screen_structural_term(exactness_term(boundary_1), truth, candidates)
+    result = screen_structural_term(
+        boundary_compatibility_term(boundary_1), truth, candidates
+    )
 
     assert result.verdict == SATISFIED
     assert result.usable
     assert result.satisfied_by_truth
     assert result.varies_over_class
-    assert "separates candidates" in result.explain()
+    assert "separates supplied candidates" in result.explain()
 
 
 def test_the_gate_rejects_a_term_the_truth_violates() -> None:
-    """A term the answer does not satisfy can only pull away from it.
+    """Flag a surrogate whose supplied alternatives score below the truth.
 
-    This is the mapping cone's failure mode in the conversion campaign: rewarding
-    large singular values biases W away from the true, rank-deficient answer.
+    The conversion truth is full row rank. The tested exponential surrogate
+    nonetheless rewards increasing its smallest singular value without treating
+    the finite truth as an optimum, so it imposes bias. The screen does not claim
+    that such bias must worsen finite-sample prediction.
     """
 
     _boundary_1, truth, candidates = _conversion_case()
@@ -62,7 +69,8 @@ def test_the_gate_rejects_a_term_the_truth_violates() -> None:
 
     assert result.verdict == NOT_SATISFIED
     assert not result.usable
-    assert "does not satisfy" in result.explain()
+    assert "not near a minimum" in result.explain()
+    assert "does not predict held-out harm" in result.explain()
 
 
 def test_the_gate_rejects_a_term_that_is_constant_over_the_class() -> None:
@@ -92,17 +100,40 @@ def test_the_gate_rejects_a_term_that_is_constant_over_the_class() -> None:
     assert "constant" in result.explain()
 
 
+def test_truth_is_included_when_testing_whether_a_term_varies() -> None:
+    """A truth can be separated even when every wrong alternative ties."""
+
+    result = screen_structural_term(
+        lambda candidate: float(candidate != "truth"),
+        "truth",
+        ["wrong-a", "wrong-b", "wrong-c"],
+    )
+
+    assert result.verdict == SATISFIED
+    assert result.varies_over_class
+    assert result.relative_spread == pytest.approx(1.0)
+
+
 def test_screening_needs_candidates() -> None:
     _boundary_1, truth, _ = _conversion_case()
     with pytest.raises(ValueError, match="at least one candidate"):
-        screen_structural_term(exactness_term(_boundary_1), truth, [])
+        screen_structural_term(boundary_compatibility_term(_boundary_1), truth, [])
+
+
+def test_screening_rejects_non_finite_term_values() -> None:
+    with pytest.raises(ValueError, match="must be finite"):
+        screen_structural_term(
+            lambda candidate: math.inf if candidate == "bad" else 0.0,
+            "truth",
+            ["bad"],
+        )
 
 
 def test_relative_spread_is_scale_free() -> None:
     """Rescaling a term must not change whether it is judged to vary."""
 
     _boundary_1, truth, candidates = _conversion_case()
-    base = exactness_term(_boundary_1)
+    base = boundary_compatibility_term(_boundary_1)
     scaled = screen_structural_term(
         lambda candidate: base(candidate) * 1e6, truth, candidates
     )
@@ -110,3 +141,13 @@ def test_relative_spread_is_scale_free() -> None:
 
     assert scaled.verdict == plain.verdict
     assert scaled.relative_spread == pytest.approx(plain.relative_spread, rel=1e-9)
+
+
+def test_historical_exactness_term_is_a_compatibility_alias() -> None:
+    """Keep old callers working without using the old name in new code."""
+
+    boundary_1, truth, _ = _conversion_case()
+
+    assert exactness_term(boundary_1)(truth) == pytest.approx(
+        boundary_compatibility_term(boundary_1)(truth)
+    )

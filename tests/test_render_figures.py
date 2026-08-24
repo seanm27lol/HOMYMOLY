@@ -124,16 +124,62 @@ def test_contrast_figure_plots_every_gate3_and_gauge_contrast() -> None:
     assert markup.count("<circle") == expected
 
 
+def test_conversion_campaign_names_proxy_objectives_as_surrogates() -> None:
+    campaign = {
+        "design": {"eligible_topologies": 2, "training_pairs": 16},
+        "primary": {
+            name: {
+                "interval_bonferroni_98_33": interval,
+                "interval_95": interval,
+                "mean_log10_ratio": sum(interval) / 2,
+                "improves_confirmatory": False,
+                "harms_confirmatory": False,
+            }
+            for name, interval in (
+                ("exact", [-0.3, 0.1]),
+                ("cone", [-0.1, 0.2]),
+                ("rtd", [-0.2, 0.3]),
+            )
+        },
+    }
+
+    markup = MODULE.figure_campaign(campaign)
+
+    assert "singular-value cone surrogate" in markup
+    assert "RTD-inspired distance surrogate" in markup
+    assert "exp(-2·σ_min(W)); not mapping-cone homology" in markup
+    assert "normalized pairwise-distance MSE" in markup
+    assert "Boundary compatibility improves" in markup
+    assert "B₁Wᵀ = 0 (frozen key: exact)" in markup
+    assert ">exact<" not in markup
+    assert "no detected improvement" in markup
+    assert ">inert<" not in markup
+
+
 def test_committed_figures_match_a_fresh_render(tmp_path: Path) -> None:
     """The tracked SVGs must be regenerable, so a stale figure cannot ship."""
 
     figures = Path(__file__).parents[1] / "docs" / "figures"
-    if not (RESULTS / "MANIFEST.json").is_file() or not figures.is_dir():
-        pytest.skip("tracked evidence bundle or figure directory is not present")
+    corrected = RESULTS / "campaigns" / "conversion-campaign-v1-corrected.json"
+    if (
+        not (RESULTS / "MANIFEST.json").is_file()
+        or not figures.is_dir()
+        or not corrected.is_file()
+    ):
+        pytest.skip(
+            "tracked evidence, corrected campaign, or figure directory is not present"
+        )
 
     MODULE.main(["--results-root", str(RESULTS), "--output-dir", str(tmp_path)])
 
-    for name in ("fig-recovery.svg", "fig-contrasts.svg", "fig-compute.svg", "fig-campaign.svg"):
+    for name in (
+        "fig-recovery.svg",
+        "fig-contrasts.svg",
+        "fig-compute.svg",
+        "fig-campaign.svg",
+    ):
         assert (tmp_path / name).read_text(encoding="utf-8") == (
             figures / name
-        ).read_text(encoding="utf-8"), f"{name} is stale; re-run scripts/render_figures.py"
+        ).read_text(encoding="utf-8"), (
+            f"{name} is stale; re-run scripts/render_figures.py"
+        )

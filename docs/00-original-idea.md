@@ -39,32 +39,44 @@ loud what survived, rather than leaving the reader to infer it.
 | which target features are unreachable | implemented as the cokernel; **untested** as a predictor |
 | what fails to return under a reverse conversion | machinery exists; **no ablation** |
 | whether conversion paths agree | **never tested** |
-| whether a richer representation justifies its cost | **no on accuracy, yes on compute.** Routed inference is 1.532× faster than dense evaluation but 2.269× slower than the fastest single fixed route |
+| whether a richer representation justifies its cost | **accuracy unresolved; compute characterized.** The frozen defect-routing endpoint was impossible to support. Separately, routed inference is 1.532× faster than dense evaluation but 2.269× slower than the fastest fixed route |
 
 The transcript's own phrase — *"taking the quotient between the [kernel] and the
 image"* — is homology, and it turned out to be closer to the mark than the
 constructions built on top of it.
 
-**What survived is one clause, sharpened.** Exactness — the requirement that a
-conversion commute with the boundaries, so that `d∘d = 0` on the complex it
-implies — is a strong prior on a learned conversion when paired data is scarce,
-and its violation is a calibrated measure of the damage done. Confirmed under a
-preregistered protocol: adjusted interval [−2.802, −1.458] on `log10` held-out
-error, and a within-topology defect/damage correlation of +0.854 across 29 of 29
-topologies.
+**What survived is one clause, sharpened and renamed.** Boundary compatibility —
+the requirement that `d∘d = 0` on the complex implied by the conversion — is a
+strong prior on a learned conversion when paired data are scarce. This is not
+sequence exactness: `W = 0` satisfies `B1 Wᵀ = 0` without proving
+`im Wᵀ = ker B1`. A prospectively specified primary analysis in a locked
+same-generator-family replication gives an adjusted
+interval [−2.802, −1.458] on `log10` held-out error, subject to a disclosed
+protocol deviation from a Frobenius sum to the executed elementwise mean. The
+design was outcome-informed by same-family exploration, and exploratory seed
+overlap cannot be audited, so this is not independent confirmation. Along the
+prespecified compatibility-penalty path, a secondary analysis finds positive
+within-topology defect/error covariation in 29 of 29 topologies; its interval is
+unadjusted. The common driver `lambda` and reused data/initialization mean the
+nine path fits are not independent and do not establish independent prediction
+or off-path calibration.
 
 **What did not survive is the part the project spent its campaigns on.** The
-mapping cone fails as a training term — confirmatorily it *harms* — and RTD is
-inert. Selecting a view by measured conversion cost is not supported. Nothing in
-the derived-category, Fourier–Mukai, eigensheaf, or Langlands direction was ever
-implemented, and nothing here bears on it.
+continuous campaign's singular-value cone surrogate harms at the tested weight,
+while its RTD-inspired normalized pairwise-distance surrogate shows no detected
+improvement. Those results do not test mapping-cone homology or published
+RTD/SRTD. The frozen routing endpoint is non-informative because its oracle
+denominator made support impossible. Nothing in the derived-category,
+Fourier–Mukai, eigensheaf, or Langlands direction was ever implemented, and
+nothing here bears on it.
 
-There is an irony worth recording. Exactness was present from the first
-executable version, enforced architecturally by `ExactChainMapLayer`, and was
-never itself the object under test. The mechanism that works was in the
-architecture the whole time while every campaign was aimed at the two mechanisms
-that do not.
+There is an irony worth recording. Boundary compatibility was present from the
+first executable version, although historical names such as
+`ExactChainMapLayer` blurred exact satisfaction of an equation with exactness
+of a sequence. The penalty that helped was in the architecture's mathematical
+vocabulary while the initial research emphasis lay elsewhere.
 
 Full records: [`docs/26`](26-exactness-as-a-prior.md) for the exploratory work,
 [`docs/27`](27-conversion-campaign-protocol.md) for the frozen protocol, and
-[`docs/28`](28-conversion-campaign-results.md) for the confirmatory result.
+[`docs/28`](28-conversion-campaign-results.md) for the corrected result and
+[`docs/29`](29-audit-corrections.md) for the audit record.
