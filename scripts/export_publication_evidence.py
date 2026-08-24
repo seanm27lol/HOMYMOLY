@@ -106,6 +106,13 @@ def specifications() -> list[Spec]:
             "Strict trained GB10 compute-benchmark summary.",
         ),
         Spec(
+            "results/campaigns/conversion-campaign-v1.json",
+            "campaigns/conversion-campaign-v1.json",
+            "compact-summary",
+            "in-place",
+            "Frozen conversion campaign v1, preregistered in docs/27.",
+        ),
+        Spec(
             "artifacts/identifiable-maps/campaign-summary.json",
             "summaries/identifiable-campaign-summary.json",
             "compact-summary",

@@ -201,6 +201,17 @@
       "source_sha256": "56c806c298cd3481405f261c2b56753bbaefee53be278c00d136b55b937176c8"
     },
     {
+      "bytes": 35642,
+      "derivation": null,
+      "description": "Frozen conversion campaign v1, preregistered in docs/27.",
+      "evidence_revision": "11644c68ec0b8c28416a14ce4d8799e4c9ca0860",
+      "kind": "compact-summary",
+      "path": "campaigns/conversion-campaign-v1.json",
+      "sha256": "836914d251db8d381aef9a2dcb0ac14a14562652f3e323dc840108b5f24d5ee1",
+      "source": "results/campaigns/conversion-campaign-v1.json",
+      "source_sha256": "836914d251db8d381aef9a2dcb0ac14a14562652f3e323dc840108b5f24d5ee1"
+    },
+    {
       "bytes": 120916,
       "derivation": "per-batch-lossless-v1",
       "description": "Gate-3 base final corruption report for full, per-batch rows only.",
@@ -613,18 +624,19 @@
   "schema_version": 1,
   "source_commit_note": "Generating revision recorded inside each exported artifact, with the number of exported files attributed to it. The routing confirmatory campaign was frozen before the identifiable-map campaign, so the two families legitimately carry different commits.",
   "source_commits": {
+    "11644c68ec0b8c28416a14ce4d8799e4c9ca0860": 1,
     "8021292e97abfec91768f1b5437c883a42c29c60": 47,
     "e69b07707950b6abe332366c51fe8c94254899f3": 1
   },
   "summary": {
     "by_kind": {
       "benchmark-summary": 15,
-      "compact-summary": 3,
+      "compact-summary": 4,
       "corruption-report-derivative": 20,
       "endpoint-table": 1,
       "gate-decision": 9
     },
-    "bytes": 2851099,
-    "files": 48
+    "bytes": 2886741,
+    "files": 49
   }
 }
