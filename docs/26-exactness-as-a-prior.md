@@ -200,3 +200,98 @@ The honest phrasing is the user's: homological structure does not obviously
 - Routing on measured conversion cost. Untouched.
 - C1 within condition, as above.
 - Preregistration. All of this is exploratory.
+
+---
+
+# Closing the three open questions
+
+Added 2026-08-23, same session. Seventeen topologies throughout.
+
+## A. Claim C1, within condition — supported
+
+The earlier C1 correlation pooled two conditions, so part of it could have been
+between-condition separation rather than prediction. Redone properly: within a
+single topology, sweep the exactness weight over nine values from 0 to 3.0,
+producing learned maps of varying quality, and correlate each map's exactness
+violation with its held-out error.
+
+| quantity | value |
+|---|---|
+| mean within-topology correlation | **+0.833** |
+| 95% CI (df = 16) | **[+0.778, +0.888]** |
+| topologies with positive correlation | **17 / 17** |
+
+The caveat is discharged. A learned conversion's measured structural defect
+predicts its task damage *within* a condition, not merely across conditions.
+Claim **C1 is supported** on this benchmark — it has been marked untested in the
+ledger since the project began.
+
+## B. Nonlinear conversion — exactness still helps
+
+The obvious deflation of the earlier result is that a correct linear constraint
+helping a linear problem is unremarkable. Repeated with a nonlinear link: target
+`tanh(circulation)`, model `tanh(Wx)`.
+
+| setting | plain | exact (3.0) | 95% CI |
+|---|---:|---:|---|
+| linear | 2.686 | 1.07e-03 | [−2.711, −1.415] |
+| **nonlinear** | 0.596 | **4.50e-02** | **[−1.740, −0.808]** |
+
+The gain shrinks from roughly 2500× to roughly 13×, and remains far from zero.
+Exactness is not merely an artefact of linear least squares.
+
+The two rows are not comparable in absolute terms: `tanh` saturates and bounds
+the error, so the nonlinear baseline starts much lower. The paired log ratio is
+the endpoint, and both exclude zero.
+
+## C. Routing on measured conversion cost — preliminary, positive
+
+The half of the original idea nobody had touched: choose a view by **measuring
+what converting into it costs**, rather than by a distilled utility table.
+
+Downstream task: predict `t = cᵀ(B2ᵀx)`, a scalar readout of the face view. The
+*cell route* answers through the learned converter; the *graph route* fits a
+vector straight from edge features on the same data budget. 136 trials spanning
+four training-set sizes and two regularisation settings, so converter quality
+varies widely.
+
+| | result |
+|---|---|
+| corr(measured defect, cell-route disadvantage) | +0.187 |
+| cell route wins when defect is **low** | **36 / 68** |
+| cell route wins when defect is **high** | **10 / 68** |
+
+| strategy | median held-out error |
+|---|---:|
+| always cell | 8.597 |
+| always graph | 10.51 |
+| **routed on measured defect** | **6.027** |
+
+Routing on the measured conversion defect beats **both** fixed strategies. The
+win-rate separation is large — 53% against 15% — even though the magnitude
+correlation is weak at +0.187, so the defect says *whether* the converted view is
+usable more reliably than it says *by how much*.
+
+**Caveat.** The routing threshold is the median defect computed over the same
+trials it is evaluated on, which is in-sample selection. A held-out threshold, or
+threshold selection on separate topologies, is required before this is more than
+a first look.
+
+## Where the original idea now stands
+
+| component of the idea | status |
+|---|---|
+| hold several views | built, works |
+| move between them | now possible, and measurable, via the conversion generator |
+| defects as measurements | **C1 supported**, +0.833 within condition |
+| defects to train the maps | **exactness improves**, cone hurts, RTD inert |
+| defects to choose the view | **preliminary positive**, beats both fixed routes |
+
+Not "homological structure teaches the model." **Exactness measurably improves
+it, and the measured defect is usable both as a training signal and as a routing
+signal.** The mapping cone and RTD — the two objects the project spent its
+campaigns on — are the parts that do not work.
+
+Everything here remains exploratory, on one synthetic family, with no
+preregistration. The next step is a frozen, preregistered campaign over these
+five rows, not further exploration.
