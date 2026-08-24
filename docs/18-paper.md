@@ -543,12 +543,23 @@ It does **not** establish:
 ## 11. Code and data availability
 
 **Availability status.** The project repository is private and is licensed
-proprietarily (Copyright © 2026 Sean Mahdavian, all rights reserved). Code and
-data are therefore **not publicly available at the time of writing**, and the
-mechanism by which a reader or reviewer may obtain them is an author decision
-that must be settled before submission — many venues require either an open
-release or an explicit, actionable access statement. This section describes what
-exists and how it is organised, not what is currently downloadable.
+proprietarily (Copyright © 2026 Sean Mahdavian, all rights reserved). This is
+**not an open-source or open-data release.**
+
+**Access for peer review.** The complete source, configurations, frozen
+protocols, and evidence bundle are made available to editors and reviewers for
+the duration of review, through a read-only snapshot supplied to the handling
+editor. The snapshot is built by `scripts/build_review_snapshot.py`, which
+archives the repository at one commit together with the tracked `results/`
+bundle and its manifest and refuses to run against an uncommitted worktree, so
+every reviewer receives the same bytes the author verified. Every number in this
+paper can be recomputed and every checksum re-verified from the snapshot alone,
+without access to the live repository. Access is granted for review only and
+confers no license to redistribute or reuse the material; the terms in `LICENSE`
+continue to apply.
+
+Readers outside the review process should treat this section as a description of
+what exists and how it is organised, not as a download.
 
 All code, configurations, and compact evidence are in that repository. The
 tracked bundle under `results/` contains 49 files with a `MANIFEST.json` recording
