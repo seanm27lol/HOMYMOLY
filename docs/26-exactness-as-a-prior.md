@@ -116,3 +116,87 @@ Those remain untested.
 4. Only then consider amending the paper. The current manuscript's §6.3 finding
    is about selection over a fixed class and is unaffected by this; what would
    change is the discussion, which currently has no positive instance to point at.
+
+---
+
+# Widened search: exactness versus the mapping cone versus RTD
+
+Added 2026-08-23, same session. Seventeen topologies with at least three faces,
+sixteen training pairs, paired against plain least squares per topology, df=16
+intervals on the `log10` ratio.
+
+The learned `W` implies a face boundary `Wᵀ`, so all three terms can be written as
+conditions on the *implied* complex rather than bolted on:
+
+| term | form | meaning |
+|---|---|---|
+| exact | `‖B1 Wᵀ‖²` | the implied complex satisfies `d∘d = 0` |
+| cone | `exp(−2·σ_min(W))` | no face collapses; implied 2-cells stay independent |
+| rtd | distance-preservation proxy | edge-signal geometry survives into face coefficients |
+
+Plain least squares: median held-out **2.579**.
+
+| term (weight) | median held-out | 95% CI vs plain |
+|---|---:|---|
+| exact (0.003) | 5.14e-01 | [−1.035, −0.370] |
+| exact (0.03) | 8.47e-03 | [−1.879, −0.849] |
+| exact (0.3) | 2.71e-03 | [−2.504, −1.267] |
+| exact (3.0) | **1.82e-03** | **[−2.699, −1.430]** |
+| cone (0.01) | 3.29e+00 | [+0.108, +0.294] |
+| cone (0.1) | 3.47e+00 | [+0.180, +0.744] |
+| rtd (0.01) | 2.58e+00 | [−0.000, +0.001] |
+| rtd (0.1) | 2.58e+00 | [−0.001, +0.017] |
+| exact 0.3 + cone 0.01 | 3.48e-01 | [−1.618, −0.679] |
+
+Three different answers, and the separation is the finding:
+
+- **Exactness improves the model at every weight over a thousand-fold range**, up
+  to roughly 1400× lower held-out error. This closes the weight-sweep weakness
+  recorded above: the effect is not a tuned artefact.
+- **The mapping cone actively hurts.** Both intervals exclude zero on the harmful
+  side, and adding it to exactness makes exactness worse (3.48e-01 against
+  2.71e-03 alone).
+- **RTD does nothing.** Both intervals are indistinguishable from zero to three
+  decimal places.
+
+## Claim C1: do measured defects predict damage?
+
+Across 34 fits, pooling the unregularised and the exact-plus-cone conditions:
+
+| defect measure | correlation with `log10` held-out error |
+|---|---:|
+| `log ‖B1 Wᵀ‖` — exactness violation | **+0.833** |
+| smallest singular value of `W` — collapse | −0.601 |
+
+The exactness defect strongly predicts task damage, in the expected direction.
+
+**Caveat, and it matters.** The pool mixes two conditions that differ
+systematically in both quantities, so part of this correlation reflects
+between-condition separation rather than prediction within a condition. A
+within-condition correlation over many weights is the test that would settle C1
+properly. On this evidence C1 is *supported, not established*.
+
+## What the widened search says about the original idea
+
+The project's original thesis was that homological defect measures should improve
+a learned conversion. On this benchmark that is **true, and specifically true of
+exactness**. It is false for the mapping cone, which hurts, and empty for RTD,
+which does nothing.
+
+That reframes the whole history recorded in this repository. The cone and RTD
+were the objects the project bet on and built campaigns around; both fail here.
+Exactness was present from the beginning — `ExactChainMapLayer` enforces it
+architecturally, and the one early experiment that worked, the 1.5e-14 chain-map
+recovery, relied on it. The mechanism that was working was already in the
+architecture, while the experiments were aimed at the two mechanisms that do not.
+
+The honest phrasing is the user's: homological structure does not obviously
+*teach* the model, but exactness measurably *improves* it.
+
+## Still not established
+
+- Nonlinear conversions. Everything here is linear, and a correct linear
+  constraint helping a linear problem is expected.
+- Routing on measured conversion cost. Untouched.
+- C1 within condition, as above.
+- Preregistration. All of this is exploratory.
