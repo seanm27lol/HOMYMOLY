@@ -28,15 +28,27 @@ from .incidence import (
     canonical_edge,
     validate_boundary_squared_zero,
 )
+from .screening import (
+    CONSTANT,
+    NOT_SATISFIED,
+    SATISFIED,
+    ScreeningResult,
+    exactness_term,
+    screen_structural_term,
+)
 from .sheaf import connection_coboundary, connection_residual, cycle_holonomy
 
 __all__ = [
+    "CONSTANT",
+    "NOT_SATISFIED",
+    "SATISFIED",
     "ChainComplex",
     "ChainMap",
     "DegreeDefect",
     "Edge",
     "Face",
     "OrientedIncidence",
+    "ScreeningResult",
     "build_boundary_1",
     "build_boundary_2",
     "build_oriented_incidence",
@@ -49,6 +61,7 @@ __all__ = [
     "cycle_holonomy",
     "degree_defect",
     "exactness_defects",
+    "exactness_term",
     "graph_to_cell_inclusion",
     "harmonic_basis",
     "hodge_projector",
@@ -57,5 +70,6 @@ __all__ = [
     "mapping_cone",
     "nullity",
     "numerical_rank",
+    "screen_structural_term",
     "validate_boundary_squared_zero",
 ]
