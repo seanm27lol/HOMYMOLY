@@ -1,17 +1,67 @@
 # HOMYMOLY
 
-**Homological routing between structured representations.**
+**Algebraic exactness as a prior on learned representation conversions.**
 
-HOMYMOLY is a research project investigating whether a machine-learning system can choose among vector, graph, cell-complex, and cellular-sheaf representations while explicitly measuring the structural damage caused by each conversion.
+## Thesis
 
-The working thesis is:
+Revised 2026-08-24 to state what survived testing rather than what was originally
+hoped for. The previous thesis — that mapping-cone defects would quantify
+topology lost during routing, and that routing would select views by that
+measurement — was tested across two campaign families and **did not survive**.
+See [`docs/28`](docs/28-conversion-campaign-results.md) for the confirmatory run
+and [`docs/00`](docs/00-original-idea.md) for how this relates to the original
+idea.
 
-> A task- and compute-aware mixture of structured experts can learn typed representation changes, constrain those changes to behave like chain maps, and use mapping-cone defects to quantify topology lost or introduced during routing.
+> **When a conversion between structured representations is learned from scarce
+> paired data, an exactness constraint derived from the input is a strong prior
+> on that conversion, and the resulting exactness violation is a calibrated
+> measure of the damage the conversion does.**
+
+Both halves are confirmed on one synthetic family under a preregistered protocol:
+
+| claim | evidence |
+|---|---|
+| exactness improves a learned conversion | Bonferroni-adjusted interval **[−2.802, −1.458]** on `log10` held-out error |
+| the exactness violation predicts damage (**C1**) | within-topology correlation **+0.854**, CI [+0.831, +0.877], **29/29** topologies |
+
+The constraint is `‖W·B1ᵀ‖²` — the learned conversion must annihilate
+coboundaries, so the complex it implies satisfies `d∘d = 0`. It is not leaked
+supervision: `B1` *is* the graph and the model observes it, while the answer `B2`
+is withheld.
+
+## What did not survive
+
+- **The mapping cone fails as a training term**, in every configuration tried
+  across two campaign families. Confirmatorily it does not merely fail to help —
+  it **harms**, adjusted interval [+0.102, +0.277].
+- **RTD is inert as a training term**, adjusted interval [−0.003, +0.039].
+- Both remain useful as **diagnostics** and as explanatory contrast. Neither
+  should be tested as a loss again without first passing the screening gate
+  below.
+- **Routing does not select views by measured defect.** Confirmatory interval
+  [−0.111, +0.382] contains zero. The one real routing result is a **compute**
+  claim, not an accuracy one: routed inference is 1.532 ± 0.035× faster than
+  dense three-expert evaluation, while being 2.269 ± 0.043× slower than the
+  fastest single fixed route.
+
+## Screening gate for any future structural term
+
+Every structural term this project tested failed for one of exactly two reasons,
+and both are checkable in seconds before a protocol is written:
+
+1. the ground truth does not satisfy the term, so it pulls away from the answer;
+2. the term is constant over the hypothesis class, so it carries no information
+   at any weight.
+
+`homymoly.topology.screen_structural_term` implements both checks. Run it before
+freezing any campaign around a new term — it reproduces every outcome in
+`docs/26` and `docs/28` without running a single fit.
 
 This repository contains the research specification, the executable Stage 1
 foundation, three structured experts, graph-to-cell/sheaf translators, a
 cost-aware router, degree-specific RTD/SRTD references, exact finite chain-map
-layers, a corruption suite, and resumable GB10 experiments.
+layers, a conversion generator, a corruption suite, and resumable GB10
+experiments.
 
 ## Current outcome
 
