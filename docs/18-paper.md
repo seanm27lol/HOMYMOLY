@@ -1,840 +1,614 @@
-# Exact Recovery of a Finite Typed Map Family on a Synthetic Cellular Annulus, with Representation Routing and Homological Diagnostics
+# Exactness, Not Acyclicity: Which Homological Constraints Improve a Learned Conversion Between Structured Representations
 
 **Sean Mahdavian**
 
-**Revision: 2026-08-23**
+**Revision: 2026-08-24**
 
 Affiliation, ORCID, funding, competing interests, and license are author-supplied
 submission fields and are deliberately left unset in this draft. See
-[Declarations](#12-declarations).
+[Declarations](#13-declarations).
 
 ## Abstract
 
-This report asks a narrow, answerable question: can a neural implementation
-recover an exact, typed, degree-wise map between two structured representations
-when the correct map is guaranteed to lie in a small known family, and does
-adding homological structure to the training objective help it do so?
+Moving data between structured representations — graphs, cell complexes, sheaves
+— loses information, and homological algebra supplies exact tools for measuring
+what a map destroys. It is natural to hope those tools can also *improve* a
+learned conversion by acting as training objectives. We test three of them and
+find that the answer depends entirely on which object is chosen, and that the
+difference is predictable in advance from two cheap analytic checks.
 
-We build a synthetic six-sector cellular annulus — 12 vertices, 18 edges, 6
-faces, Betti numbers (1, 1, 0) — and a finite dihedral family of twelve exact
-three-term maps acting on it. A model observes explicit identifying markers and
-uses a flattened multilayer perceptron to select one member of a hard-coded
-group-action basis. Over a frozen 40-run campaign (8 objectives × 5 seeds,
-4,800/1,200/1,200 examples per run) the implementation recovers the planted map
-exactly: transformation accuracy 1.000 and cell-face accuracy 1.000 in every run
-whose objective contains either task or reconstruction supervision, with map
-mean-squared error at the 1e-16 level and chain-map residuals inside a fixed 1e-5
-tolerance. A prespecified engineering recovery gate passed in 10 of 10 applicable
-runs.
+Under a protocol frozen and committed before execution, on 29 topologies of a
+generator built so that conversion is learnable and homological defects vary, an
+**exactness** constraint improves a learned conversion by roughly two orders of
+magnitude in held-out error: Bonferroni-adjusted interval [−2.802, −1.458] on the
+paired `log10` ratio. The constraint is not leaked supervision — it is built from
+the graph the model already observes, while the answer is withheld. The resulting
+**exactness violation is a calibrated measure of damage**: within-topology
+correlation with held-out error of +0.854, 95% interval [+0.831, +0.877],
+positive in 29 of 29 topologies.
 
-The structural results are negative, and we report them as the main scientific
-content rather than as a caveat. Adding a mapping-cone term, a
-representation-topology-divergence term, or both to a working objective changed
-nothing measurable: all 21 declared continuous contrast intervals contain zero,
-against a saturated accuracy ceiling. Trained on structural losses *alone*, the
-model sits at chance — transformation accuracy 0.0815 (cone-only) and 0.0833
-(RTD-only) against a 0.0833 chance baseline — even though the decoded cones are
-acyclic in every evaluated example. This is not an optimization failure: every
-candidate map is a signed permutation, hence an invertible isometry, so cone
-acyclicity and RTD are both *constant* on the hypothesis space and carry exactly
-zero information about which element was planted. Acyclicity certifies that the
-selected map is invertible; it does not certify that it is the correct map, and
-the same degeneracy afflicts any hypothesis class of invertible maps — which is
-the setting where a cone objective looks most attractive.
+The same campaign refutes the two objects this line of work more commonly
+reaches for. A **mapping-cone** term does not merely fail to help; it harms,
+adjusted interval [+0.102, +0.277]. A **representation-topology-divergence** term
+is inert, [−0.003, +0.039].
 
-Two further audited results are reported with their own boundaries. A frozen
-five-seed routing campaign gives a hard-minus-best-fixed-expert margin of +0.1098
-(95% Student-t interval [+0.0953, +0.1243]), under privileged latent-regime
-distillation and with target structured views available at inference. Corrected
-fixed-expert corruption diagnostics — nine paired contrasts in the Gate-3 base
-family and three across eight seed-matched gauge pairs — produce no interval
-excluding zero.
+We explain both failures mechanistically, and the explanations differ. In a
+second setting — selection among a fixed family of twelve maps on a cellular
+annulus — every candidate is a signed permutation, hence an isomorphism, so cone
+acyclicity is *constant* over the hypothesis class and carries zero information
+at any weight; models trained on it alone identify at chance while producing
+acyclic cones in 6,000 of 6,000 evaluated examples. In the learned-conversion
+setting the cone fails differently: the ground truth *violates* it, so the term
+pulls away from the answer. These two failure modes are exhaustive in our
+experience, and both are checkable in seconds. We give the check, and show it
+reproduces every outcome reported here without running a single fit.
 
-We do not claim a general graph neural network, a universal representation
-translator, a learned quasi-isomorphism, or any categorical, Langlands,
-eigensheaf, or Fourier–Mukai result. The verified identity is the chain-map law
-up to a fixed numerical tolerance on one synthetic template family.
+We do not claim that homological structure teaches a model. We claim that one
+specific constraint, derivable from the input, measurably improves a learned
+conversion and calibrates its damage — and that the objects most often proposed
+for this role do not.
 
-## 1. Research question and novelty statement
+## 1. Introduction
 
 ### 1.1 The question
 
-Given two structured representations of the same underlying object, a *typed map*
-is a family of linear maps — one per degree — that is required to commute with
-the two boundary operators. Such a map is the discrete analogue of a chain map.
-The practical question is whether a learned system can produce one that is
-*exact* rather than approximate, and whether homological objectives help.
+Given two structured representations of the same object, a conversion between
+them is a **typed map**: a family of linear maps, one per degree, required to
+commute with the boundary operators. Homological algebra measures what such a map
+destroys (the kernel of the induced map on homology), what it cannot reach (the
+cokernel), and whether it is an isomorphism (the acyclicity of its mapping cone).
 
-That question is only answerable if the correct answer is known. We therefore do
-not attempt open-ended conversion. We plant a specific map drawn from a finite
-group action, give the model the information needed in principle to identify
-which member was planted, and measure whether it recovers that member exactly.
-
-This is an implementation and exactness study. It establishes that the machinery
-works on a case where ground truth exists, and it measures whether homological
-loss terms contribute. It does not establish that the machinery generalizes.
+The practical hope is that these measurements can serve as training signal — that
+attaching one as a loss term will make a learned conversion better. This paper
+asks which of them, if any, does.
 
 ### 1.2 What is and is not new
 
-Learning higher-order structure from graphs is an established direction:
-Differentiable Cell Complex Module [5] learns cell probabilities jointly with a
-task, Differentiable Lifting [6] learns liftings into cellular, simplicial, and
-combinatorial complexes, and Neural Sheaf Diffusion [7] and Knowledge Sheaves [8]
-learn sheaf restriction maps for graph and knowledge-graph data. Comparing paired
-representations through cross-barcodes is likewise established: Representation
-Topology Divergence [1], its differentiable autoencoder form [2], and the
-symmetric variant SRTD [3] are the direct basis for our divergence reference, and
-a quotient-homology account of neural representation [4] develops an adjacent
-algebraic view. Per-example dynamic routing among experts has an established
-literature as well [11–14].
+Learning higher-order structure from graphs is established: Differentiable Cell
+Complex Module [5] learns cell probabilities jointly with a task, Differentiable
+Lifting [6] learns liftings into cellular, simplicial, and combinatorial
+complexes, and Neural Sheaf Diffusion [7] and Knowledge Sheaves [8] learn sheaf
+restriction maps. Comparing paired representations through cross-barcodes is
+likewise established: Representation Topology Divergence [1], its differentiable
+autoencoder form [2], and the symmetric variant SRTD [3] are the direct basis for
+our divergence reference, and a quotient-homology account of neural
+representation [4] develops an adjacent algebraic view. Categorical deep
+learning [9] and functor learning by gradient descent [10] ask what algebraic
+structure a learned map should respect.
 
-Against that background our contribution is deliberately small and is stated as a
-methodological one: a controlled benchmark in which an exact typed map is planted
-and recoverable, a nullspace parameterization under which every parameter value
-satisfies the chain-map equation by construction, and an audited factorial
-measurement showing that mapping-cone and RTD objectives add nothing on this
-benchmark and cannot identify the map on their own — together with the
-structural reason why (§6.3), which applies to any hypothesis class of
-invertible maps and not only to ours. We make no claim of priority or of
-superiority over any cited system, and the comparison in §3 is positioning, not
-systematic review.
+Our contribution is narrow and largely negative-with-a-mechanism:
+
+1. A confirmatory result that an **input-derivable exactness constraint** improves
+   a learned conversion under scarce paired data, with a matched-rank control
+   ruling out the obvious deflation.
+2. A confirmatory result that the **exactness violation predicts damage**.
+3. Confirmatory refutations of the **mapping cone** (harmful) and **RTD** (inert)
+   as training terms, each with a distinct, stated mechanism.
+4. A **screening criterion** — two analytic checks — that predicts all of the
+   above without experiments, and a benchmark generator in which homological
+   defects genuinely vary.
+
+We make no claim of priority over any cited system, and §3 is positioning rather
+than systematic review.
 
 ## 2. Background and definitions
 
-Each concept is stated in plain language first, then in notation.
+Each concept is stated in plain language before notation.
 
 ### 2.1 Graphs, cell complexes, and cellular sheaves
 
 A **graph** records which pairs of objects are related. A **cell complex** adds
 higher-dimensional pieces: on top of vertices (degree 0) and edges (degree 1) it
 attaches faces (degree 2) glued along closed edge loops. A **cellular sheaf**
-attaches a small vector space to each cell and a linear *transport* map to each
-incidence, so that data can be moved along the complex; the sheaf records not
-just what is connected but how quantities rotate as they move.
+attaches a small vector space to each cell and a linear transport map to each
+incidence, so data can move along the complex.
 
-Formally, a two-dimensional cell complex has boundary operators `d1` (edges to
-vertices) and `d2` (faces to edges) satisfying `d1 d2 = 0`. A cellular sheaf
-assigns a stalk to each cell and restriction maps to each incident pair; our
-sheaf expert uses rank-2 planar rotations as edge transports.
+Formally a two-dimensional complex has boundary operators `d1` (edges to
+vertices) and `d2` (faces to edges) satisfying `d1 d2 = 0`.
 
-### 2.2 The cellular annulus
+### 2.2 Typed maps, chain maps, exactness
 
-An **annulus** is a ring — a disc with a hole. Our synthetic template is a ring
-divided into six sectors. The hole is what makes it interesting: it gives the
-complex a one-dimensional cycle that no amount of local information can remove,
-so a map that preserves structure must preserve that cycle.
+A **typed map** carries degree-`n` data to degree-`n` data. It is a **chain map**
+when it commutes with the boundaries — informally, when it does not tear the
+complex. For a source with boundary `dC` and target with boundary `dD`,
 
-Concretely the template has 12 vertices, 18 edges, and 6 faces, with Betti
-numbers `(b0, b1, b2) = (1, 1, 0)`: one connected component, one independent
-cycle, no enclosed volume. All 40 campaign runs use this single template.
+    dD F1 − F0 dC = 0.
 
-### 2.3 Typed maps, chain maps, and exactness defects
+The left-hand side is the **exactness defect**. Our `ExactChainMapLayer`
+parameterizes `(F0, F1)` inside the nullspace of that expression, so exactness is
+architectural rather than penalized.
 
-A **typed map** is a collection of linear maps, one for each degree, that carries
-degree-0 data to degree-0 data, degree-1 to degree-1, and so on. It is a **chain
-map** when it commutes with the boundary operators — that is, when taking the
-boundary and then applying the map gives the same answer as applying the map and
-then taking the boundary. Informally: the map does not tear the complex.
+### 2.3 The implied complex
 
-For a source complex with boundary `dC` and a target with boundary `dD`, the
-degree maps `F0, F1` form a chain map when
+This paper's central move. When a model learns a lift `W` from edge signals to
+face signals, `Wᵀ` is a candidate face boundary. The learned conversion therefore
+**implies a complex** with boundaries `(B1, Wᵀ)`, and that complex is legitimate
+only if `B1 Wᵀ = 0`. Every structural term below is written as a condition on the
+implied complex rather than bolted on:
 
-    dD F1 - F0 dC = 0.
+| term | form | meaning |
+|---|---|---|
+| `exact` | `‖B1 Wᵀ‖²` | the implied complex satisfies `d∘d = 0` |
+| `cone` | `exp(−2·σ_min(W))` | no implied 2-cell collapses |
+| `rtd` | distance-preservation proxy | edge-signal geometry survives into face coefficients |
 
-The left-hand side is the **exactness defect**: the amount by which the square
-fails to commute. Our `ExactChainMapLayer` parameterizes `(F0, F1)` inside the
-nullspace of that expression, so every parameter value satisfies the equation up
-to floating-point roundoff. The **chain-map residual** we report is the largest
-observed magnitude of that defect. Because the zero map trivially satisfies the
-equation, paired-signal or task supervision remains necessary.
+### 2.4 Kernels, cokernels, and mapping cones
 
-### 2.4 Filtered mapping cones
+The **kernel** of the induced map on homology is what a conversion destroys; the
+**cokernel** is what it cannot reach. A **mapping cone** is acyclic exactly when
+the map is a quasi-isomorphism, and its homology is the sum of the two:
 
-A **mapping cone** is a construction that packages "what the map fails to
-preserve" into a single object. If the cone has no homology — if it is
-**acyclic** — the map is an isomorphism on homology. Acyclicity is thus a
-certificate of invertibility.
+    dim H_n(cone F) = dim coker H_n(F) + dim ker H_(n−1)(F).
 
-A **filtered** mapping cone applies this at a sequence of thresholds rather than
-once, so the certificate can be read as a function of scale. We compute both a
-differentiable soft-nullity proxy, usable as a training signal, and an exact
-integer-rank cone homology evaluation, used only for reporting.
-
-The crucial interpretive point, which our results make concrete: acyclicity says
-the decoded map is invertible. It does not say the decoded map is the *planted*
-one. A wrong invertible map has an acyclic cone too.
+We verify this identity numerically on all 24 candidates of §4.1. It matters
+here because it shows the cone **bundles** two directional facts into one number
+and loses their separation — the kernel and cokernel are strictly more
+informative than the acyclicity bit.
 
 ### 2.5 RTD and SRTD
 
-**Representation Topology Divergence** compares two point clouds that describe
-the same items — possibly in different ambient dimensions — by tracking when
-topological features appear and disappear as a distance threshold grows, and
-scoring the mismatch. **SRTD** is a symmetric variant that replaces an ad hoc
-directional combination with a union/intersection construction and reports
-degree-specific totals.
-
-Our corrected reference implementation accepts paired dissimilarity matrices with
-a one-to-one entity correspondence, normalizes each matrix by its full-matrix 0.9
-quantile, reports persistence separately by homological degree, uses degree 1 for
-the published scalar convention, constructs one additional simplex degree
-internally for deaths while excluding truncation-frontier generators, and caps
-exact enumeration at 64 entities. The campaign uses 48 RTD training entities.
-
-A separate training-time H0 distance surrogate used in historical runs is *not*
-an exact cross-barcode and may disagree with exact RTD even in directional
-ordering; it is labeled a surrogate throughout the code and its historical
-outputs are withdrawn.
+**Representation Topology Divergence** compares two point clouds describing the
+same items by tracking when topological features appear and disappear as a
+distance threshold grows. **SRTD** is a symmetric variant. Our corrected
+reference normalizes each dissimilarity matrix by its full-matrix 0.9 quantile,
+reports persistence separately by degree, uses degree 1 for the published scalar,
+and caps exact enumeration at 64 entities.
 
 ## 3. Related work
 
-Sections 2.5 and 1.2 cite the primary sources this work builds on. In summary:
-RTD [1], RTD-AE [2], and SRTD [3] define the representation-divergence reference,
-and quotient homology [4] offers a related algebraic treatment of representation;
-DCM [5] and DiffLift [6] are the closest precedents for learning higher-order
-topological structure from graph data; Neural Sheaf Diffusion [7] and Knowledge
-Sheaves [8] are the precedents for learned sheaf transports; DeepMoE [11],
-GMoE [12], GraphMETRO [13], and MvCGE [14] establish per-example dynamic expert
-routing on graph data.
+§1.2 and §2.5 cite the primary sources. In summary: RTD [1], RTD-AE [2], and
+SRTD [3] define the divergence reference, with quotient homology [4] an adjacent
+algebraic treatment; DCM [5] and DiffLift [6] are the closest precedents for
+learning higher-order topological structure from graphs; Neural Sheaf
+Diffusion [7] and Knowledge Sheaves [8] for learned sheaf transports; DeepMoE
+[11], GMoE [12], GraphMETRO [13], and MvCGE [14] for per-example expert routing.
 
-A separate line of work asks what algebraic structure a learned map should
-respect. Categorical deep learning [9] argues that architectures are usefully
-described as algebras over a theory, and functor learning by gradient
-descent [10] gives a concrete instance in which the learned object is required
-to preserve structure rather than merely fit data. Our nullspace-constrained
-typed map sits in that tradition operationally — exactness is imposed by
-construction — but §9 states plainly that nothing here validates a categorical
-claim, and §6.3 shows that imposing the structure is exactly what fails to
-identify the map.
+Categorical deep learning [9] argues architectures are usefully described as
+algebras over a theory, and functor learning [10] gives an instance where the
+learned object must preserve structure rather than merely fit data. Our
+nullspace-constrained map sits in that tradition operationally; §10 states
+plainly that nothing here validates a categorical claim.
 
-HOMYMOLY differs in combining fixed representation families, conversion
-diagnostics, and routing in one codebase. The present experiments do not
-establish that this combination is new or better than any of the above.
+## 4. Two settings
 
-## 4. System and method
-
-### 4.1 Architecture and data flow
+### 4.1 Selection over a fixed family
 
 <figure>
   <img src="figures/architecture.svg" alt="Architecture and data flow of the identifiable typed-map experiment: a planted group element, a marker-only selector, a fixed twelve-element basis, the nullspace-constrained chain-map layer, and four scored outputs." width="680">
-  <figcaption><strong>Figure 1. Architecture and data flow.</strong> A group element is planted in the annulus template. The selector observes only the identifying markers and never sees the target complex. It chooses one member of a fixed twelve-element basis, and the resulting typed map is scored four ways. The chain-map constraint is structural — it holds for every parameter value — so the residual is a numerical check, not a learned objective.</figcaption>
+  <figcaption><strong>Figure 1. The selection setting.</strong> A group element is planted in a six-sector cellular annulus (12 vertices, 18 edges, 6 faces, Betti (1, 1, 0)). The selector observes only identifying markers and never sees the target complex. It chooses one member of a fixed twelve-element basis, and the resulting typed map is scored four ways. The chain-map constraint is structural — it holds for every parameter value — so the residual is a numerical check, not a learned objective.</figcaption>
 </figure>
 
-Because the twelve basis maps are signed permutations, every map the layer can
-produce is invertible. Section 6.3 shows that this is exactly why the two
-structural objectives cannot identify the planted element.
+Twelve dihedral maps act on the annulus. Each is built as a **signed permutation
+in every degree**: `F0` permutes vertices, `F1` permutes edges with an
+orientation sign, `F2` is fixed by matching the mapped boundary to a unique
+oriented face. We verify numerically that all twelve satisfy `Fᵀ F = I` at
+degrees 0, 1, and 2.
 
-### 4.2 Losses and ablations
+That property is the whole story of this setting, and §5 draws it out.
 
-Every objective is a weighted sum of the terms below. The eight ablations are the
-frozen factorial cells of the campaign.
+### 4.2 Learned continuous conversion
 
-| term | what it penalizes | role |
-|---|---|---|
-| `task` | error in selecting the planted group element (12-way) | identification supervision |
-| `reconstruction` | typed signal MSE at degrees 0, 1, 2 after applying the decoded map | paired-signal supervision |
-| `cone` | differentiable soft-nullity proxy for mapping-cone acyclicity | structural (homological) |
-| `rtd` | degree-1 SRTD between source and mapped point clouds, 48 entities | structural (homological) |
+A generator in which conversion is genuinely learnable. Its design is forced by a
+conflict: the routing benchmark used elsewhere in this project deliberately hides
+cell structure from the graph observation so a router cannot shortcut, which
+makes conversion impossible by construction. Routing needs targets *not*
+inferable from the graph; conversion needs them *inferable*. One generator cannot
+serve both, so this is a separate one.
 
-| ablation | task | reconstruction | cone | rtd | purpose |
-|---|:--:|:--:|:--:|:--:|---|
-| `task_only` | yes | – | – | – | identification supervision alone |
-| `reconstruction_only` | – | yes | – | – | paired-signal supervision alone |
-| `task_reconstruction` | yes | yes | – | – | working control for structural contrasts |
-| `task_reconstruction_cone` | yes | yes | yes | – | does a cone term add anything? |
-| `task_reconstruction_rtd` | yes | yes | – | yes | does an RTD term add anything? |
-| `combined` | yes | yes | yes | yes | do both together add anything? |
-| `cone_only` | – | – | yes | – | can a cone term identify the map alone? |
-| `rtd_only` | – | – | – | yes | can an RTD term identify the map alone? |
+- The **2-cells are a cycle basis of the graph**, so the cell complex is
+  determined by the graph rather than drawn beside it. Graph size and density
+  vary, so the cycle rank varies, and the defect of a conversion varies with it.
+- **Face activity thresholds the circulation** of the edge cochain around each
+  cycle — exactly `B2ᵀ x1`. Integrating an edge feature around a cycle is the
+  operation a converter must perform.
+- **Sheaf transport** combines an endpoint frame difference with a per-edge
+  twist. The frame difference telescopes to the identity around any closed cycle,
+  so without the twist every holonomy would be trivially zero; the twist rides a
+  separate edge channel so holonomy and face activity are not the same quantity
+  twice.
 
-Three contrasts were declared before the campaign, each against
-`task_reconstruction`: `combined`, `task_reconstruction_cone`, and
-`task_reconstruction_rtd`. The two `*_only` cells are identifiability controls,
-not contrasts.
+Over 300 samples the construction gives cycle ranks 0–31, **32 distinct defect
+profiles**, and `B1 B2 = 0` exactly. The degree-1 kernel of the canonical
+inclusion equals the cycle rank: it counts the cycles the conversion destroys.
 
-### 4.3 Endpoints and baselines
+**The learning task.** Learn `W: R^E → R^F` with the cycle basis `B2` **withheld**;
+`B1` is observable because it is the graph. Ground truth is `W = B2ᵀ`, a median of
+216 free parameters.
 
-| endpoint | direction | family |
-|---|---|---|
-| `transformation_accuracy` | higher is better | identification |
-| `cell_face_accuracy` | higher is better | cell recovery |
-| `map_mse` | lower is better | map error |
-| `degree_zero_mse`, `degree_one_mse`, `degree_two_mse` | lower is better | typed reconstruction error |
-| `sheaf_transport_frobenius_mse` | lower is better | prespecified descriptive reconstruction error |
+## 5. When can a structural term carry information?
 
-Two baselines anchor the accuracy endpoints. **Chance** is 1/12 = 0.0833 for
-transformation accuracy and 1/6 = 0.1667 for cell-face accuracy. An **analytic
-marker decoder** — a closed-form reader of the identifying markers, with no
-learning — achieves 1.000. The analytic decoder matters: it shows the task is
-exactly solvable from the provided markers, so a learned accuracy of 1.000 is
-recovery of a known-attainable ceiling, not evidence of a powerful model.
+Two conditions are necessary, and in our experience jointly sufficient to avoid
+wasting a campaign.
 
-### 4.4 Routing experiment
+**Condition 1 — the ground truth must satisfy the term.** Otherwise the term
+pulls away from the answer and can only hurt.
 
-Three experts (graph, cell-complex, connection-sheaf) each return a
-64-dimensional embedding and binary logits. A hard router selects one expert per
-example from observation summaries that omit label and regime tensors but include
-graph features, candidate and active-face statistics, and sheaf-transport
-statistics. The synthetic benchmark builds counterfactual groups containing one
-example per regime-label pair on a shared oriented complex, with group-disjoint
-splits and deliberately relational labels (a sign relation across unmarked anchor
-edges; probe-face activity with the edge cochain held fixed; a cycle-holonomy
-defect).
+**Condition 2 — the term must vary over the hypothesis class.** A term that takes
+the same value on every reachable candidate carries zero information, at any
+weight.
 
-Routing training used privileged latent-regime distillation: validation regime
-labels indexed a regime-by-expert accuracy table that supplied the router's
-utility targets. The regime was never an inference input, but this is a
-supervision privilege and is part of the claim boundary throughout.
+Both conditions failed at least once in the experiments below, and the failures
+are instructive because they are different.
 
-### 4.5 Fixed-expert corruption diagnostic
+### 5.1 Condition 2 fails on the annulus, provably
 
-Two families of corruption diagnostic are reported. Both compare clean and
-corrupted **fixed-expert embeddings**. Neither invokes a translator or a learned
-map, so neither can support or refute any conversion claim.
+A mapping cone is acyclic exactly when its chain map is a quasi-isomorphism. Every
+candidate in §4.1 is a signed permutation, hence invertible, hence a
+quasi-isomorphism. **Cone acyclicity therefore takes the same value on all twelve
+hypotheses.**
 
-The statistic is the Pearson correlation of rank residuals between a topological
-defect diagnostic and the damage rate, after controlling for ranked severity,
-ranked mean embedding displacement, and block fixed effects. Draws are
-deterministic under a `sha256-block-and-sample-v1` protocol, so a baseline and a
-candidate with matching seeds receive identical corrupted examples. Each
-corruption kind contributes 13 complete blocks across 5 severity levels
-(0.05, 0.1, 0.2, 0.4, 0.8), giving 65 paired batch observations per kind.
+The same argument covers RTD there. A signed permutation is orthogonal, hence an
+isometry, so the mapped point cloud carries the same pairwise dissimilarity matrix
+as the source under every candidate — maximum observed distance change 1.5e-07 at
+float precision. The paired matrices RTD consumes are identical across the class.
 
-- **Gate-3 base family**: four trained runs (`task-only` baseline;
-  `plus-recon`, `plus-chain`, `full` candidates), three corruption kinds, nine
-  paired contrasts. Uncertainty is a paired complete-block bootstrap; inference
-  is whole-block model-label randomization. Conditional on the fixed checkpoint
-  pair — it does not estimate training-seed variation.
-- **Gauge family**: eight seed-matched pairs (`gauge-task-only` versus
-  `gauge-plus-chain`, seeds 20260803–20260810) differing only in
-  `translator_weight` (0.0 vs 0.1) and `chain_weight` (0.0 vs 0.05). Here the
-  unit of analysis *is* the training seed, so an across-seed Student-t interval
-  with df = 7 and an exact two-sided sign test are available.
+The generalization is broader than this annulus: **any hypothesis class whose
+candidates are all invertible has a constant cone-acyclicity signal**, and that is
+precisely the class a practitioner has in mind when a cone objective looks
+attractive.
 
-## 5. Experimental design
+The obvious objection — that this is circular, because the class was chosen to
+consist of isomorphisms — restates the finding rather than rebutting it. Wanting a
+learned map to be structure-preserving is the same property that makes acyclicity
+useless for choosing *among* structure-preserving candidates. What makes it a trap
+rather than a triviality is the view from inside the training loop: the objective
+is driven to full satisfaction, every example returns a clean certificate, and
+identification never rises above chance.
 
-### 5.1 Freeze, seeds, denominators
+### 5.2 Condition 1 fails on the learned conversion
 
-The identifiable campaign was frozen before execution. Source config
-`configs/identifiable-maps/gb10-full.yaml`, SHA-256
-`22abb205e8a89586b38799d7f7b8d53f0c24cef45f872453533ddf34e20fad73`. Eight
-ablations × five seeds (20260821–20260825) = 40 runs, all executed, none missing,
-replaced, or excluded. Each run uses 4,800 training, 1,200 validation, and 1,200
-test examples on the single annulus template. The map tolerance is fixed at 1e-5.
-Cone-only and RTD-only aggregate Betti histograms cover 6,000 test examples each
-(5 seeds × 1,200).
+In §4.2 the truth `W = B2ᵀ` is rank-deficient in the relevant sense, so a term
+rewarding large singular values is *violated by the answer*. A cone-flavoured
+penalty there does not fail to help; it actively pushes away from the truth. §7.3
+confirms this.
 
-The routing campaign froze five configs and its primary endpoint before its valid
-runs; seeds 20260906–20260910; the endpoint is hard-routed accuracy minus the
-maximum fixed-expert accuracy.
+### 5.3 The check is cheap
 
-### 5.2 Hardware, software, provenance
+Both conditions are computable without training. `screen_structural_term`
+evaluates a candidate term on the ground truth and on a sample of the hypothesis
+class, and reports one of three verdicts:
+`satisfied-and-varies`, `ground-truth-violates-the-term`, or
+`constant-over-the-hypothesis-class`.
 
-All campaign runs and all benchmarks executed on one NVIDIA GB10,
-Linux 6.17.0-1026-nvidia aarch64, glibc 2.39, Python 3.12.3, PyTorch 2.13.0+cu130,
-CUDA 13.0, NumPy 2.5.2, PyYAML 6.0.3, deterministic algorithms enabled with
+Applied retroactively it reproduces every outcome in this paper: exactness on the
+conversion task is usable; the cone on the conversion task is violated by the
+truth; the cone on the annulus is constant. **No fits are required.** We recommend
+running it before freezing any protocol around a new structural term.
+
+## 6. Experimental design
+
+### 6.1 Preregistration
+
+The conversion campaign was frozen in a protocol document committed **before
+execution**: SHA-256
+`503cc282f40d118ba1739c2afe1bfc77eaf2b1733baaddb91c0c3363e75ae2b8`, committed at
+`d5d18af`, campaign run at `11644c6` from a clean worktree. No endpoint, weight,
+decision rule, or sample size changed after the freeze.
+
+| item | value |
+|---|---|
+| declared topologies | 30 (seeds 20261001–20261030) |
+| eligible | **29**; seed 20261025 had fewer than three faces and was skipped, **not replaced** |
+| training pairs | 16 |
+| held-out pairs | 3072 |
+| observation noise | 0.02 |
+| optimiser | Adam, lr 0.05, 2500 steps, `W` initialised to zeros, float64 |
+| weights | `exact` 3.0, `cone` 0.01, `rtd` 0.1 |
+
+Each weight is the best-performing value for that term in prior exploratory work,
+so **every term is represented at its most favourable tested setting**. Weights
+are not comparable across terms because the terms have different scales.
+
+### 6.2 Endpoints and decisions
+
+Primary endpoint is the paired quantity, one value per topology:
+
+    d = log10( held-out MSE with term / held-out MSE without )
+
+Negative means the term improves the model. Pairing removes topology variance.
+
+**Multiplicity is adjusted.** The three primary contrasts form one family; the
+confirmatory interval is Bonferroni-corrected to two-sided 98.333%, giving a
+family-wise error rate of 0.05. Unadjusted 95% intervals are reported alongside
+and the adjusted interval governs. An exact two-sided sign test is reported as
+distribution-free sensitivity and governs nothing.
+
+The campaign ran once over all declared topologies. No interim analysis, no early
+stop, no extension.
+
+### 6.3 Hardware, software, provenance
+
+Campaign: CPU, float64, PyTorch 2.13.0+cu130, Python 3.12.3. The annulus campaign
+and all timing benchmarks ran on one NVIDIA GB10, Linux 6.17.0-1026-nvidia
+aarch64, CUDA 13.0, deterministic algorithms enabled with
 `CUBLAS_WORKSPACE_CONFIG=:4096:8`.
 
 | item | value |
 |---|---|
-| identifiable campaign commit | `8021292e97abfec91768f1b5437c883a42c29c60` |
+| annulus campaign commit | `8021292e97abfec91768f1b5437c883a42c29c60` |
+| annulus launch fingerprint | `44408d7adf8467e594879b46e25a1cb7fd89a7e7a5d5f3446548bcbf3ed1096e` |
+| annulus strict summary SHA-256 | `0cd0defb0b0d41b5f7563c364cfdda62cb72c5e5a845bdd5d1ab76a2e1cb953c` |
 | routing campaign commit | `e69b07707950b6abe332366c51fe8c94254899f3` |
-| campaign launch fingerprint | `44408d7adf8467e594879b46e25a1cb7fd89a7e7a5d5f3446548bcbf3ed1096e` |
-| frozen full-config SHA-256 | `22abb205e8a89586b38799d7f7b8d53f0c24cef45f872453533ddf34e20fad73` |
-| strict campaign summary SHA-256 | `0cd0defb0b0d41b5f7563c364cfdda62cb72c5e5a845bdd5d1ab76a2e1cb953c` |
-| identifiable code fingerprint | `5908adf7d445524c52797d779478945a184b4e1f10056c1d21bcde044bedb360` |
-| routing code fingerprint | `473fb0f6714798274c38949107221df3bd941e89273a6eef76e54394d6c1f1d8` |
 | scheduler steps completed | 56 of 56 |
 
-The scheduler receipt is sealed and lists all 296 produced files with byte counts
-and SHA-256 digests; all 296 verify against the on-disk artifacts. The 56 steps
-comprise 40 training runs, one strict summary, ten identifiable-map checkpoint
-benchmarks, and five routing benchmarks.
+The sealed scheduler receipt lists all 296 produced files with byte counts and
+SHA-256 digests; all 296 verify against the on-disk artifacts.
 
-### 5.3 Estimands, uncertainty, multiplicity, stopping rules
+## 7. Results
 
-The identifiable campaign's estimand for each declared contrast is the mean
-across five paired seeds of (candidate − control) on a registered endpoint.
-Uncertainty is a Student-t interval with df = 4; a distribution-free exact
-two-sided sign test is reported as sensitivity. **No multiplicity adjustment is
-applied anywhere in this report.** With five untied paired seeds the exact
-two-sided sign test cannot fall below p = 0.0625, so it can never be decisive at
-conventional thresholds; with eight untied seeds in the gauge family the floor is
-p = 0.0078125.
+### 7.1 Exactness improves a learned conversion
 
-The gauge estimand is the mean across eight paired training seeds of the
-candidate-minus-baseline adjusted statistic, with a df = 7 Student-t interval and
-an exact two-sided sign test.
-
-Decision rules were fixed in advance: a contrast is called a difference only if
-its interval excludes zero. The engineering recovery gate is an absolute
-threshold gate, not a comparison: a run passes when cell-face accuracy ≥ 0.95,
-transformation accuracy ≥ 0.95, map MSE ≤ 1e-3, chain residual ≤ 1e-5, and the
-hard-cone acyclic fraction = 1.0. Stopping was by fixed epoch budget, not by
-monitoring an endpoint.
-
-A stop condition was declared for provenance mismatch: any disagreement in
-checkpoint, config, script, commit, sample count, seed, pairing key, schema, or
-hash halts analysis rather than triggering a re-run or a substitution. No such
-mismatch was found.
-
-## 6. Results
-
-### 6.1 Exact recovery of the planted typed map
-
-Six of the eight objectives — every objective containing task or reconstruction
-supervision — recover the planted map exactly on all five seeds.
-
-| ablation | transformation accuracy | cell-face accuracy | map MSE | degree-1 MSE |
-|---|---:|---:|---:|---:|
-| `task_only` | 1.000 | 1.000 | 2.6e-17 | 4.2e-16 |
-| `reconstruction_only` | 1.000 | 1.000 | 2.5e-08 | 3.2e-07 |
-| `task_reconstruction` | 1.000 | 1.000 | 1.7e-16 | 2.4e-15 |
-| `task_reconstruction_cone` | 1.000 | 1.000 | 1.7e-16 | 2.4e-15 |
-| `task_reconstruction_rtd` | 1.000 | 1.000 | 1.6e-16 | 2.3e-15 |
-| `combined` | 1.000 | 1.000 | 1.7e-16 | 2.3e-15 |
-| `cone_only` | 0.0815 | 0.1697 | 1.09e-01 | 1.07 |
-| `rtd_only` | 0.0833 | 0.1703 | 1.91e-01 | 1.87 |
-
-Chance is 0.0833 for transformation accuracy and 0.1667 for cell-face accuracy.
-All standard deviations across the five seeds are zero for the saturated
-accuracies.
+| term | weight | 95% interval | Bonferroni 98.33% | sign test | decision |
+|---|---:|---|---|---:|---|
+| `exact` | 3.0 | [−2.628, −1.632] | **[−2.802, −1.458]** | <1e-6 | **improves** |
+| `cone` | 0.01 | [+0.125, +0.254] | **[+0.102, +0.277]** | <1e-6 | **harms** |
+| `rtd` | 0.1 | [+0.002, +0.034] | [−0.003, +0.039] | 0.458 | **inert** |
 
 <figure>
-  <img src="figures/fig-recovery.svg" alt="Two-panel bar chart. Left panel: transformation accuracy by objective, with six supervised objectives at 1.000 and cone-only and RTD-only at the 0.0833 chance line. Right panel: map mean-squared error on a log scale, showing roughly fifteen orders of magnitude between the supervised objectives and the two controls." width="680">
-  <figcaption><strong>Figure 2. Exact recovery by training objective.</strong> Mean over five seeds; every declared ablation is shown, grouped as supervised objectives then identifiability controls. Left: transformation accuracy against the 0.0833 chance baseline. Right: map mean-squared error on a log scale. Any objective carrying task or reconstruction supervision saturates; the two structure-only controls sit at chance with map errors fifteen orders of magnitude larger. Generated from <code>results/summaries/identifiable-campaign-summary.json</code>.</figcaption>
+  <img src="figures/fig-campaign.svg" alt="Forest plot of three homological terms. The exactness interval lies far below zero and is labelled improves; the cone interval lies above zero and is labelled harms; the RTD interval straddles zero and is labelled inert." width="680">
+  <figcaption><strong>Figure 5. The three homological terms, one protocol, three answers.</strong> Paired <code>log10</code>(held-out error with term / without), one value per topology, 29 topologies. Thick bar is the Bonferroni-adjusted 98.33% interval that governs the decision; thin bar is the unadjusted 95%. Exactness improves by roughly two orders of magnitude; the cone harms; RTD is inert. Generated from <code>results/campaigns/conversion-campaign-v1.json</code>.</figcaption>
 </figure>
 
-The **engineering recovery gate passed in 10 of 10 applicable runs** — the
-`task_reconstruction` and `combined` objectives, five seeds each. In every
-applicable run both accuracies were exactly 1.0, map errors were at numerical
-precision, chain-map residuals met the fixed 1e-5 tolerance (largest observed
-1.42e-14), and hard cones were acyclic. Zero runs failed.
+Median `log10` ratio for exactness is −2.858, roughly a **700-fold** reduction in
+held-out error; the mean is −2.130. The adjusted interval lies far from zero.
 
-This is an implementation gate. It establishes that the parameterization,
-training path, decoder, and exact cone oracle agree on a case where the answer is
-known. Because the analytic marker decoder also attains 1.000, the ceiling was
-attainable without learning.
+The term is `‖W B1ᵀ‖²`, satisfied exactly by the truth because
+`B2ᵀ B1ᵀ = (B1 B2)ᵀ = 0`. **It is not leaked supervision**: `B1` is the graph, which
+the model observes; `B2` is the answer, which is withheld.
 
-### 6.2 Structural losses add nothing measurable
+### 7.2 The exactness violation is a calibrated damage measure
 
-All 21 declared continuous contrast endpoints — three contrasts against
-`task_reconstruction`, seven registered endpoints each — have Student-t intervals
-containing zero. Accuracy endpoints are exactly tied at 1.000, so their
-differences are identically zero and their sign tests are fully tied.
+Within each topology, nine exactness weights produce learned maps of varying
+quality. The endpoint is the correlation between a map's exactness violation and
+its held-out error.
 
-This is a null result under a hard ceiling, and the ceiling is the reason it is
-weak evidence rather than strong evidence of absence. When the control already
-scores 1.000, no candidate can improve on it, and a null is guaranteed by
-construction on the identification endpoints. The continuous reconstruction
-endpoints are more informative — they had room to move and did not — but they sit
-at 1e-16, within floating-point noise of exact.
-
-The honest reading: on this benchmark, mapping-cone and RTD terms neither help
-nor hurt. The benchmark cannot distinguish "these terms are useless" from "this
-task is too easy to reveal their value".
-
-### 6.3 Structural losses alone cannot identify the map, and provably cannot
-
-The two identifiability controls are the sharpest structural finding.
-
-| control | transformation accuracy | chance | cell-face accuracy | chance | hard-cone Betti over 6,000 examples |
-|---|---:|---:|---:|---:|---|
-| `cone_only` | 0.0815 | 0.0833 | 0.1697 | 0.1667 | `[0,0,0,0]` in 6,000 / 6,000 |
-| `rtd_only` | 0.0833 | 0.0833 | 0.1703 | 0.1667 | `[0,0,0,0]` in 6,000 / 6,000 |
-
-Both controls sit at chance on both accuracy endpoints, and their map MSEs
-(1.09e-01, 1.91e-01) are fifteen orders of magnitude worse than the supervised
-objectives. Yet **every decoded cone is acyclic in every one of the 6,000
-evaluated examples for both controls.**
-
-That combination is the point. A model trained only to make its mapping cone
-acyclic succeeds completely at making its mapping cone acyclic, and learns
-nothing about which map was planted.
-
-**This is not an optimization failure. Both signals are constant on the
-hypothesis space, so their information content about the planted element is
-exactly zero.** The construction makes this checkable rather than conjectural.
-Each of the twelve basis maps is built as a signed permutation in every degree:
-`F0` permutes vertices, `F1` permutes edges with an orientation sign, and `F2`
-is fixed by matching the mapped cellular boundary against a unique oriented
-face. We verified numerically that all twelve satisfy `Fᵀ F = I` at degrees 0,
-1, and 2, and that each is a signed permutation with exactly one unit-magnitude
-entry per row and column.
-
-Two consequences follow directly.
-
-- **The cone signal is constant.** A mapping cone is acyclic exactly when its
-  chain map is a quasi-isomorphism. A signed permutation is invertible, so every
-  one of the twelve candidates is an isomorphism of chain complexes, hence a
-  quasi-isomorphism, hence has an acyclic cone. Cone acyclicity takes the same
-  value on all twelve hypotheses. The observed `[0,0,0,0]` in 6,000 of 6,000
-  examples is the empirical signature of that constant, not a learned outcome.
-- **The RTD signal is constant.** A signed permutation is orthogonal, hence an
-  isometry, so the mapped point cloud has the same pairwise dissimilarity matrix
-  as the source under every candidate (maximum observed distance change
-  1.5e-07, at float precision). The paired matrices RTD consumes are therefore
-  identical across the hypothesis space, and the divergence is likewise
-  constant.
-
-So both `*_only` objectives are fully satisfiable by any of the twelve
-candidates, and chance-level identification is the only attainable outcome. The
-generalization is broader than this annulus: **any hypothesis class whose
-candidate maps are all invertible has a constant cone-acyclicity signal**, and
-that is precisely the setting in which a cone objective looks most attractive.
-
-The obvious objection — that this is circular, because the hypothesis class was
-chosen to consist of isomorphisms — is the finding restated rather than a
-rebuttal. The property that motivates reaching for a cone objective in the first
-place, namely wanting the learned map to be structure-preserving, is the same
-property that makes acyclicity useless for choosing among structure-preserving
-candidates. What makes it a trap rather than a triviality is the view from
-inside the training loop: the structural objective is driven to complete
-satisfaction, the diagnostic reports a clean certificate on every example, and
-identification never rises above chance. Nothing in the training signal reveals
-the problem.
-
-Acyclicity certifies invertibility within the template family; it does not
-certify correctness. Any claim that a cone objective supplies a useful training
-signal for identification is refuted here.
-
-### 6.4 Frozen routing result
-
-| seed | hard routed | best fixed | margin | dense | route accuracy | route MI (nats) |
-|---|---:|---:|---:|---:|---:|---:|
-| 20260906 | 0.8028 | 0.6743 | +0.1285 | 0.7723 | 0.6100 | 0.1622 |
-| 20260907 | 0.7745 | 0.6754 | +0.0991 | 0.7571 | 0.5468 | 0.0972 |
-| 20260908 | 0.7680 | 0.6667 | +0.1013 | 0.7582 | 0.5381 | 0.0934 |
-| 20260909 | 0.7789 | 0.6667 | +0.1122 | 0.7342 | 0.5752 | 0.1264 |
-| 20260910 | 0.7745 | 0.6667 | +0.1078 | 0.7505 | 0.5501 | 0.1006 |
-
-Mean hard-minus-best-fixed margin **+0.1098** (sample SD 0.0117), two-sided 95%
-Student-t interval **[+0.0953, +0.1243]**. All five margins are positive and the
-frozen interval rule labels the result supported. The exact sign-test sensitivity
-value is p = 0.0625, its floor at five untied seeds. Mean hard-minus-dense
-accuracy is +0.0253; dense logits are an unweighted mean of trained expert logits,
-not an independently optimized ensemble.
-
-Two disclosures travel with this number permanently. Training used privileged
-latent-regime distillation, and an aborted pre-freeze seed-20260906 attempt
-recorded validation metrics under different executable code before the committed
-seed was rerun. The core endpoint, decision rule, and config hashes were committed
-before the valid runs, but a provenance-safeguard paragraph was added during seed
-five. We therefore call this protocol-aligned under the committed freeze, not
-pristine preregistration.
-
-### 6.5 Trained compute benchmarks
-
-Both benchmark families measure a warmed, synchronized CUDA forward pass on the
-same GB10. **They report different tail statistics and are never pooled**: the
-identifiable runner records p10/p90 and the routing runner records p95. Neither
-is a preregistered matched-compute Pareto claim.
-
-**Identifiable-map checkpoints** — batch 192, 20 warmup and 100 timed iterations,
-five seeds per ablation, model forward only (data loading, training losses, exact
-RTD, and exact cone oracles are outside the timed region):
-
-| ablation | median latency (mean ± SD over 5 seeds) | p90 latency (mean) | peak allocated bytes |
-|---|---:|---:|---:|
-| `combined` | 0.2753 ± 0.0037 ms | 0.2899 ms | 35,069,440 |
-| `task_reconstruction` | 0.2762 ± 0.0022 ms | 0.2979 ms | 35,069,440 |
-
-The paired difference is −0.00089 ms with a 95% interval of [−0.0075, +0.0057] ms
-— indistinguishable, as expected: **the two ablations execute the same inference
-graph**, so this contrast is a runner-noise check, not an architectural
-comparison. Peak allocated memory is byte-identical across all ten runs.
-
-**Routing checkpoints** — batch 64, bfloat16, 100 timed iterations, five seeds:
-
-| quantity | mean ± SD over 5 seeds |
+| quantity | value |
 |---|---|
-| dense-to-routed median-latency ratio | 1.532 ± 0.035 |
-| routed-to-fastest-fixed median-latency ratio | 2.269 ± 0.043 |
+| mean within-topology correlation | **+0.854** |
+| 95% interval | **[+0.831, +0.877]** |
+| topologies with positive correlation | **29 / 29** |
 
-Routed inference is about 1.53× faster than dense three-expert evaluation and
-about 2.27× slower than the fastest single fixed route, which was `fixed_graph`
-in all five seeds. Routed evaluation also had lower peak allocated memory than
-dense (119,415,296 versus 169,401,344 bytes) in every seed.
+Because the sweep happens *inside* a topology, this is genuine within-condition
+prediction rather than separation between a regularised and an unregularised
+group.
 
-<figure>
-  <img src="figures/fig-compute.svg" alt="Horizontal bar chart of median inference latency for the routed path, three single fixed routes, and the dense three-expert path, with whiskers marking mean p95. Routed sits between the fixed routes and dense." width="680">
-  <figcaption><strong>Figure 3. Trained routing inference latency on GB10.</strong> Median over 100 timed iterations, averaged across five seeds; whiskers mark mean p95. Batch 64, bfloat16. Routed inference is faster than dense evaluation and slower than any single fixed route. All paths were timed in the plotted order inside one process, so residual thermal or allocator drift is confounded with path order. Generated from <code>results/summaries/compute-campaign.json</code>.</figcaption>
-</figure>
+### 7.3 The cone harms and RTD is inert
 
-> **Correction.** An earlier internal handoff recorded the routed-to-fastest-fixed
-> ratio as `1.863 ± 0.071`. That figure is not reproducible from any artifact in
-> this repository under any ratio definition we could construct, and it appears in
-> no machine-readable result. The value above, 2.269 ± 0.043, is recomputed from
-> the five sealed trained benchmarks and is *less* favorable to routing than the
-> figure it replaces. Two earlier `compute-remediation*.json` benchmarks record
-> `checkpoint: null` — they timed an untrained model and are excluded from all
-> reported compute results.
+Both are confirmatory. The protocol predicted the cone would fail to improve; it
+does worse, with an adjusted interval entirely above zero. RTD's unadjusted
+interval sits marginally above zero, its adjusted interval contains zero, and its
+sign test is 0.458.
 
-### 6.6 Corrected Gate-3 base diagnostic
+§5.2 gives the mechanism for the cone here: the truth violates the term. §5.1
+gives a different mechanism for the same object in the selection setting.
 
-Nine paired contrasts, all with 13 complete blocks and 65 paired batch
-observations per kind:
+### 7.4 The selection setting, and why its nulls are weak
 
-| candidate − `task-only` | corruption kind | adjusted difference | 95% paired block-bootstrap interval |
-|---|---|---:|---|
-| `plus-recon` | edge cochain | +0.018 | [−0.311, +0.347] |
-| `plus-recon` | node anchor | +0.020 | [−0.235, +0.284] |
-| `plus-recon` | transport rotation | −0.011 | [−0.167, +0.120] |
-| `plus-chain` | edge cochain | −0.022 | [−0.295, +0.334] |
-| `plus-chain` | node anchor | +0.030 | [−0.118, +0.147] |
-| `plus-chain` | transport rotation | −0.021 | [−0.164, +0.088] |
-| `full` | edge cochain | +0.057 | [−0.185, +0.364] |
-| `full` | node anchor | −0.011 | [−0.217, +0.241] |
-| `full` | transport rotation | −0.072 | [−0.214, +0.019] |
-
-**All nine intervals contain zero.** No multiplicity adjustment was applied. These
-statistics are conditional on each fixed checkpoint pair and the sampled blocks;
-they do not estimate training-seed variation.
-
-### 6.7 Gauge diagnostic across eight training seeds
-
-The gauge family upgrades the unit of analysis from the checkpoint pair to the
-training seed, giving eight paired seeds and df = 7:
-
-| corruption kind | mean difference | sample SD | 95% Student-t interval (df = 7) | exact sign test |
-|---|---:|---:|---|---|
-| edge cochain noise | −0.0968 | 0.1595 | [−0.2301, +0.0366] | p = 1.000 (4+/4−) |
-| node anchor noise | −0.0549 | 0.1017 | [−0.1400, +0.0301] | p = 0.727 (3+/5−) |
-| transport rotation | +0.0506 | 0.1241 | [−0.0531, +0.1543] | p = 0.727 (5+/3−) |
-
-**All three intervals contain zero** and no sign test approaches significance,
-against a floor of p = 0.0078125. Adding translator and chain terms to the gauge
-objective produces no detectable change in the fixed-expert corruption
-diagnostic. Scope is unchanged: this is a fixed-expert embedding diagnostic and
-evaluates no conversion.
+On the annulus, every objective containing task or reconstruction supervision
+recovers the planted map exactly — transformation and cell-face accuracy 1.000 on
+all five seeds, map MSE at 1e-16, engineering recovery gate passed **10 of 10**
+applicable runs.
 
 <figure>
-  <img src="figures/fig-contrasts.svg" alt="Forest plot of twelve corruption contrasts with 95% intervals. Every interval crosses the zero line: nine Gate-3 base contrasts and three gauge contrasts." width="680">
-  <figcaption><strong>Figure 4. Every corruption contrast interval contains zero.</strong> Candidate minus baseline on the adjusted partial-Spearman endpoint. The nine Gate-3 base contrasts use a paired complete-block bootstrap and are conditional on a fixed checkpoint pair; the three gauge contrasts use a Student-t interval with df = 7 across eight training seeds. No multiplicity adjustment is applied. Generated from <code>results/gate3/paired_comparison_final.json</code> and <code>results/summaries/gauge-corruption-campaign.json</code>.</figcaption>
+  <img src="figures/fig-recovery.svg" alt="Two-panel bar chart. Left: transformation accuracy by objective, six supervised objectives at 1.000 and cone-only and RTD-only at the 0.0833 chance line. Right: map mean-squared error on a log scale, roughly fifteen orders of magnitude between the supervised objectives and the two controls." width="680">
+  <figcaption><strong>Figure 2. Recovery by objective in the selection setting.</strong> Mean over five seeds. Any objective carrying task or reconstruction supervision saturates; the two structure-only controls sit at chance with map errors fifteen orders of magnitude larger. Generated from <code>results/summaries/identifiable-campaign-summary.json</code>.</figcaption>
 </figure>
 
-### 6.8 Historical molecular transfer
+All 21 declared continuous contrast intervals contain zero, so adding a cone or
+RTD term changed nothing. **That null is weak evidence**: an analytic marker
+decoder also reaches 1.000, so the ceiling was attainable without learning and no
+candidate could improve on a control already at the maximum.
 
-Reported for completeness; superseded in importance by the synthetic results
-above and unchanged by this revision. Official OGBG-MOLHIV scaffold split
-(32,901/4,113/4,113), early stopping on validation AUROC, official evaluator. The
-three values behind each mean are initialization seeds on one fixed split; their
-SD is not uncertainty over molecule sampling.
+The informative part is the two structure-only controls. `cone_only` reaches
+transformation accuracy 0.0815 and `rtd_only` 0.0833 against a 0.0833 chance
+baseline — **while producing acyclic cones in 6,000 of 6,000 evaluated examples
+each**. That is §5.1 made visible: the objective is fully satisfied and
+identification never leaves chance.
 
-| model | status | valid mean | official-test AUROC (mean ± seed SD) |
-|---|---|---:|---:|
-| graph | initial comparison | 0.794 | 0.771 ± 0.014 |
-| cell v1, AtomRing faces | initial comparison | 0.782 | 0.723 ± 0.017 |
-| cell v2, boundary-edge max + ring size | post-test development | 0.771 | 0.757 ± 0.002 |
-| cell v3, plus bond-type counts | post-test development | 0.761 | 0.729 ± 0.025 |
+### 7.5 Controls: is it exactness, or just regularisation?
 
-In the initial v1 read, graph exceeded cell by 0.0481 AUROC and won all three
-paired seeds. V2 was designed after inspecting v1 on the official test and v3
-after inspecting v2, so v2 and v3 test scores are exploratory development
-observations, not clean comparisons. The test split contains no acyclic graphs
-(a cycle-rank audit finds 4,113/4,113 cyclic), so acyclic molecular transfer is
-unevaluable here.
+Exploratory, ten topologies, at 16 training pairs against plain least squares at
+1.582:
 
-## 7. Discussion
+| penalty | median held-out | 95% CI vs plain |
+|---|---:|---|
+| ridge, best of four weights | 0.631 | [−0.451, −0.174] |
+| **random subspace, rank matched to `B1ᵀ`** | **2.256** | [−0.103, +0.601] |
+| **exactness** | **0.002** | **[−2.826, −1.134]** |
 
-**Exactness is achievable and was achieved; it was also easy.** The
-implementation recovers the planted map to 1e-16 whenever it receives either form
-of supervision, and an analytic decoder does the same with no learning. The right
-conclusion is that the machinery is correct, not that the model is strong.
+Generic shrinkage buys about 2.5×. **The same quantity of constraint in a random
+subspace buys nothing.** Exactness buys about 800×. The gain is that specific
+subspace, not regularisation and not the amount of constraint.
 
-**Acyclicity is not correctness.** This is the result we would most want other
-work to carry forward, and §6.3 shows it is structural rather than incidental.
-Because every candidate map is a signed permutation — invertible and
-distance-preserving — cone acyclicity and RTD are constant across the hypothesis
-space, so neither can carry information about which element was planted. Chance
-identification is the only attainable outcome, and the acyclic cones in 6,000 of
-6,000 examples are that constant made visible.
+A further exploratory check with a nonlinear link (target `tanh(circulation)`,
+model `tanh(Wx)`) reduces the gain from roughly 2500× to roughly 13×, interval
+[−1.740, −0.808]. Exactness is not solely an artefact of linear least squares,
+though §9 notes the linear mechanism is understood.
 
-The scope of the warning is what matters. Any hypothesis class of invertible
-maps inherits the same degeneracy, and that is exactly the class a practitioner
-has in mind when a cone objective seems appealing. Treating acyclicity as
-evidence of learned correspondence would be a mistake, and our controls show
-precisely how that mistake looks from the inside: the structural objective is
-driven to full satisfaction, every example returns a clean certificate, and the
-science is absent. A cone term is a legitimate *constraint* and a useless
-*discriminator* among structure-preserving candidates.
+### 7.6 Routing: a compute claim, not an accuracy one
 
-**Routing and conversion remain separate claims.** A router can choose among
-fixed experts without learning any map between their domains. The +0.1098 margin
-supports the former in a privileged synthetic setting and provides no evidence
-for the latter.
+Selecting a view by measured conversion defect was preregistered and is **not
+supported**: interval [−0.111, +0.382] contains zero, with the threshold chosen
+on an even-indexed split and applied unchanged to an odd-indexed evaluation split.
+A clearly post hoc comparison against the better fixed strategy also contains
+zero.
 
-**A responsive diagnostic is not incremental predictive value.** Corrected
-RTD/SRTD measures degree-specific representation differences, but across nine
-Gate-3 contrasts and three eight-seed gauge contrasts no interval excludes zero.
+The diagnosis is that the setting offered nothing to win. The router picks the
+better view on **25 of 28** trials, yet a *perfect oracle* buys only **1.36×** over
+always using the cell view (median 2.022 against 2.741). An 89%-accurate selector
+cannot beat a fixed choice against that ceiling.
 
-**Ceiling effects limit what this design can ever show.** The most useful next
-step is not more seeds on this benchmark but a harder one: a template family
-where the correct map is not attainable analytically, so that structural terms
-have room to contribute and a null becomes informative.
+A separate routing result, from a different experiment, does stand — and it is
+about compute rather than accuracy.
 
-## 8. Limitations
+<figure>
+  <img src="figures/fig-compute.svg" alt="Horizontal bar chart of median inference latency for the routed path, three single fixed routes, and the dense three-expert path, with whiskers marking mean p95." width="680">
+  <figcaption><strong>Figure 3. Trained routing inference latency on GB10.</strong> Median over 100 timed iterations averaged across five seeds; whiskers mark mean p95. Batch 64, bfloat16. All paths were timed in the plotted order inside one process, so residual thermal or allocator drift is confounded with path order. Generated from <code>results/summaries/compute-campaign.json</code>.</figcaption>
+</figure>
 
-- **Ceiling effects.** Six of eight objectives saturate both accuracy endpoints
-  at exactly 1.000. Contrasts against a saturated control cannot detect
-  improvement, so the structural null is weak evidence of absence.
-- **Five seeds.** The identifiable campaign has five paired seeds; the exact
-  two-sided sign test floor is p = 0.0625, so it can never be decisive. Five
-  seeds are also too few to check Student-t assumptions.
-- **Synthetic data, one template.** All 40 runs use a single six-sector annulus
-  with a hard-coded finite group action. Nothing here transfers automatically to
-  real data, other complexes, or larger map families.
-- **Privileged historical routing supervision.** The routing result used
-  latent-regime distillation from validation regime labels and had target
-  structured views available at inference, plus the disclosed pre-freeze
-  procedural deviation.
-- **Target-view historical translators.** The historical translator modules
-  consumed target face activity and target edge transports. They are target-view
-  encoders and do not demonstrate conversion from graph observations. Current
-  cell and sheaf targets are additionally unidentifiable from graph inputs in
-  this generator.
-- **Fixed-expert Gate-3 scope.** Both corruption families compare clean and
-  corrupted fixed-expert embeddings. They never invoke a translator or learned
-  map and cannot support or refute a typed-conversion claim. Gate-3 base
-  statistics are conditional on fixed checkpoints; only the gauge family
-  estimates across-seed variation.
-- **Timing order and scope.** Within each routing benchmark process all paths
-  were timed in a fixed order (routed, fixed_graph, fixed_cell, fixed_sheaf,
-  dense), so residual thermal or allocator drift is confounded with path order.
-  Raw per-iteration timings were not retained — only the summary quantiles. All
-  timings come from one runner, one machine, one batch shape, and one precision
-  per family, and are not matched-accuracy comparisons.
-- **Mixed tail statistics.** The identifiable runner reports p90 and the routing
-  runner reports p95. These are never pooled and must not be compared directly.
-- **The §6.3 result is demonstrated for selection over a fixed class.** Every
-  candidate's cone score is fixed before training, which is why the signal
-  carries no information. That argument does not by itself cover a map learned
-  as continuous parameters, where the cone score moves as the parameters move.
-  An exploratory paired probe in that setting — a learned map between two
-  different cycle complexes, twelve seeds, structural term on versus off —
-  found no improvement in held-out error at any training-set size, with every
-  interval containing zero. That probe was not preregistered and is not counted
-  as a result here; it is recorded in
-  [`docs/24`](24-continuous-map-probe.md). Notably it failed for a *different*
-  reason: sampling the learned map space found structure preservation to be
-  generic (200 of 200 random maps were quasi-isomorphisms), so a prior favouring
-  it had nothing to discriminate.
-- **No multiplicity control.** No adjustment is applied to any interval or
-  p-value in this report.
-- **Artifact boundaries.** The 8.8 GB `artifacts/` tree is untracked. Tracked
-  evidence is the curated `results/` bundle (48 files, 2.85 MB); checkpoints and
-  per-example dumps are pinned by SHA-256 but not distributed.
-- **Numerical determinism.** GPU scatter-add is not guaranteed bit-deterministic
-  even with deterministic flags enabled. Exact cross-barcode enumeration is
-  exponential and capped at 64 entities.
-- **Molecular results.** The MOLHIV test split was adaptively reused after v1 and
-  contains no acyclic graphs.
+Routed inference is **1.532 ± 0.035×** faster than dense three-expert evaluation
+and **2.269 ± 0.043×** slower than the fastest single fixed route, with lower peak
+allocated memory than dense in every seed. The defensible statement is that
+routing saves compute against dense evaluation, not that it saves compute overall
+and not that a measured defect selects the view.
 
-## 9. Claim boundary
+An earlier five-seed campaign found a hard-minus-best-fixed accuracy margin of
++0.1098, 95% interval [+0.0953, +0.1243]. That result used privileged
+latent-regime distillation and had target structured views available at
+inference, and a disclosed pre-freeze procedural deviation makes it
+protocol-aligned rather than pristine preregistration. It is a different
+experiment from the defect-based routing tested here and the two must not be
+conflated.
 
-The strongest supported new result is deliberately narrow: **the implementation
-recovers a finite dihedral family of exact three-term maps on one synthetic
-six-sector cellular annulus, using explicit identifying markers and a flattened
-MLP to select from a hard-coded finite group-action basis.** This is a controlled
-implementation and exactness study.
+### 7.7 Corruption diagnostics
 
-This work does **not** establish:
+<figure>
+  <img src="figures/fig-contrasts.svg" alt="Forest plot of twelve corruption contrasts with 95% intervals; every interval crosses the zero line." width="680">
+  <figcaption><strong>Figure 4. Every corruption contrast interval contains zero.</strong> Nine Gate-3 base contrasts use a paired complete-block bootstrap conditional on a fixed checkpoint pair; three gauge contrasts use a Student-t interval with df = 7 across eight training seeds. No multiplicity adjustment. Generated from <code>results/gate3/paired_comparison_final.json</code> and <code>results/summaries/gauge-corruption-campaign.json</code>.</figcaption>
+</figure>
 
-- superiority of cone or RTD training losses — both are null here, and neither
-  can identify the map alone, provably so within a hypothesis class of
-  invertible maps (§6.3);
-- conversion quality on real data or out-of-distribution structures;
+These compare clean and corrupted **fixed-expert embeddings**. They never invoke a
+translator or learned map and therefore cannot support or refute any conversion
+claim. All twelve intervals contain zero.
+
+## 8. Discussion
+
+**The choice of homological object decides the outcome.** Three objects, one
+protocol, three different answers: exactness improves, the cone harms, RTD is
+inert. Reporting "homological structure does or does not help" without naming the
+object would have been meaningless.
+
+**Both failures are predictable in advance.** §5's two conditions cost seconds and
+would have redirected this project years of effort earlier. We regard the
+screening criterion as the most transferable thing here.
+
+**Acyclicity is not correctness.** A mapping cone certifies that a decoded map is
+invertible. In a hypothesis class of invertible maps that certificate is constant,
+and a model trained on it alone satisfies it perfectly while learning nothing.
+
+**The cone bundles what the kernel and cokernel separate.** `dim H_n(cone) =
+dim coker H_n + dim ker H_(n−1)` — the cone sums a directional pair and loses the
+distinction between *destroyed* and *unreachable*. Where a measurement is wanted,
+the unbundled pair is strictly more informative.
+
+**Exactness works because it is a correct constraint that is free.** The mechanism
+is not mysterious: `W B1ᵀ = 0` forces each row of `W` into the cycle space, cutting
+effective dimension from `F×E` to `F×F`. A correct linear constraint helping a
+linear problem is expected. What is notable is that exactness *is* the correct
+constraint and is derivable from the input.
+
+## 9. Limitations
+
+- **One synthetic family.** 29 topologies, one training-set size, mostly linear
+  conversions. Nothing transfers automatically to real data.
+- **The mechanism is understood, not surprising.** See above. The claim is about
+  which constraint is correct and available, not about an unexpected effect.
+- **Nonlinearity is only spot-checked.** The `tanh` result is exploratory, at one
+  link and one weight.
+- **The selection setting saturates.** Six of eight objectives reach exactly
+  1.000, so its structural nulls cannot detect improvement.
+- **Five seeds in the annulus campaign**, where the exact two-sided sign test
+  floor is p = 0.0625 and can never be decisive.
+- **Routing is not established either way.** It failed in a setting with a 1.36×
+  oracle ceiling; that is a statement about the habitat as much as the method.
+- **Privileged supervision** in the historical routing campaign, and
+  **target-view translators** in the historical conversion modules, which consumed
+  target structure and are not conversions.
+- **Timing caveats.** All paths timed in fixed order inside one process; raw
+  per-iteration timings not retained; identifiable runner reports p90 and routing
+  runner p95, never pooled.
+- **No multiplicity control** outside the three primary conversion contrasts.
+- **Artifact boundaries.** The 8.8 GB `artifacts/` tree is untracked; tracked
+  evidence is the curated `results/` bundle.
+
+## 10. Claim boundary
+
+This work establishes, on one synthetic family under a frozen protocol, that an
+input-derivable exactness constraint improves a learned conversion and that its
+violation calibrates the damage. It establishes that a mapping-cone term harms and
+an RTD term is inert in the same setting, each for a stated reason.
+
+It does **not** establish:
+
+- any benefit from cone or RTD objectives — the evidence runs the other way;
+- that a measured defect can select a representation;
+- conversion quality on real or out-of-distribution data;
 - general equivalence between graphs, cellular complexes, and sheaves;
-- a learned quasi-isomorphism or exact sequence — the verified identity is the
-  chain-map law up to a fixed 1e-5 numerical tolerance;
-- any Langlands, eigensheaf, Fourier–Mukai, or category-theoretic machine
-  learning result; those ideas are motivation, not results, and nothing in this
-  repository validates them. Imposing a chain-map constraint by construction is
-  not a categorical claim in the sense of [9] or [10]: we fix one finite
-  hypothesis class by hand and select within it, and §6.3 shows that the
-  structural constraint carries no identifying information on its own;
-- a translator-based Gate-3 claim — the corruption programs evaluate fixed expert
-  embeddings only.
+- a learned quasi-isomorphism — the verified identity is the chain-map law to a
+  fixed 1e-5 tolerance;
+- any Langlands, eigensheaf, Fourier–Mukai, or category-theoretic result.
+  Imposing a chain-map constraint by construction is not a categorical claim in
+  the sense of [9] or [10]: we fix one finite hypothesis class by hand in §4.1 and
+  learn inside a fixed nullspace in §4.2.
 
-## 10. Code and data availability
+## 11. Code and data availability
 
 All code, configurations, and compact evidence are in the project repository. The
-tracked evidence bundle under `results/` contains 48 files totaling 2.85 MB with a
-`MANIFEST.json` recording, for every file, its path, byte count, SHA-256,
-generating commit, and generating command:
+tracked bundle under `results/` contains 49 files with a `MANIFEST.json` recording
+path, byte count, SHA-256, generating commit, and generating command for each.
 
 | location | contents |
 |---|---|
-| `results/summaries/` | strict compact summaries for the identifiable, gauge, compute, and routing campaigns |
+| `results/campaigns/` | the frozen conversion campaign record |
+| `results/summaries/` | strict compact summaries for the annulus, gauge, compute, and routing campaigns |
 | `results/gate3/`, `results/gate3g/` | gate decisions and per-batch corruption-report derivatives |
 | `results/benchmarks/` | ten identifiable and five routing trained benchmark records |
 
-Corruption reports are exported as **per-batch derivatives**: the `per_example`
-array is dropped and the `per_batch` array — the unit of analysis — is retained.
-This is lossless for every published statistic, verified by recomputing the
-adjusted partial Spearman correlation from the retained rows alone and matching
-the published value to 1e-15. Each derivative records the SHA-256 of the
-untruncated source report, so the dropped detail remains pinned.
+Corruption reports are exported as per-batch derivatives: the `per_example` array
+is dropped and the `per_batch` array — the unit of analysis — retained. This is
+lossless for every published statistic, verified by recomputing the adjusted
+partial Spearman from retained rows and matching to 1e-15.
 
-The 8.8 GB `artifacts/` tree — checkpoints, per-example prediction dumps,
-training histories, scheduler logs — is intentionally untracked and is not
-distributed. It is not durable journal evidence by itself.
+Synthetic generators are deterministic given the committed configs and seeds; no
+external dataset is required.
 
-The synthetic generators are deterministic given the committed configs and seeds;
-no external dataset is required to reproduce the identifiable campaign. OGBG-MOLHIV
-is obtained through the standard OGB distribution.
-
-## 11. Reproducibility
-
-Regenerating the tracked evidence from the artifact tree is three commands:
+## 12. Reproducibility
 
 ```bash
+python scripts/run_conversion_campaign.py \
+  --output results/campaigns/conversion-campaign-v1.json
 python scripts/summarize_gauge_corruption_campaign.py \
   --output results/summaries/gauge-corruption-campaign.json
 python scripts/summarize_compute_campaign.py \
   --output results/summaries/compute-campaign.json
 python scripts/export_publication_evidence.py --output-root results
-```
-
-Each summarizer revalidates provenance before it aggregates and refuses to
-proceed on any hash, seed, pairing, or schema mismatch. The exporter works from
-an explicit allowlist and refuses checkpoints, prediction dumps, histories, logs,
-and caches even when asked for them. Its manifest carries no timestamp, so
-re-exporting unchanged evidence reproduces the bundle byte for byte; verify an
-existing bundle with:
-
-```bash
 python scripts/export_publication_evidence.py --verify-only
 ```
 
-The paper PDF is rendered from this Markdown file with
-`python scripts/render_paper.py --input docs/18-paper.md --output docs/18-paper.pdf`.
+Each summarizer revalidates provenance before aggregating and fails closed on any
+hash, seed, pairing, schema, or receipt mismatch. The exporter works from an
+explicit allowlist and refuses checkpoints, prediction dumps, histories, logs, and
+caches. Its manifest carries no timestamp, so re-exporting unchanged evidence
+reproduces the bundle byte for byte.
 
-Reproducing the 40-run campaign itself requires an NVIDIA GB10 or equivalent and
-the pinned software stack in §5.2; the campaign is not re-executed as part of
-release validation.
+The paper PDF is rendered with `python scripts/render_paper.py`; figures are
+regenerated from tracked evidence with `python scripts/render_figures.py`.
 
-## 12. Declarations
+## 13. Declarations
 
-**Author contributions.** Sean Mahdavian designed and implemented the system,
-ran the campaigns, and wrote the manuscript.
+**Author contributions.** Sean Mahdavian designed and implemented the system, ran
+the campaigns, and wrote the manuscript.
 
 **Affiliation, ORCID, funding, competing interests, data license, and code
-license** are author-supplied submission fields and are intentionally unset in
-this draft rather than guessed. They must be completed before submission.
+license** are author-supplied submission fields, intentionally unset in this draft
+rather than guessed. They must be completed before submission.
 
-**Ethics.** This work uses synthetic data generated by committed deterministic
-code and one public molecular benchmark (OGBG-MOLHIV) under its published terms.
-No human subjects, personal data, or personally identifiable information are
-involved. The molecular component is a methodological benchmark comparison and is
-not a claim about any specific compound's biological activity; the reported
-result there is negative in its initial clean comparison. We see no dual-use
-concern arising from this work. Compute costs are reported in §6.5; the total
-campaign is small — 40 short training runs and 15 benchmark runs on a single
-workstation-class device.
+**Ethics.** Every experiment reported here uses synthetic data generated by
+committed deterministic code. No human subjects, personal data, or personally
+identifiable information are involved, and we see no dual-use concern. Compute is
+small: the annulus campaign is 25.8 minutes of GPU time and the conversion
+campaign runs on CPU.
 
-**Reporting.** Null and negative results are reported in the body of this paper
-rather than in an appendix, and every number in every table is traceable to a
-tracked machine-readable file under `results/`.
+A molecular transfer experiment on the public OGBG-MOLHIV benchmark was run
+earlier in this project and is **deliberately not reported here**, because it
+answers a different question from the one this paper asks. Its result — the
+ring-lift route losing to the graph route, with later variants contaminated by
+repeated inspection of the official test split — is recorded in the project's
+claims ledger as C6.
+
+**Reporting.** Null and negative results are reported in the body rather than an
+appendix, and every number in every table is traceable to a tracked
+machine-readable file under `results/`.
 
 ## References
 

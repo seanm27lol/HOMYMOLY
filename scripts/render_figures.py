@@ -495,6 +495,145 @@ def figure_compute(compute: dict[str, Any]) -> str:
     return _document(width, height, body, "Trained routing inference latency")
 
 
+# --------------------------------------------------------------------------
+# Figure: the frozen conversion campaign
+# --------------------------------------------------------------------------
+
+TERM_LABEL = {
+    "exact": ("exact", "the implied complex satisfies d∘d = 0", 0),
+    "cone": ("cone", "no implied 2-cell collapses", 1),
+    "rtd": ("rtd", "edge geometry survives the lift", 2),
+}
+
+
+def figure_campaign(campaign: dict[str, Any]) -> str:
+    order = [name for name in ("exact", "cone", "rtd") if name in campaign["primary"]]
+    rows = [(name, campaign["primary"][name]) for name in order]
+
+    width = 680.0
+    label_width = 210.0
+    # Reserve room on the right for the verdict and the printed interval.
+    plot_width = width - label_width - 136.0
+    top = 92.0
+    row_height = 44.0
+    height = top + len(rows) * row_height + 62.0
+
+    lows = [row["interval_bonferroni_98_33"][0] for _, row in rows]
+    highs = [row["interval_bonferroni_98_33"][1] for _, row in rows]
+    lo, hi = min(lows + [0.0]), max(highs + [0.0])
+    pad = (hi - lo) * 0.10
+    lo, hi = lo - pad, hi + pad
+
+    def scale(value: float) -> float:
+        return label_width + (value - lo) / (hi - lo) * plot_width
+
+    body: list[str] = [
+        _text(0, 20, "Which homological term improves a learned conversion?", size=13, weight="bold"),
+        _text(
+            0,
+            37,
+            "Paired log10(held-out error with term / without), one value per topology. "
+            "Negative means the term helps.",
+            size=10.5,
+            fill=INK_SECONDARY,
+        ),
+        _text(
+            0,
+            52,
+            f"{campaign['design']['eligible_topologies']} topologies, "
+            f"{campaign['design']['training_pairs']} training pairs, preregistered in docs/27.",
+            size=10.5,
+            fill=INK_SECONDARY,
+        ),
+        _text(
+            0,
+            67,
+            "Thick bar: Bonferroni 98.33% (governs the decision).  Thin bar: unadjusted 95%.",
+            size=10,
+            fill=INK_MUTED,
+        ),
+    ]
+
+    for tick in (-3, -2, -1, 0, 1):
+        if not lo <= tick <= hi:
+            continue
+        x = scale(tick)
+        body.append(_line(x, top - 8, x, top + len(rows) * row_height, stroke=GRID))
+        body.append(
+            _text(
+                x,
+                top + len(rows) * row_height + 16,
+                f"{tick:+d}" if tick else "0",
+                size=9.5,
+                fill=INK_MUTED,
+                anchor="middle",
+            )
+        )
+    zero = scale(0.0)
+    body.append(
+        _line(zero, top - 8, zero, top + len(rows) * row_height, stroke=INK_SECONDARY, width=1.4)
+    )
+    body.append(
+        _text(
+            label_width + plot_width / 2,
+            top + len(rows) * row_height + 34,
+            "log10 ratio of held-out error",
+            size=10,
+            fill=INK_SECONDARY,
+            anchor="middle",
+        )
+    )
+
+    for index, (name, row) in enumerate(rows):
+        y = top + index * row_height + row_height / 2.0 - 4
+        label, gloss, slot = TERM_LABEL[name]
+        colour = SERIES[slot]
+        verdict = (
+            "improves"
+            if row["improves_confirmatory"]
+            else ("harms" if row["harms_confirmatory"] else "inert")
+        )
+        body.append(_text(label_width - 12, y + 1, label, size=11, anchor="end", family=MONO))
+        body.append(
+            _text(label_width - 12, y + 15, gloss, size=9, anchor="end", fill=INK_MUTED)
+        )
+        adjusted = row["interval_bonferroni_98_33"]
+        plain = row["interval_95"]
+        body.append(_line(scale(plain[0]), y, scale(plain[1]), y, stroke=colour, width=2))
+        body.append(
+            _line(scale(adjusted[0]), y, scale(adjusted[1]), y, stroke=colour, width=6)
+        )
+        centre = scale(row["mean_log10_ratio"])
+        body.append(
+            f'<circle cx="{centre:.1f}" cy="{y:.1f}" r="4.5" fill="{SURFACE}" '
+            f'stroke="{colour}" stroke-width="2.5"/>'
+        )
+        # The exact interval dominates the axis, so cone and rtd compress to a
+        # few pixels. Print the adjusted interval beside each row so the decision
+        # is legible even where the bar is not.
+        anchor_x = scale(adjusted[1]) + 8
+        body.append(_text(anchor_x, y + 1, verdict, size=10, fill=colour, weight="bold"))
+        body.append(
+            _text(
+                anchor_x,
+                y + 14,
+                f"[{adjusted[0]:+.3f}, {adjusted[1]:+.3f}]",
+                size=9,
+                fill=INK_MUTED,
+                family=MONO,
+            )
+        )
+
+    body.extend(
+        _legend(
+            0,
+            height - 14,
+            [(SERIES[0], "improves"), (SERIES[1], "harms"), (SERIES[2], "inert")],
+        )
+    )
+    return _document(width, height, body, "Conversion campaign primary contrasts")
+
+
 def main(argv: list[str] | None = None) -> int:
     project_root = Path(__file__).resolve().parent.parent
     parser = argparse.ArgumentParser(description=__doc__)
@@ -518,6 +657,9 @@ def main(argv: list[str] | None = None) -> int:
             load("summaries/gauge-corruption-campaign.json"),
         ),
         "fig-compute.svg": figure_compute(load("summaries/compute-campaign.json")),
+        "fig-campaign.svg": figure_campaign(
+            load("campaigns/conversion-campaign-v1.json")
+        ),
     }
     for name, markup in figures.items():
         (output / name).write_text(markup, encoding="utf-8")

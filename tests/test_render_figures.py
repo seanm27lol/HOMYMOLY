@@ -133,7 +133,7 @@ def test_committed_figures_match_a_fresh_render(tmp_path: Path) -> None:
 
     MODULE.main(["--results-root", str(RESULTS), "--output-dir", str(tmp_path)])
 
-    for name in ("fig-recovery.svg", "fig-contrasts.svg", "fig-compute.svg"):
+    for name in ("fig-recovery.svg", "fig-contrasts.svg", "fig-compute.svg", "fig-campaign.svg"):
         assert (tmp_path / name).read_text(encoding="utf-8") == (
             figures / name
         ).read_text(encoding="utf-8"), f"{name} is stale; re-run scripts/render_figures.py"
