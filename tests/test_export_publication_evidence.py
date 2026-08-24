@@ -264,7 +264,7 @@ def test_verify_detects_an_unlisted_file_and_a_changed_source(tmp_path: Path) ->
 def test_the_real_allowlist_names_only_publishable_evidence() -> None:
     specs = MODULE.specifications()
 
-    assert len(specs) == 48
+    assert len(specs) == 49
     for spec in specs:
         assert Path(spec.source).suffix == ".json"
         assert Path(spec.destination).suffix == ".json"
