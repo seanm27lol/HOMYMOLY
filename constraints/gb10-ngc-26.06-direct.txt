@@ -4,7 +4,7 @@
 # resolved distribution inventory for each promoted result set.
 networkx==3.6.1
 PyYAML==6.0.3
-tensorboard==2.20.0
+tensorboard==2.21.0
 
 # Optional `molecular` extra, verified on ARM64/GB10.
 ogb==1.3.6
