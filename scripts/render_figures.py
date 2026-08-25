@@ -737,6 +737,254 @@ def figure_campaign(campaign: dict[str, Any]) -> str:
     return _document(width, height, body, "Edge-to-cycle lifting primary contrasts")
 
 
+# --------------------------------------------------------------------------
+# Figure: untouched-seed replication of the seven frozen claims
+# --------------------------------------------------------------------------
+
+FUTILITY_CLAIM_ID = "h7-rtd-bounded-benefit-futility"
+GOVERNING_BOUND = {
+    "less": ("one_sided_upper_bound", "upper bound"),
+    "greater": ("one_sided_lower_bound", "lower bound"),
+}
+
+
+def figure_replication(campaign: dict[str, Any]) -> str:
+    claims = campaign["primary"]["claims"]
+    rows: list[tuple[str, str, float, float, str, bool]] = []
+    for claim in claims:
+        key, bound_name = GOVERNING_BOUND[claim["direction"]]
+        rows.append(
+            (
+                claim["id"],
+                f"{claim['numerator_arm']} / {claim['reference_arm']}",
+                float(claim["mean_log10_ratio"]),
+                float(claim[key]),
+                bound_name,
+                bool(claim["supported"]),
+            )
+        )
+    futility = next(claim for claim in claims if claim["id"] == FUTILITY_CLAIM_ID)
+    margin = float(futility["threshold"])
+    descriptive_mean = float(
+        campaign["descriptive"]["ambient_adam_vs_min_norm_ls"]["mean_log10_ratio"]
+    )
+    eligible = int(campaign["eligibility"]["eligible"])
+
+    width = 680.0
+    label_width = 272.0
+    plot_width = width - label_width - 8.0
+    top = 100.0
+    row_height = 42.0
+    divider_gap = 12.0
+    descriptive_height = 34.0
+    plot_bottom = top + len(rows) * row_height + divider_gap + descriptive_height
+    height = plot_bottom + 60.0
+
+    extremes = [value for row in rows for value in (row[2], row[3])]
+    lo = min(extremes + [0.0, margin, descriptive_mean])
+    hi = max(extremes + [0.0, margin, descriptive_mean])
+    pad = (hi - lo) * 0.06
+    lo, hi = lo - pad, hi + pad
+
+    def scale(value: float) -> float:
+        return label_width + (value - lo) / (hi - lo) * plot_width
+
+    body: list[str] = [
+        _text(
+            0,
+            20,
+            f"Untouched-seed replication ({eligible} eligible generator seeds)",
+            size=13,
+            weight="bold",
+        ),
+        _text(
+            0,
+            36,
+            "Mean paired log10 held-out-MSE ratio per frozen claim; "
+            "negative favors the numerator arm.",
+            size=10.5,
+            fill=INK_SECONDARY,
+        ),
+        _text(
+            0,
+            51,
+            "Point: seed mean. Whisker ends at the governing one-sided "
+            "Bonferroni bound in the claim's direction.",
+            size=10.5,
+            fill=INK_SECONDARY,
+        ),
+        _text(
+            0,
+            66,
+            "Seven-claim confirmatory family at familywise alpha 0.05; "
+            "same-generator-family replication, not real-data validation.",
+            size=10,
+            fill=INK_MUTED,
+        ),
+        _text(
+            0,
+            81,
+            "H7 is a bounded-benefit/futility statement only; it cannot "
+            "establish equality or absence of every benefit.",
+            size=10,
+            fill=INK_MUTED,
+        ),
+    ]
+
+    for tick in (-3, -2, -1, 0):
+        if not lo <= tick <= hi:
+            continue
+        x = scale(tick)
+        body.append(_line(x, top - 8, x, plot_bottom, stroke=GRID))
+        body.append(
+            _text(
+                x,
+                plot_bottom + 16,
+                f"{tick:+d}" if tick else "0",
+                size=9.5,
+                fill=INK_MUTED,
+                anchor="middle",
+            )
+        )
+    zero = scale(0.0)
+    body.append(
+        _line(zero, top - 8, zero, plot_bottom, stroke=INK_SECONDARY, width=1.4)
+    )
+    body.append(
+        _text(
+            label_width + plot_width / 2,
+            plot_bottom + 34,
+            "log10 ratio of held-out MSE (numerator / reference)",
+            size=10,
+            fill=INK_SECONDARY,
+            anchor="middle",
+        )
+    )
+
+    for index, (claim_id, pair, estimate, bound, bound_name, supported) in enumerate(
+        rows
+    ):
+        y = top + index * row_height + row_height / 2.0
+        colour = SERIES[0] if supported else SERIES[1]
+        verdict = "supported" if supported else "not supported"
+        body.append(
+            _text(
+                label_width - 12, y - 8, claim_id, size=9.5, anchor="end", family=MONO
+            )
+        )
+        body.append(
+            _text(
+                label_width - 12,
+                y + 4,
+                pair,
+                size=8.5,
+                anchor="end",
+                fill=INK_MUTED,
+                family=MONO,
+            )
+        )
+        body.append(
+            _text(
+                label_width - 12,
+                y + 16,
+                f"{verdict} · {bound_name} {bound:+.4f}",
+                size=9,
+                anchor="end",
+                fill=colour,
+            )
+        )
+        left, right = sorted((estimate, bound))
+        body.append(_line(scale(left), y, scale(right), y, stroke=colour, width=2))
+        body.append(
+            _line(scale(bound), y - 4.5, scale(bound), y + 4.5, stroke=colour, width=2)
+        )
+        body.append(
+            f'<circle cx="{scale(estimate):.1f}" cy="{y:.1f}" r="4.5" '
+            f'fill="{colour if supported else SURFACE}" '
+            f'stroke="{SURFACE if supported else colour}" stroke-width="2.5"/>'
+        )
+        if claim_id == FUTILITY_CLAIM_ID:
+            margin_x = scale(margin)
+            body.append(
+                _line(
+                    margin_x,
+                    y - 7,
+                    margin_x,
+                    y + 7,
+                    stroke=INK_MUTED,
+                    width=1.2,
+                    dash="2 2",
+                )
+            )
+            body.append(
+                _text(
+                    margin_x - 6,
+                    y + 3,
+                    f"futility margin {margin}",
+                    size=8.5,
+                    fill=INK_MUTED,
+                    anchor="end",
+                )
+            )
+
+    divider_y = top + len(rows) * row_height + divider_gap / 2.0
+    descriptive_y = divider_y + divider_gap / 2.0 + descriptive_height / 2.0
+    body.append(
+        _line(label_width, divider_y, width - 8, divider_y, stroke=AXIS, dash="3 3")
+    )
+    body.append(
+        _text(
+            label_width - 12,
+            descriptive_y - 8,
+            "ambient_adam / ambient_min_norm_ls",
+            size=9,
+            anchor="end",
+            fill=INK_SECONDARY,
+            family=MONO,
+        )
+    )
+    body.append(
+        _text(
+            label_width - 12,
+            descriptive_y + 3,
+            "descriptive optimizer diagnostic",
+            size=8.5,
+            anchor="end",
+            fill=INK_MUTED,
+        )
+    )
+    body.append(
+        _text(
+            label_width - 12,
+            descriptive_y + 14,
+            f"mean {descriptive_mean:+.4f} · no confirmatory decision",
+            size=8.5,
+            anchor="end",
+            fill=INK_MUTED,
+        )
+    )
+    marker = scale(descriptive_mean)
+    body.append(_rect(marker - 3.5, descriptive_y - 3.5, 7, 7, fill=INK_MUTED))
+
+    body.extend(
+        _legend(
+            0,
+            height - 12,
+            [
+                (SERIES[0], "supported (filled point)"),
+                (SERIES[1], "not supported (open point)"),
+                (INK_MUTED, "descriptive (muted square)"),
+            ],
+        )
+    )
+    return _document(
+        width,
+        height,
+        body,
+        f"Untouched-seed replication ({eligible} eligible generator seeds)",
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     project_root = Path(__file__).resolve().parent.parent
     parser = argparse.ArgumentParser(description=__doc__)
@@ -764,6 +1012,9 @@ def main(argv: list[str] | None = None) -> int:
         "fig-compute.svg": figure_compute(load("summaries/compute-campaign.json")),
         "fig-campaign.svg": figure_campaign(
             load("campaigns/conversion-campaign-v1-corrected.json")
+        ),
+        "fig-replication.svg": figure_replication(
+            load("campaigns/lifting-replication-v2.json")
         ),
     }
     for name, markup in figures.items():

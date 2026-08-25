@@ -268,7 +268,7 @@ def test_verify_detects_an_unlisted_file_and_a_changed_source(tmp_path: Path) ->
 def test_the_real_allowlist_names_only_publishable_evidence() -> None:
     specs = MODULE.specifications()
 
-    assert len(specs) == 50
+    assert len(specs) == 51
     for spec in specs:
         assert Path(spec.source).suffix == ".json"
         assert Path(spec.destination).suffix == ".json"
@@ -290,6 +290,7 @@ def test_the_real_allowlist_names_only_publishable_evidence() -> None:
     assert set(conversion) == {
         "campaigns/conversion-campaign-v1.json",
         "campaigns/conversion-campaign-v1-corrected.json",
+        "campaigns/lifting-replication-v2.json",
     }
     assert (
         "Historical" in conversion["campaigns/conversion-campaign-v1.json"].description
@@ -298,6 +299,9 @@ def test_the_real_allowlist_names_only_publishable_evidence() -> None:
         "Canonical corrected"
         in conversion["campaigns/conversion-campaign-v1-corrected.json"].description
     )
+    replication = conversion["campaigns/lifting-replication-v2.json"].description
+    assert "untouched-seed, outcome-informed, same-generator-family" in replication
+    assert "not a pristine preregistration" in replication
     # Every gauge seed contributes both trained runs and exactly one comparison.
     derivatives = [spec for spec in specs if spec.destination.startswith("gate3g/")]
     assert (
@@ -318,6 +322,40 @@ def test_canonical_conversion_correction_proves_its_frozen_lineage() -> None:
     document["correction"]["supersedes"]["sha256"] = "0" * 64
     with pytest.raises(ValueError, match="historical result SHA-256"):
         MODULE.validate_corrected_conversion_record(PROJECT_ROOT, document)
+
+
+def test_lifting_replication_v2_record_proves_its_sealed_lineage() -> None:
+    result = PROJECT_ROOT / MODULE.LIFTING_REPLICATION_V2_RESULT
+    if not result.is_file():
+        pytest.skip("v2 lifting replication result has not landed yet")
+
+    document = json.loads(result.read_text(encoding="utf-8"))
+
+    MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, document)
+
+    tampered = json.loads(json.dumps(document))
+    for claim in tampered["primary"]["claims"]:
+        if claim["id"] == "h5-ridge-vs-ambient-ls":
+            claim["supported"] = True
+    with pytest.raises(ValueError, match="support decisions"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+
+def test_lifting_replication_v2_record_rejects_tampered_hash_and_c1_decision() -> None:
+    result = PROJECT_ROOT / MODULE.LIFTING_REPLICATION_V2_RESULT
+    if not result.is_file():
+        pytest.skip("v2 lifting replication result has not landed yet")
+    document = json.loads(result.read_text(encoding="utf-8"))
+
+    tampered_hash = json.loads(json.dumps(document))
+    tampered_hash["provenance"]["protocol"]["sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="protocol"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered_hash)
+
+    tampered_c1 = json.loads(json.dumps(document))
+    tampered_c1["c1"]["supported"] = True
+    with pytest.raises(ValueError, match="C1"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered_c1)
 
 
 def test_primary_interval_validator_uses_df28_bonferroni_quantile() -> None:

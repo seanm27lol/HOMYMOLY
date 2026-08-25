@@ -219,3 +219,85 @@ After the clean rerun, the canonical record is:
 
 The superseded schema-v1 result is retained only if its manifest role is marked
 historical; it must not be cited for corrected C1 or adjusted intervals.
+
+## 9. v2 lifting replication: pre-seal audit, seal, and post-campaign validation
+
+The untouched-seed v2 replication
+([`docs/31`](31-independent-lifting-replication-protocol.md),
+[`docs/32`](32-independent-lifting-replication-seal.json),
+[`docs/33`](33-lifting-replication-v2-results.md)) underwent its own
+adversarial audit cycle. This entry records the findings and their
+resolutions; the sealed files themselves are immutable.
+
+### 9.1 Pre-seal adversarial audit findings and resolutions
+
+An adversarial review of the v2 design before sealing found and resolved the
+following, each reflected in the sealed protocol, runner, and tests:
+
+- **Naked command-line hash replaced by seal-file parsing.** An early design
+  passed the expected runner hash as a CLI argument, which is unenforceable
+  and self-referential. The runner instead parses and validates the committed
+  machine-readable seal record, requires it at HEAD, and compares its own
+  runtime SHA-256 against the seal's `runner_sha256`. There is no
+  `--expected-runner-sha256` flag.
+- **C1 epsilon floor removed.** A draft added an epsilon to defects before
+  log transformation, which would tune the endpoint after outcomes are
+  imaginable. The sealed design requires every defect and error to be finite
+  and strictly positive and treats any violation as a whole-design failure;
+  Fisher clipping uses only the exact `nextafter(1, 0)` endpoint rule.
+- **Generator exceptions made fail-closed.** A generation exception in the
+  declared block is a campaign failure (`design_failure`), never an exclusion
+  or a silent skip; the failing seed is recorded and no seed is deleted alone.
+- **Basis orthonormality made a hard assertion.** Cycle-basis membership
+  (`||B1 Q_cycle||_F <= 1e-10`), orthonormality
+  (`||Q_cycle.T Q_cycle − I||_F <= 1e-10`), observed rank exactly `V − 1`
+  under the recorded tolerance, and random-basis orthonormality with a
+  nonzero QR diagonal are hard stop conditions, not advisory diagnostics.
+- **Information-flow firewall made structural.** The fitting APIs for all
+  arms receive only their declared training tensors and, where applicable,
+  `B1` or the seeded random basis; `B2`, face-cycle metadata, and held-out
+  values are unreachable from fitting code, enforced by API shape rather than
+  by convention. The truth-access oracle is segregated from every fitted arm.
+- **Rank recording required.** Every gelsd least-squares fit records its
+  returned numerical rank and smallest singular value, and the closed-form
+  soft solve records its pseudoinverse effective rank; a rank violation stops
+  the campaign.
+- **Arm names aligned to the frozen handoff identifiers.** Arm and claim
+  identifiers match
+  [`docs/30`](30-journal-completion-handoff.md) §7 and the seal's primary
+  family exactly, so no relabeling can occur between execution and reporting.
+
+### 9.2 Two-commit seal
+
+The design was sealed under the fail-closed two-commit procedure of
+[`docs/30`](30-journal-completion-handoff.md) §9.1. Commit A
+(`044322c7dc6a6255eec941dbcb76c45288a9666c`) contains the protocol, runner,
+and tests; commit B
+(`9baae6b8322120724e7f5aff3c47fd7ef343086c`) adds the seal record with the
+four verified SHA-256 fingerprints (protocol, runner, generator, lock) and was
+pushed to the private remote before any declared seed was instantiated,
+creating a remote timestamp ahead of execution. No design file changed between
+commit A and execution, and the recorded execution worktree was clean.
+
+### 9.3 Post-campaign independent validation verdict
+
+The completed result
+(`results/campaigns/lifting-replication-v2.json`, status `complete`; 33 of 36
+declared seeds eligible; six of seven claims supported, H5 not supported) was
+validated independently of the runner: every summary, interval, support flag,
+and C1 value was recomputed from the retained raw rows, with all checks
+passing and maximum absolute discrepancies from `0.0` to `1e-13`. The
+validation also verified the deterministic sub-seeds, the cycle-nullspace and
+random-basis diagnostics, the `inner_cv_ridge` fold-loss recomputation and
+selected penalties, the eligibility accounting, and the audit block.
+
+### 9.4 Retention-gap note
+
+Post-campaign validation found one retention gap: the executed runner did not
+retain or assert the per-seed closed-form stationarity residual that protocol
+§7.3 lists for `soft_boundary_closed_form_lambda3`. The residual had been
+test-verified below `1e-10` pre-seal on hand fixtures and historical seed
+`20261001`, and no inferential value depends on it. Because the seed block is
+sealed and consumed, rerunning over a retention gap is forbidden; the gap is
+recorded transparently here and in
+[`docs/33`](33-lifting-replication-v2-results.md) rather than repaired.

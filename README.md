@@ -1,41 +1,57 @@
 # HOMYMOLY
 
-**Boundary compatibility as a prior on learned edge-to-cycle liftings.**
+**Graph-derived cycle-subspace information for scarce-probe identification of an edge-to-cycle lifting.**
 
 ## Thesis
 
-Revised 2026-08-24 to state what survived testing rather than what was originally
-hoped for. The previous thesis — that cone- or RTD-inspired defects would improve
+Revised 2026-08-25 after the sealed untouched-seed v2 replication. The previous
+thesis — that cone- or RTD-inspired defects would improve
 conversion and select views during routing — was tested across two campaign
 families and **did not survive as stated**. See
-[`docs/28`](docs/28-conversion-campaign-results.md) for the prospectively locked
-same-generator-family replication
+[`docs/33`](docs/33-lifting-replication-v2-results.md) for the sealed
+replication results
 and [`docs/00`](docs/00-original-idea.md) for how this relates to the original
 idea.
 
 > **When an edge-to-cycle-coordinate lifting is learned from scarce paired data,
-> a boundary-of-boundary penalty derived from the input is a strong prior on
-> that lifting. Along the prespecified penalty path, the
-> resulting compatibility defect covaries with held-out damage within the
-> studied synthetic family.**
+> graph-derived cycle-subspace information is a strong prior on that lifting,
+> and an exact classical constraint — least squares restricted to the cycle
+> kernel — is preferable to soft shrinkage of the same information at the
+> frozen weight. The soft boundary-compatibility penalty is a differentiable
+> approximation whose improvement replicates; the exact constraint edges it
+> out.**
 
-The first claim comes from a prospectively specified primary analysis in a
-same-family replication, with a disclosed sum-versus-mean implementation
-deviation. It is not independent confirmation: the hypotheses, directions,
-endpoint, training size, and weights were informed by exploration on the same
-generator family, and the exploratory seeds were not retained, so overlap with
-the frozen seed block cannot be audited. The second is a prespecified secondary
-regularization-path association with an unadjusted interval:
+The primary evidence is the sealed v2 replication on the untouched seed block
+20270101–20270136 (33 of 36 seeds eligible): protocol
+[`docs/31`](docs/31-independent-lifting-replication-protocol.md) and the
+machine-readable seal
+[`docs/32`](docs/32-independent-lifting-replication-seal.json) were committed
+and pushed before any declared seed was instantiated. It is an untouched-seed,
+outcome-informed, same-generator-family replication — not independent-lab or
+independent-generator confirmation, not a pristine preregistration, and never
+pooled with the historical v1 campaign. Six of the seven frozen claims are
+supported at one-sided Bonferroni alpha 0.05/7 (n = 33):
 
 | claim | evidence |
 |---|---|
-| boundary compatibility improves an edge-to-cycle lifting | Bonferroni-adjusted interval **[−2.749, −1.511]** on `log10` held-out map-recovery error |
-| compatibility defect covaries with damage along the penalty path (**C1**) | within-seed Pearson correlation **+0.961**, unadjusted CI [+0.935, +0.987], **29/29** eligible seeds |
+| exact cycle-kernel LS improves over graph-blind ambient min-norm LS (**H2**) | one-sided upper bound **−1.328** on the paired `log10` held-out MSE ratio |
+| exact cycle-kernel LS improves over the closed-form soft penalty at its frozen weight (**H3**) | upper bound **−0.048**; modest geometric-mean ratio **0.746** |
+| soft boundary penalty improves over graph-blind ambient Adam (**H1**, replicates v1) | upper bound **−1.251** |
+| true cycle subspace improves over a dimension-matched random subspace (**H4**, specificity) | upper bound **−2.572** |
+| training-only 4-fold ridge vs ambient min-norm LS (**H5**) | **not supported** (upper bound +0.092 not below zero); reported as frozen, not reinterpreted |
+| singular-value cone surrogate harms (**H6**, replicates v1) | lower bound **+0.086** above zero |
+| RTD-inspired distance surrogate (**H7**) | bounded-benefit/futility: rules out a benefit of 10% or more in geometric-mean MSE (margin `log10(0.90)`); **not** a noninferiority or equivalence conclusion |
 
-For C1, the nine fits within each topology reuse the same data and initialization
-and differ in the common driver `lambda`; they are not independent observations.
-The result does not establish independent predictive information or off-path
-calibration.
+A prespecified off-path secondary analysis (**C1** — descriptive, outside the
+decision family) finds the cycle-projector defect covarying with held-out error
+across independent training/noise replicates where a dimension-matched
+random-subspace defect does not: paired Fisher-z contrast **+1.088**,
+unadjusted 95% interval [+0.887, +1.289]. This is association, not causation,
+and establishes no calibration or routing utility. The historical v1 campaign
+(prospectively locked, with a disclosed sum-versus-mean implementation
+deviation) found the same soft-penalty direction on 29 eligible seeds; its
+regularization-path C1 reused data and initialization across nine weights with
+`lambda` as a common driver, a confound the v2 off-path design removes.
 
 The continuous task fits `W: R^E -> R^F` from edge signals to coordinates in a
 chosen cycle basis; `W^T` is a candidate `d2`. This is a degree-changing lifting,
@@ -51,8 +67,12 @@ sequence**, because `W = 0` also has zero defect without
 `im Wᵀ = ker B1`. The penalty does not directly use `B2` or response labels, but
 `B1` determines the target cycle subspace and is strong input-derived structural
 side information; the unpenalized baseline ignores it. With the known
-deterministic generator, `B2` is algorithmically recoverable from the graph. No
-analytic cycle-basis, Hodge-projection, or nullspace oracle was included. Frozen
+deterministic generator, `B2` is algorithmically recoverable from the graph. The
+historical campaign included no analytic cycle-basis, Hodge-projection, or
+nullspace comparator; the v2 replication adds exactly those controls — least
+squares restricted to `ker B1`, a dimension-matched seeded random subspace, and
+training-only cross-validated ridge — while the generator's own basis appears
+only as a withheld-knowledge oracle ceiling with exactly zero error. Frozen
 protocol 27 wrote the Frobenius sum rather than the executed elementwise mean;
 the difference is disclosed and the protocol file remains immutable.
 
@@ -66,13 +86,22 @@ latter potentially identifiable hard-subspace system (median `E = 23`,
 ## What did not survive
 
 - A **singular-value cone surrogate**,
-  `exp(−2·σ_min(W))`, harms held-out lifting-recovery error at the tested weight;
-  this is not a test of mapping-cone homology.
-- An **RTD-inspired normalized pairwise-distance surrogate** shows no detected
-  improvement. It is target-misaligned here: it asks the rank-`F` lifting to
+  `exp(−2·σ_min(W))`, harms held-out lifting-recovery error at the tested weight,
+  and the harm replicates on the sealed untouched-seed block (v2 H6, one-sided
+  lower bound **+0.086** above zero); this is not a test of mapping-cone homology.
+- An **RTD-inspired normalized pairwise-distance surrogate** showed no detected
+  improvement in v1; the v2 replication strengthens this to a
+  bounded-benefit/futility result (H7): any benefit is below 10% of
+  geometric-mean held-out MSE at the prespecified margin `log10(0.90)`. This is
+  not a noninferiority or equivalence result and says nothing negative about
+  published RTD/SRTD. The surrogate is also target-misaligned here: it asks the
+  rank-`F` lifting to
   preserve full source geometry even though the planted truth discards cut-space
-  components. This is not an equivalence result and says nothing negative about
-  published RTD/SRTD.
+  components.
+- **Training-only cross-validated ridge** shows no detected benefit over ambient
+  minimum-norm least squares under the frozen v2 design (v2 H5, not supported,
+  reported exactly as frozen). This null does not prove ridge cannot help under
+  other designs, weights, or data regimes.
 - Exact mapping-cone homology and the corrected RTD/SRTD implementation remain
   useful as **diagnostics**. Their mathematical names are not transferred to the
   conversion surrogates.
@@ -117,6 +146,14 @@ experiments.
 The 40-run identifiable typed-map campaign is **complete and frozen**. Full
 record: [`docs/23`](docs/23-identifiable-results.md). Manuscript:
 [`docs/18-paper.md`](docs/18-paper.md).
+
+The sealed untouched-seed v2 lifting replication is **complete, sealed before
+execution, and independently validated**: 33 of 36 declared seeds eligible, six
+of seven frozen claims supported (H5 ridge not supported). Protocol
+[`docs/31`](docs/31-independent-lifting-replication-protocol.md),
+machine-readable seal
+[`docs/32`](docs/32-independent-lifting-replication-seal.json), full record
+[`docs/33`](docs/33-lifting-replication-v2-results.md).
 
 **The implementation decodes the planted map perfectly.** On a synthetic
 six-sector cellular annulus (12 vertices, 18 edges, 6 faces, Betti (1, 1, 0))
@@ -178,6 +215,10 @@ respectively and are never pooled.
 - Not a benefit from mapping-cone homology or published RTD/SRTD losses: the
   historically named conversion campaign tested two explicitly narrower surrogates. Also not a
   matched-compute Pareto claim.
+- Not an independent-lab or independent-generator replication: the v2 seed
+  block was untouched, sealed, and pushed before execution, but the design was
+  outcome-informed and shares the generator family with the historical
+  campaign, and the two are never pooled.
 
 ## Five-minute smoke path
 
@@ -191,16 +232,17 @@ uv sync --frozen --extra dev --python 3.12.3
 .venv/bin/python scripts/export_publication_evidence.py --verify-only
 ```
 
-The last command re-hashes all 48 tracked evidence files and reports
+The last command re-hashes all 51 tracked evidence files and reports
 `{"verified": true, ...}` when the bundle matches its manifest.
 
 ## Where the evidence lives
 
-Tracked, checksummed, and readable without a GPU — 48 files, 2.85 MB:
+Tracked, checksummed, and readable without a GPU — 51 files, 4,034,915 bytes:
 
 | path | contents |
 |---|---|
 | `results/MANIFEST.json` | path, byte count, SHA-256, generating commit, and command for every file |
+| `results/campaigns/` | frozen edge-to-cycle lifting campaign records (v1 corrected; sealed v2 replication) |
 | `results/summaries/` | strict compact summaries: identifiable, gauge, compute, routing |
 | `results/gate3/`, `results/gate3g/` | gate decisions and per-batch corruption-report derivatives |
 | `results/benchmarks/` | ten identifiable and five routing trained benchmark records |
@@ -216,8 +258,13 @@ scheduler logs) is intentionally untracked and is not durable evidence by
 itself.
 
 The read-only reviewer snapshot contains the source and this compact evidence
-bundle. It can rehash and trace every reported value, rerun the CPU conversion
-campaign, run the tests, and regenerate the paper. It cannot independently rerun
+bundle. It can rehash and trace every reported value, rerun the historical CPU
+conversion campaign, run the tests, and regenerate the paper. The sealed v2
+replication record is verify-only by construction: its runner binds `--output`
+to the sealed path and refuses to overwrite it, while the exporter revalidates
+the record's sealed lineage (seal schema, embedded hashes, design commit,
+eligibility accounting, claim family) whenever the bundle is rebuilt. It cannot
+independently rerun
 the GB10 annulus campaign or trained-checkpoint benchmarks without separately
 supplied raw artifacts/checkpoints and compatible GPU hardware.
 
@@ -241,7 +288,7 @@ RTD compares the Vietoris–Rips filtrations induced by two paired point-cloud
 representations. HOMYMOLY's broader research program considers explicit typed
 transformations between graph, cell, and sheaf complexes, structural diagnostics,
 task utility, and compute-aware routing. The present paper establishes only the
-narrow boundary-compatibility result stated above. Directional RTD remains useful
+narrow cycle-subspace identification result stated above. Directional RTD remains useful
 for asymmetric diagnosis; SRTD is a natural symmetric comparison.
 
 ## Repository map
@@ -264,7 +311,7 @@ for asymmetric diagnosis; SRTD is a natural symmetric comparison.
 - [Gate 3 record](docs/15-gate3-record.md)
 - [Gate 5 record: molecular transfer](docs/16-gate5-record.md)
 - [Gate 2 confirmatory campaign](docs/17-gate2-confirmatory.md)
-- [Paper: Boundary Compatibility, Not Acyclicity](docs/18-paper.md)
+- [Paper: Graph-Derived Cycle-Subspace Information for Scarce-Probe Identification of an Edge-to-Cycle Lifting](docs/18-paper.md)
 - [Routing confirmatory v2 protocol](docs/19-routing-confirmatory-v2-protocol.md)
 - [Audit remediation and continuation record](docs/20-audit-remediation.md)
 - [Identifiable typed-map protocol](docs/21-identifiable-typed-map-protocol.md)
@@ -276,6 +323,10 @@ for asymmetric diagnosis; SRTD is a natural symmetric comparison.
 - [Frozen edge-to-cycle lifting protocol (historical filename)](docs/27-conversion-campaign-protocol.md)
 - [Corrected edge-to-cycle lifting results](docs/28-conversion-campaign-results.md)
 - [Post-campaign audit corrections](docs/29-audit-corrections.md)
+- [Journal completion handoff](docs/30-journal-completion-handoff.md)
+- [Sealed v2 lifting replication protocol](docs/31-independent-lifting-replication-protocol.md)
+- [v2 design seal (machine-readable)](docs/32-independent-lifting-replication-seal.json)
+- [Untouched-seed v2 lifting replication results](docs/33-lifting-replication-v2-results.md)
 - [Bibliography](references.bib)
 
 ## Stage 1 foundation
@@ -316,7 +367,12 @@ The system keeps two claims separate:
   exactness, or learn a shared converter for unseen topologies. Here `W` maps
   edge signals to cycle-basis coordinates and `W^T` is a candidate `d2`; it is
   not a typed chain map. Training labels have Gaussian noise sigma 0.02, while
-  held-out targets are noiseless, so the endpoint measures map recovery.
+  held-out targets are noiseless, so the endpoint measures map recovery. The
+  sealed v2 replication adds the classical comparators on an untouched seed
+  block: least squares restricted to `ker B1` — which improves over both the
+  graph-blind minimum-norm baseline and the closed-form soft solution — a
+  dimension-matched random subspace, and training-only cross-validated ridge
+  (frozen claim not supported).
 - The annulus experiment uses a distinct finite twelve-map architecture whose
   chain-map equations hold by construction and whose hard mapping cones are
   evaluated exactly.
@@ -342,8 +398,10 @@ HOMYMOLY does **not** claim to introduce:
 - mixture-of-experts routing.
 - equality-constrained least squares, cycle-space projection, or Hodge theory.
 
-The supported contribution is narrower: an auditable empirical evaluation of an
-input-derived boundary-compatibility penalty on one deterministic synthetic
+The supported contribution is narrower: an auditable empirical evaluation of
+graph-derived cycle-subspace information — as an exact classical constraint and
+as a soft boundary-compatibility penalty — for scarce-probe identification on
+one deterministic synthetic
 lifting family, plus carefully bounded negative and compute results. Classical
 constrained least squares and Hodge theory explain the subspace mechanism; the
 paper does not claim a new theorem.
@@ -360,15 +418,21 @@ scientific, not computational.
   saturated ceiling. The structural contrasts are therefore weak nulls, and the
   informative next step is a harder benchmark where the correct map is *not*
   analytically attainable — not more seeds on this one.
-- The continuous lifting campaign supports a boundary-compatibility penalty
-  over the unpenalized fit, subject to the disclosed sum-versus-mean protocol
-  deviation. It is a prospectively locked same-family replication, not
-  independent confirmation: design choices were outcome-informed, and
-  exploratory seed overlap is unverifiable. Its compatibility/error result is a
-  prespecified, unadjusted regularization-path association; `lambda` is a common
-  driver, so independent prediction and off-path calibration remain open. The
-  baseline ignores `B1`, and no analytic cycle-basis/Hodge/nullspace oracle was
-  tested.
+- The sealed untouched-seed v2 lifting replication (33 of 36 eligible seeds on
+  a consumed, never-previewed block) supports six of seven frozen claims:
+  exact kernel-restricted least squares beats both the graph-blind
+  minimum-norm baseline and the closed-form soft penalty (modest
+  geometric-mean ratio 0.746); the soft penalty's improvement over ambient
+  Adam replicates the historical campaign; specificity against a
+  dimension-matched random subspace holds; the singular-value surrogate's
+  harm replicates; the RTD-inspired surrogate's benefit is bounded below 10%
+  (futility, not equivalence); and the frozen ridge claim is not supported.
+  The design remains outcome-informed and same-generator-family — not
+  independent-lab or independent-generator confirmation — and v1 and v2 are
+  never pooled. The historical campaign remains the prior account, with its
+  disclosed sum-versus-mean protocol deviation; one v2 retention gap (a
+  per-seed stationarity residual not retained) is disclosed in
+  [`docs/33`](docs/33-lifting-replication-v2-results.md).
 - The frozen defect-routing H5 endpoint is non-informative because success was
   mathematically impossible under its per-row oracle denominator. Its 28 rows
   also pseudoreplicate 14 topology clusters at two weights, so the former df=27

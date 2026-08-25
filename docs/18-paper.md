@@ -1,11 +1,11 @@
-# Boundary Compatibility, Not Acyclicity: Structural Penalties for Learning an Edge-to-Cycle Lifting
+# Graph-Derived Cycle-Subspace Information for Scarce-Probe Identification of an Edge-to-Cycle Lifting: An Exact Constraint Outperforms Soft Shrinkage
 
 **Sean Mahdavian**
 
 Phillips Exeter Academy · ORCID
 [0009-0000-8432-7825](https://orcid.org/0009-0000-8432-7825)
 
-**Revision: 2026-08-24**
+**Revision: 2026-08-25**
 
 ## Abstract
 
@@ -16,38 +16,52 @@ what a map destroys. It is natural to hope that related constraints can also
 two different tasks: selection of a genuine degree-preserving chain map on an
 annulus, and a primary continuous edge-to-cycle-coordinate lifting. The latter
 fits `W: R^E -> R^F`; its transpose is a candidate degree-2 differential, not a
-chain map between complexes. We test a boundary-of-boundary penalty and two
-motivated surrogates. Their behavior differs, and cheap analytic diagnostics
+chain map between complexes. We compare an exact cycle-subspace constraint, a
+differentiable boundary-of-boundary penalty, and two motivated surrogates.
+Their behavior differs, and cheap analytic diagnostics
 illuminate the observed differences.
 
-In a prospectively locked same-generator-family replication — with a disclosed
-sum-versus-mean implementation deviation in the compatibility penalty — on 29
-eligible generator seeds, each a joint topology/data/noise realization, we fit
-one separate map per topology. The hypotheses, directions,
-endpoint, training size, and weights were informed by earlier work on the same
-family, whose seed identities were not retained; this is not an independent
-confirmation or pristine preregistration. A
-**boundary-compatibility** penalty improves held-out recovery of the learned
-lifting: Bonferroni-adjusted interval [−2.749, −1.511] on the
-paired `log10` ratio. Paired responses encode `B2`; the structural penalty itself
-does not directly use `B2` or the responses, but uses `B1`, which determines the
-target cycle subspace and is strong side information that the unpenalized
-baseline ignores. In a
-prespecified secondary analysis, **defect covaries with held-out error along the
-compatibility-penalty path**: the mean within-seed Pearson correlation is
-+0.961, with an unadjusted 95% interval [+0.935, +0.987], and is positive in 29
-of 29 eligible seeds. The common penalty weight drives both quantities, and the nine
-fits within a topology are not independent observations; this path result does
-not establish independent predictive information or off-path calibration.
+The primary evidence is a **sealed untouched-seed, outcome-informed,
+same-generator-family replication**. Its protocol and a machine-readable design
+seal were committed and pushed to the private remote before any of the 36
+declared seeds was instantiated; 33 seeds were eligible, each a joint
+topology/data/noise realization, and we fit one separate map per topology. The
+hypotheses, arms, directions, and weights were chosen after earlier outcomes on
+the same family were known, so this is not an independent-lab or
+independent-generator replication and not a pristine preregistration; the seed
+block itself was never previewed. Six of the seven prespecified claims are
+supported at one-sided Bonferroni `alpha = 0.05/7`. Exact least squares
+restricted to the graph's cycle kernel improves held-out recovery over the
+graph-blind ambient minimum-norm solution (one-sided upper bound −1.328 on the
+paired `log10` ratio) and over the closed-form solution of the soft
+boundary-penalty objective at its frozen weight (upper bound −0.048; a modest
+geometric-mean MSE ratio of 0.746). The soft penalty's earlier improvement over
+the graph-blind Adam reference replicates on this disjoint block (upper bound
+−1.251). The gain is specific to the cycle subspace — a dimension-matched
+random subspace is far worse (upper bound −2.572) — while training-only
+cross-validated ridge shows no detected improvement over ambient minimum-norm
+least squares, and its frozen claim is not supported. Graph-derived
+cycle-subspace information is therefore valuable for this scarce-probe
+system-identification task, and the exact classical constraint is preferable to
+soft shrinkage of the same information at the frozen weight; the soft penalty
+is a differentiable approximation, not a superior method.
 
-The same campaign rejects one surrogate objective and finds no improvement from
-another. A **singular-value cone surrogate**, `exp(−2·σ_min(W))`, does not
-merely fail to help; it harms the lifting, adjusted interval [+0.109, +0.270]. For an
-**RTD-inspired normalized pairwise-distance surrogate**, the adjusted interval
-[−0.002, +0.038] includes zero. The latter asks an intentionally lossy lifting to
-preserve full source geometry. These are not mapping-cone homology and the
-published RTD/SRTD statistic, respectively.
+The same campaign replicates harm from a **singular-value cone surrogate**,
+`exp(−2·σ_min(W))` (one-sided lower bound +0.086), and bounds any benefit of an
+**RTD-inspired normalized pairwise-distance surrogate** below 10% of
+geometric-mean held-out MSE — a bounded-benefit/futility result at the
+prespecified margin `log10(0.90)`, not a noninferiority or equivalence
+conclusion. These are not mapping-cone homology and the
+published RTD/SRTD statistic, respectively. In a prespecified off-path
+secondary analysis — descriptive, outside the decision family — the
+cycle-projector defect covaries positively with held-out error across
+independent training/noise realizations while a dimension-matched
+random-subspace defect does not (paired Fisher-z contrast +1.088, unadjusted
+95% interval [+0.887, +1.289]); this is association, not causation.
 
+An earlier same-family campaign, prospectively locked but carrying a disclosed
+sum-versus-mean implementation deviation, found the same soft-penalty direction
+on 29 eligible seeds; the two campaigns are never pooled.
 We identify two distinct mechanisms. In a second setting — selection among a
 fixed family of twelve maps on a cellular annulus — every **hard decoded map** is
 a chain isomorphism and therefore a quasi-isomorphism. Exact cone acyclicity cannot
@@ -63,11 +77,13 @@ future objectives, but they were not prospective checks for the reported
 campaigns and are neither necessary nor sufficient conditions for improved
 finite-sample prediction.
 
-We do not claim that homological structure teaches a model. We claim that one
-specific penalty, derivable from the input, measurably improves an edge-to-cycle
-lifting in this same-family replication. Along its prespecified weight path,
-compatibility defect covaries with held-out error; the two tested surrogates do
-not improve this task.
+We do not claim that homological structure teaches a model. We claim that
+graph-derived cycle-subspace information, recoverable from the observed input,
+measurably improves scarce-probe identification of an edge-to-cycle lifting on
+this synthetic family, and that an exact classical constraint on that subspace
+outperforms soft shrinkage of the same information here. The tested cone- and
+RTD-inspired surrogates do not improve this task; the singular-value surrogate
+harms it.
 
 ## 1. Introduction
 
@@ -102,25 +118,34 @@ representation [4] develops an adjacent algebraic view. Categorical deep
 learning [9] and functor learning by gradient descent [10] ask what algebraic
 structure a learned map should respect.
 
-Our contribution is narrow and largely negative-with-a-mechanism:
+Our contribution is narrow and largely confirmatory-with-a-mechanism:
 
-1. A prospectively specified analysis in a **same-generator-family replication**
-   showing that an input-derivable **boundary-compatibility penalty** improves an
-   edge-to-cycle lifting under scarce paired data, subject to the disclosed
-   protocol implementation deviation and outcome-informed design.
-2. A prespecified secondary result, reported with an unadjusted interval, that
-   the **compatibility defect covaries with held-out damage along the fixed
-   compatibility-penalty path**, not that it independently predicts damage.
-3. Multiplicity-controlled primary results showing harm from a
-   **singular-value cone surrogate** and no detected improvement from an
-   **RTD-inspired normalized pairwise-distance surrogate**.
+1. A sealed **untouched-seed, outcome-informed, same-generator-family
+   replication** (33 eligible of 36 declared seeds) showing that graph-derived
+   **cycle-subspace information** improves scarce-probe identification of an
+   edge-to-cycle lifting: exact least squares restricted to `ker B1` improves
+   over a graph-blind minimum-norm baseline and over the closed-form soft
+   boundary penalty at its frozen weight, while the soft penalty's improvement
+   over a graph-blind Adam reference replicates from the historical campaign.
+2. A prespecified **off-path** secondary analysis, reported with unadjusted
+   intervals and no support decision, in which the cycle-projector defect
+   covaries with held-out damage across independent training/noise replicates
+   and the paired Fisher-z contrast against a dimension-matched random-subspace
+   defect is positive — association, not independent prediction or causation.
+3. Multiplicity-controlled confirmatory results replicating harm from a
+   **singular-value cone surrogate**, bounding any benefit of an
+   **RTD-inspired normalized pairwise-distance surrogate** below a prespecified
+   futility margin, establishing specificity of the cycle subspace against a
+   dimension-matched random subspace, and reporting a frozen, unsupported claim
+   for training-only cross-validated ridge.
 4. Two **retrospective no-fit diagnostic heuristics**, proposed as prospective
    screens for future work, for detecting constant or target-misaligned signals,
    and a benchmark generator in which homological defects genuinely vary.
 
 This is not a new theorem or algorithm for equality-constrained least squares or
 Hodge decomposition. Its narrow contribution is an evidence-traceable evaluation
-of an input-derived cycle-subspace penalty on one deterministic synthetic
+of input-derived cycle-subspace information — as an exact classical constraint
+and as a soft penalty — on one deterministic synthetic
 lifting family. We make no claim of priority over any cited system, and §3 is
 positioning rather than systematic review.
 
@@ -297,10 +322,15 @@ deterministic generator algorithm known, the NetworkX basis `B2` is algorithmica
 recoverable from the observed graph, and `B1` alone determines the target cycle
 subspace `ker B1`. The penalty is therefore strong input-derived structural side
 information, not direct use of `B2` or response labels. The unpenalized baseline
-ignores `B1`. The campaign omits stronger graph-aware analytic comparators: one
-could reconstruct the generator's cycle basis directly, parameterize the rows of
+ignores `B1`. The historical campaign omits stronger graph-aware analytic
+comparators: one could reconstruct the generator's cycle basis directly,
+parameterize the rows of
 `W` in `ker B1`, or project an estimator into that subspace with a Hodge/nullspace
-operator. The reported contrast is against a graph-blind full-matrix baseline,
+operator. The sealed v2 replication of §6.4 adds exactly these comparators —
+least squares restricted to `ker B1`, a dimension-matched seeded random
+subspace, and training-only cross-validated ridge — while the generator's own
+cycle basis appears only as a withheld-knowledge oracle ceiling (§7.2). The
+historical contrast is against a graph-blind full-matrix baseline,
 not against an optimal cycle-basis or Hodge oracle.
 
 For each eligible seed, the executed estimation problem is
@@ -372,7 +402,7 @@ need not be invertible and the differentiable proxy can vary and provide
 gradients. The RTD-style annulus loss is also not constant: it compares
 cross-example distances of predicted and target typed representations, the
 selectors vary by example, and soft mixtures are non-orthogonal. It consumes
-target batch structure. Accordingly, the empirical chance accuracies in §7.4
+target batch structure. Accordingly, the empirical chance accuracies in §7.5
 cannot be deduced from a constancy theorem for either soft objective.
 
 ### 5.2 The continuous surrogates are target-misaligned
@@ -426,7 +456,11 @@ Document 26 does not retain the exploratory seed identities, so possible overlap
 with the frozen seed block 20261001–20261030 cannot be audited. Prospective
 locking prevents changes after the freeze; it does not remove this
 outcome-informed design history. Independent confirmation requires an untouched,
-disjoint generator family or seed block.
+disjoint generator family or seed block. §6.4 reports that next step: a sealed
+replication on an untouched, disjoint seed block of the same generator family.
+Its design remains outcome-informed, so it is still not independent-lab or
+independent-generator confirmation; what the untouched block removes is any
+selection on the new outcomes.
 
 | item | value |
 |---|---|
@@ -511,6 +545,79 @@ aarch64, CUDA 13.0, deterministic algorithms enabled with
 The sealed scheduler receipt lists all 296 produced files with byte counts and
 SHA-256 digests; all 296 verify against the on-disk artifacts.
 
+### 6.4 Sealed untouched-seed replication (v2)
+
+The follow-up demanded above — an untouched, disjoint seed block of the same
+generator family — is complete. The design was frozen in protocol
+[`docs/31`](31-independent-lifting-replication-protocol.md) with a dedicated
+runner (`scripts/run_lifting_replication_v2.py`) and tests, committed as design
+commit A; a machine-readable design seal
+([`docs/32`](32-independent-lifting-replication-seal.json)) was committed
+immediately after as commit B and pushed to the private remote (timestamp
+2026-08-24 22:31:13 -0400) before any declared seed was instantiated. At
+preflight the runner re-verified the seal schema, every embedded hash against
+both its frozen constants and the actual file bytes, its own runtime SHA-256,
+the seal's presence at HEAD, and a clean worktree. No design file changed
+between commit A and execution; the recorded execution revision equals commit
+B. The canonical command was
+
+```bash
+env CUDA_VISIBLE_DEVICES=-1 .venv/bin/python \
+  scripts/run_lifting_replication_v2.py \
+  --output results/campaigns/lifting-replication-v2.json
+```
+
+| item | value |
+|---|---|
+| protocol | `docs/31`, SHA-256 `6288eade4755aa188299760303b389ce13acd42659b8b9bc340cb9d4024afec0` |
+| design commit (A) | `044322c7dc6a6255eec941dbcb76c45288a9666c` |
+| seal / execution commit (B) | `9baae6b8322120724e7f5aff3c47fd7ef343086c` |
+| result | `results/campaigns/lifting-replication-v2.json`, committed at `64a1c3bf6b5f824fb5990392f5efb08bf36559b9` |
+| declared seeds | 36 (`20270101..20270136`) |
+| eligible seeds | **33**, meeting the frozen minimum of 30; `20270103`, `20270116`, `20270120` generated two faces each, were retained, and were **never replaced** |
+| generation failures | 0 |
+| training pairs | 16 |
+| held-out pairs | 3072 |
+| training-label noise | Gaussian, sigma 0.02 |
+| held-out target | noiseless `B2ᵀ x` |
+| environment | CPU, float64, single torch thread, CUDA hidden; Python 3.12.3, PyTorch 2.13.0 (build `2.13.0+cu130`), NetworkX 3.6.1, NumPy 2.5.2; Linux aarch64; recorded environment matched the frozen requirement exactly |
+
+Nine fitted arms enter the seven-claim family: two graph-blind references
+(finite-step Adam; minimum-norm least squares of the same unpenalized
+objective), the soft boundary penalty at frozen weight 3.0 in finite-step Adam
+and in closed form, exact least squares restricted to `ker B1`, least squares
+restricted to a dimension-matched seeded random subspace, training-only
+four-fold-selected ridge, and the historical singular-value (weight 0.01) and
+RTD-inspired distance surrogates. A tenth arm sets the map to the withheld
+generator cycle basis; it is an attainability ceiling and enters no contrast.
+
+The endpoint of every claim is the paired
+`log10(MSE_arm / MSE_reference)` within a seed; the estimand is its mean over
+eligible seeds, the conditional synthetic-generator quantity
+`E_seed[log10(MSE_arm/MSE_reference) | connected, F>=3]`. Decisions use
+one-sided Student-t bounds at Bonferroni `alpha = 0.05/7` with `n = 33`, df 32,
+critical value `2.5912722991315227`. Sign tests are direction-neutral
+sensitivity analyses and never govern support. One eligible generator seed is
+the sole unit of inference: it jointly determines topology and, through a
+frozen SHA-256 sub-seed schedule, the training predictors, label noise, test
+predictors, and random specificity subspace. A prespecified off-path secondary
+analysis (C1) sits outside the Bonferroni family and receives no support
+decision.
+
+This is an **untouched-seed, outcome-informed, same-generator-family
+replication**. The seed block was never instantiated before the seal, but the
+hypotheses, arms, directions, and weights were chosen after the v1 outcomes and
+a hostile post-campaign diagnostic on the old seeds were known. It is not an
+independent-lab or independent-generator replication and not a pristine
+preregistration. V1 and v2 estimates are never pooled, meta-analyzed, or
+jointly interval-estimated. After execution, every primary summary was
+independently recomputed from the retained raw rows (maximum absolute
+discrepancy at most `1e-13`, summation-order roundoff), and an independent
+re-derivation reproduced every estimate, bound, and support flag to
+`4.45e-16`. One retention gap found by that validation is disclosed in §9 and
+in the full result record,
+[`docs/33`](33-lifting-replication-v2-results.md).
+
 ## 7. Results
 
 ### 7.1 Boundary compatibility improves an edge-to-cycle lifting
@@ -537,9 +644,128 @@ baseline ignores this strong structural side information. With the generator
 algorithm known, `B2` is algorithmically recoverable from the graph, and no
 analytic cycle-basis, nullspace, or Hodge-projection oracle was included.
 Training still optimizes all `F×E` entries of `W`; weight 3.0 penalizes but does
-not prohibit off-cycle components.
+not prohibit off-cycle components. §7.2 reports the sealed untouched-seed
+replication that adds the omitted classical comparators.
 
-### 7.2 Secondary analysis: covariation along the compatibility-penalty path
+### 7.2 Sealed untouched-seed replication: the exact cycle constraint outperforms soft shrinkage
+
+All seven prespecified claims of §6.4 were decided once, on the sealed block,
+under the frozen decision rules. The endpoint is the paired `log10` ratio of
+held-out MSE (numerator arm / reference arm); negative estimates mean the
+numerator arm improves recovery. [`docs/33`](33-lifting-replication-v2-results.md)
+is the full record; Figure 3 summarizes it.
+
+Exact values, standard errors, and bounds at full precision are recorded in
+[`docs/33`](33-lifting-replication-v2-results.md); the table rounds to four
+decimals.
+
+| id | endpoint (numerator / reference) | estimate | SE | one-sided bound | support |
+|---|---|---:|---:|---:|---|
+| h1-soft-vs-ambient-adam | `soft_boundary_lambda3 / ambient_adam` | −1.8726 | 0.2399 | upper −1.2509 | **supported** |
+| h2-hard-cycle-vs-ambient-ls | `hard_cycle_ls / ambient_min_norm_ls` | −1.8769 | 0.2120 | upper −1.3275 | **supported** |
+| h3-hard-cycle-vs-soft-closed-form | `hard_cycle_ls / soft_boundary_closed_form_lambda3` | −0.1274 | 0.0305 | upper −0.0484 | **supported** |
+| h4-hard-cycle-vs-hard-random | `hard_cycle_ls / hard_random_subspace_ls` | −3.2319 | 0.2547 | upper −2.5720 | **supported** |
+| h5-ridge-vs-ambient-ls | `inner_cv_ridge / ambient_min_norm_ls` | +0.0152 | 0.0297 | upper +0.0922 | **not supported** |
+| h6-singular-surrogate-harm | `singular_value_surrogate / ambient_adam` | +0.1906 | 0.0404 | lower +0.0858 | **supported** |
+| h7-rtd-bounded-benefit-futility | `rtd_inspired_distance_surrogate / ambient_adam` | +0.0188 | 0.0087 | lower −0.0038 vs margin −0.0458 | **supported** |
+
+<figure>
+  <img src="figures/fig-replication.svg" alt="Forest plot of the seven frozen claims of the untouched-seed replication. Six claims are supported: the soft penalty and the exact cycle constraint each improve on their graph-blind references, the exact constraint improves on the closed-form soft solution and on a dimension-matched random subspace, the singular-value surrogate harms, and the RTD-inspired surrogate is bounded below its futility margin. The ridge claim is not supported. A muted square marks the descriptive optimizer diagnostic." width="680">
+  <figcaption><strong>Figure 3. The seven-claim family of the sealed untouched-seed replication.</strong> Point: mean paired <code>log10</code>(held-out MSE, numerator arm / reference arm) over 33 eligible generator seeds; whisker: the governing one-sided Bonferroni bound in the claim's direction (familywise <code>alpha = 0.05/7</code>, critical value 2.5912722991315227). H5 (ridge) is not supported. The dashed marker on H7 is the prespecified futility margin <code>log10(0.90)</code>; H7 is a bounded-benefit/futility statement only and cannot establish equality or the absence of every benefit. The muted square below the divider is the descriptive optimizer diagnostic (ambient Adam / ambient minimum-norm LS), which carries no support decision. Same-generator-family replication on synthetic seeds, not real-data validation. Generated from <code>results/campaigns/lifting-replication-v2.json</code>.</figcaption>
+</figure>
+
+**H1 replicates the soft-penalty effect on untouched seeds.** The soft
+boundary-compatibility penalty at frozen weight 3.0 improves over the
+graph-blind ambient Adam reference on the disjoint block: geometric mean MSE
+ratio `0.01340985679332218`, descriptive two-sided 95% interval
+`[−2.36129485375057, −1.3838568663407198]`, sign test 33 negative of 33
+(p = `2.3283064365386963e-10`).
+
+**H2 improves on the solver-matched graph-blind baseline.** Exact least squares
+restricted to `ker B1` improves over the ambient minimum-norm least-squares
+solution of the same unpenalized objective: geometric mean ratio
+`0.013277071629811591`, descriptive interval
+`[−2.3087619478822723, −1.4450334555558149]`, sign test 33 of 33.
+
+**H3 is the central comparison.** Hard cycle-subspace least squares improves
+over the closed-form solution of the same frozen soft objective, with optimizer
+confounding removed by construction: geometric mean ratio
+`0.745769272372031` — real but modest — descriptive interval
+`[−0.18951209171471245, −0.06527893761520454]`, sign test 28 negative, 3
+positive, 2 ties discarded (p = `4.649162292480469e-06`). Under the frozen
+design the exact classical constraint is preferable to soft shrinkage of the
+same `B1`-derived information. The soft penalty is a differentiable
+approximation to that constraint, not a new superior method, and constrained
+least squares is classical (§3), not a novel algorithm.
+
+**H4 establishes specificity.** The true cycle subspace improves over the
+dimension-matched seeded random subspace: geometric mean ratio
+`0.0005862327707089732`, descriptive interval
+`[−3.7506683788961146, −2.7131914369786294]`, sign test 33 of 33. The advantage
+is specific to the cycle subspace, not to dimension reduction alone.
+
+**H5 is not supported, exactly as frozen.** Training-only four-fold-selected
+ridge did not improve over ambient minimum-norm least squares: the governing
+one-sided upper bound `+0.09221008861621441` is not below zero (geometric mean
+ratio `1.0355395685149351`; sign test 19 positive, 14 negative,
+p = `0.48685024166479707`). The claim is reported as frozen and is not
+reinterpreted; this null does not show that ridge cannot help under any design,
+only that no benefit was detected here.
+
+**H6 replicates the singular-value surrogate's harm.** The one-sided lower
+bound `+0.0858061772078059` exceeds zero (geometric mean ratio
+`1.5508000886966786`; sign test 29 positive, 4 negative,
+p = `1.0928604751825333e-05`). The claim is scoped to the exact implemented
+formula, not mapping-cone homology.
+
+**H7 is supported as a bounded-benefit/futility statement.** The one-sided
+lower bound `−0.003807143571896345` exceeds the prespecified margin
+`log10(0.90) = −0.045757490560675115`, ruling out an RTD-inspired benefit of
+10% or more in geometric-mean held-out MSE versus ambient Adam. This is **not**
+a noninferiority or equivalence conclusion — the direction and estimand
+semantics are reversed relative to those procedures — and it cannot establish
+equality or the absence of every benefit. The claim is scoped to this
+target-misaligned surrogate, not published RTD/SRTD.
+
+**Descriptive optimizer diagnostics** (prespecified, outside the family, no
+support decision). Ambient Adam is measurably worse than the minimum-norm
+least-squares solution of the same unpenalized objective: mean log10 ratio
+`+0.22888064836548128` (median `+0.2811655771640295`), exact sign test 25
+positive, 8 negative, p = `0.004551384132355452`. Finite-step Adam also does
+not fully reach the closed-form optimum of the penalized objective: soft Adam
+versus its closed form averages `+0.10580697537392178`, with per-seed solution
+gap `||A_adam − A_closed_form||_F` mean `0.8556475807071382` (maximum
+`4.005285286298402`). Part of the H1 margin is therefore optimizer slack rather
+than penalty geometry; H3 removes this confound. This solver gap is why the
+soft penalty's reference is Adam while the classical estimators are referenced
+to the same-solver least-squares solution.
+
+**C1 (prespecified secondary, off-path, no decision).** Per eligible topology,
+twelve independent training-input/label-noise replicates of the minimum-norm
+estimator share one independently generated 3,072-row noiseless test set. The
+cycle-projector defect covaries positively with held-out error across these
+replicates — mean Fisher-z `+0.7712258159811779`, unadjusted 95% interval
+`[+0.43398720808657104, +1.1084644238757848]`, back-transformed mean r
+`+0.6476416755579272` — while the dimension-matched random-subspace defect does
+not (mean z `−0.3168499119888693`, interval
+`[−0.5622502040999926, −0.07144961987774598]`). The relevant descriptive
+contrast is the paired delta-z: `+1.0880757279700473`, interval
+`[+0.8873984853168706, +1.288752970623224]`, lying above zero. Two positive
+correlations alone would not establish specificity; the paired contrast is what
+separates the projectors. Unlike the historical path correlation of §7.3, these
+replicates share no common penalty-weight driver. This remains association, not
+causation: the analysis does not establish that either defect is independently
+calibrated, causal, or useful for routing, and it says nothing about real data.
+
+**The generator-cycle-basis oracle is a withheld-knowledge ceiling.** Setting
+the map to the withheld generator basis yields held-out MSE, and error relative
+to the mean squared test target, of exactly `0.0` on all 33 eligible seeds. It
+is a deterministic attainability ceiling and numerical-integrity check — it
+shows how much generator knowledge the learning problem withholds — and it is
+isolated from every fitted arm and inferential table. It is not evidence that
+any learned method discovered the generator basis.
+
+### 7.3 Historical secondary analysis: covariation along the compatibility-penalty path
 
 Within each topology, nine prespecified weights on the compatibility penalty
 produce learned maps of varying quality. The endpoint is the correlation between
@@ -559,20 +785,23 @@ The result establishes covariation along this regularization path; it does not
 show that defect carries independent predictive information, calibrates error
 off path or on unseen topologies, isolates an intervention effect, or is causal.
 
-### 7.3 The singular-value surrogate harms; the distance surrogate does not improve
+### 7.4 The singular-value surrogate harms; the distance surrogate does not improve (historical campaign)
 
 Both belong to the multiplicity-controlled primary family. The singular-value
 cone surrogate harms held-out error at the tested weight: its adjusted interval
 lies entirely above zero. For the RTD-inspired normalized pairwise-distance
 surrogate, the adjusted interval contains zero and the sign test is 0.458. This
 supports **no detected improvement**, not equivalence, inertness, or a general
-claim about published RTD/SRTD; no equivalence margin was prespecified.
+claim about published RTD/SRTD; no equivalence margin was prespecified. The
+sealed replication strengthens both: H6 (§7.2) replicates the harm, and H7
+upgrades the distance surrogate's null to a bounded-benefit/futility result at
+a prespecified margin.
 
 §5.2 identifies the singular-value surrogate's scale-inflating bias; the frozen
 contrast establishes that it harmed here. §5.1 proves a different fact in the
 selection setting: exact cone acyclicity is constant across that finite class.
 
-### 7.4 The selection setting, and why its nulls are weak
+### 7.5 The selection setting, and why its nulls are weak
 
 On the annulus, all six objectives containing task or reconstruction supervision
 decode the planted transformation perfectly: transformation and cell-face
@@ -583,7 +812,7 @@ applicable runs.
 
 <figure>
   <img src="figures/fig-recovery.svg" alt="Two-panel bar chart. Left: transformation accuracy by objective, six task- or reconstruction-supervised objectives at 1.000 and cone-only and RTD-only at the 0.0833 chance line. Right: map mean-squared error on a log scale; supervised means span 2.618e-17 to 2.504e-8, while cone-only and RTD-only are 0.109 and 0.191." width="680">
-  <figcaption><strong>Figure 3. Recovery by objective in the selection setting.</strong> Mean over five seeds. All six objectives carrying task or reconstruction supervision have perfect decoded accuracy, with mean map MSE from <code>2.618e-17</code> to <code>2.504e-8</code>. The cone-only and RTD-only controls sit at chance with mean map MSE 0.109 and 0.191, about 7–16 orders of magnitude above the supervised range depending on the comparison. The RTD-only loss consumes target batch geometry and is not an unsupervised control. Generated from <code>results/summaries/identifiable-campaign-summary.json</code>.</figcaption>
+  <figcaption><strong>Figure 4. Recovery by objective in the selection setting.</strong> Mean over five seeds. All six objectives carrying task or reconstruction supervision have perfect decoded accuracy, with mean map MSE from <code>2.618e-17</code> to <code>2.504e-8</code>. The cone-only and RTD-only controls sit at chance with mean map MSE 0.109 and 0.191, about 7–16 orders of magnitude above the supervised range depending on the comparison. The RTD-only loss consumes target batch geometry and is not an unsupervised control. Generated from <code>results/summaries/identifiable-campaign-summary.json</code>.</figcaption>
 </figure>
 
 All 21 declared continuous contrast intervals contain zero, so adding the
@@ -600,20 +829,27 @@ decoded predictions while identification remains at chance. It does not show
 that the differentiable cone proxy was constant during training, and it supplies
 no analogous constancy proof for the RTD-style loss.
 
-### 7.5 Specificity against generic regularisation remains open
+### 7.6 Specificity: the cycle subspace, not dimension reduction or generic shrinkage
 
 Earlier exploratory notes report ridge, random-subspace, and nonlinear-link
 checks, but no generating script or machine-readable result for those analyses
 is preserved in the publication evidence. Their quantitative values are
-therefore excluded from this paper. The primary campaign establishes an
-improvement over the unpenalized fit; it does not establish that boundary
-compatibility outperforms a tuned generic regularizer or a rank-matched random
-subspace. A frozen, machine-recorded matched-control campaign is required before
-making that specificity claim.
+therefore excluded from this paper. The frozen, machine-recorded
+matched-control campaign this question required is the sealed v2 replication of
+§7.2, and it resolves the question in both directions. H4 establishes that the
+true cycle subspace improves over a dimension-matched seeded random subspace:
+the gain is specific to the cycle subspace, not to dimension reduction alone.
+H5 — frozen, and not supported — finds no detected benefit from training-only
+four-fold-selected ridge over ambient minimum-norm least squares under this
+design. H3 locates the remaining margin: the exact cycle constraint improves on
+even the closed-form soft penalty, by a modest geometric-mean ratio of
+`0.745769272372031`. The historical campaign's improvement over the unpenalized
+fit was therefore not merely generic shrinkage, and its soft penalty is not the
+best use of the same `B1`-derived information.
 
-### 7.6 Routing: a flawed accuracy endpoint and a separate compute result
+### 7.7 Routing: a flawed accuracy endpoint and a separate compute result
 
-The prespecified H5 accuracy endpoint is **non-informative because its decision
+The prespecified routing H5 accuracy endpoint is **non-informative because its decision
 rule is impossible to satisfy**. It divides the chosen route's error by the
 per-row minimum of the cell and graph errors, so every ratio is at least one and
 every log ratio is nonnegative. An interval strictly below zero cannot occur.
@@ -632,7 +868,7 @@ descriptive compute comparison rather than an accuracy claim.
 
 <figure>
   <img src="figures/fig-compute.svg" alt="Horizontal bar chart of median inference latency for the routed path, three single fixed routes, and the dense three-expert path, with whiskers marking mean p95." width="680">
-  <figcaption><strong>Figure 4. Trained routing inference latency on GB10.</strong> Median over 100 timed iterations averaged across five seeds; whiskers mark mean p95. Batch 64, bfloat16. All paths were timed in the plotted order inside one process, so residual thermal or allocator drift is confounded with path order. Generated from <code>results/summaries/compute-campaign.json</code>.</figcaption>
+  <figcaption><strong>Figure 5. Trained routing inference latency on GB10.</strong> Median over 100 timed iterations averaged across five seeds; whiskers mark mean p95. Batch 64, bfloat16. All paths were timed in the plotted order inside one process, so residual thermal or allocator drift is confounded with path order. Generated from <code>results/summaries/compute-campaign.json</code>.</figcaption>
 </figure>
 
 Across five seeds, the mean dense/routed speed ratio is **1.532** (Student-t 95%
@@ -650,11 +886,11 @@ protocol-aligned rather than pristine preregistration. It is a different
 experiment from the defect-based routing tested here and the two must not be
 conflated.
 
-### 7.7 Corruption diagnostics
+### 7.8 Corruption diagnostics
 
 <figure>
   <img src="figures/fig-contrasts.svg" alt="Forest plot of twelve corruption contrasts with 95% intervals; every interval crosses the zero line." width="680">
-  <figcaption><strong>Figure 5. Every corruption contrast interval contains zero.</strong> Nine Gate-3 base contrasts use a paired complete-block bootstrap conditional on a fixed checkpoint pair; three gauge contrasts use a Student-t interval with df = 7 across eight training seeds. No multiplicity adjustment. Generated from <code>results/gate3/paired_comparison_final.json</code> and <code>results/summaries/gauge-corruption-campaign.json</code>.</figcaption>
+  <figcaption><strong>Figure 6. Every corruption contrast interval contains zero.</strong> Nine Gate-3 base contrasts use a paired complete-block bootstrap conditional on a fixed checkpoint pair; three gauge contrasts use a Student-t interval with df = 7 across eight training seeds. No multiplicity adjustment. Generated from <code>results/gate3/paired_comparison_final.json</code> and <code>results/summaries/gauge-corruption-campaign.json</code>.</figcaption>
 </figure>
 
 These compare clean and corrupted **fixed-expert embeddings**. They never invoke a
@@ -663,15 +899,18 @@ claim. All twelve intervals contain zero.
 
 ## 8. Discussion
 
-**The precise objective matters.** In one prospectively locked same-family
-replication with a disclosed implementation deviation, boundary compatibility
-improves held-out recovery of an edge-to-cycle lifting, a singular-value cone
-surrogate harms it, and an
-RTD-inspired normalized pairwise-distance surrogate shows no detected
-improvement. Reporting only that
-"homological structure helps" or "does not help" would erase the distinction
-between a boundary-of-boundary penalty and two motivated but nonidentical
-surrogates.
+**The precise objective matters.** In a sealed untouched-seed, outcome-informed,
+same-generator-family replication, exact least squares restricted to the
+graph's cycle kernel improves held-out recovery of an edge-to-cycle lifting
+over both the graph-blind minimum-norm baseline and the closed-form soft
+boundary penalty at its frozen weight; the soft penalty's improvement over a
+graph-blind Adam reference replicates from the historical campaign; a
+singular-value cone surrogate's harm replicates; and an RTD-inspired normalized
+pairwise-distance surrogate is bounded below a 10% geometric-mean benefit.
+Reporting only that
+"homological structure helps" or "does not help" would erase the distinctions
+among an exact classical constraint, a boundary-of-boundary penalty, and two
+motivated but nonidentical surrogates.
 
 **Retrospective no-fit inspection is useful but not dispositive.** §5's checks expose the
 hard-map cone constancy result and the singular-value surrogate's scale-inflating
@@ -689,63 +928,108 @@ dim coker H_n + dim ker H_(n−1)` — the cone sums a directional pair and lose
 distinction between *destroyed* and *unreachable*. Where a measurement is wanted,
 the unbundled pair is strictly more informative.
 
-**The boundary-compatibility penalty favors the correct input-derived
-subspace.** Its zero set has every row of `W` in the cycle space, which has
+**The cycle-subspace information, not the penalty form, carries the gain.** The
+compatibility penalty's zero set has every row of `W` in the cycle space, which has
 dimension `F` for these connected topologies. The executed finite-weight
 regularizer merely shrinks off-cycle components; it does not hard-constrain the
-optimizer, reduce the parameter count from `F×E`, or prove exactness. The result
-shows that this cycle-subspace bias helped the generated targets and was
-available from the observed graph. This is strong side information: the
-unpenalized comparator ignores `B1`, while a generator-aware cycle-basis oracle
-or Hodge/nullspace estimator could use it even more directly. Whether the gain
-persists against those graph-aware comparators or a tuned generic regularizer
-remains open.
+optimizer, reduce the parameter count from `F×E`, or prove exactness. The
+replication's matched controls isolate what matters: kernel-restricted least
+squares improves over the closed-form solution of the same soft objective
+(modest geometric-mean ratio `0.745769272372031`), a dimension-matched random
+subspace is worse by orders of magnitude, and training-only cross-validated
+ridge shows no detected benefit over the minimum-norm baseline. The exact
+constraint is classical constrained least squares, not a new algorithm; the
+soft penalty is a differentiable approximation to it, not a superior method.
+The withheld generator-basis oracle still attains exactly zero error on every
+eligible seed, so no fitted arm reaches generator knowledge.
+
+**The soft penalty's finite-step form is optimizer-confounded, and the design
+measures how much.** Ambient Adam is measurably worse than the minimum-norm
+least-squares solution of the same unpenalized objective (descriptive mean
+log10 ratio `+0.22888064836548128`; sign test 25 positive, 8 negative,
+p = `0.004551384132355452`), and finite-step Adam does not reach the
+closed-form penalized optimum (per-seed solution gap mean
+`0.8556475807071382`). Part of the soft penalty's margin over Adam is therefore
+optimizer slack rather than penalty geometry; the closed-form contrast of H3
+removes that confound, and the exact constraint still wins it.
 
 **The effect occurs in a favorable scarce-probe geometry.** With only 16 probes,
 21 of 29 ambient systems have `E > 16`; the hard cycle-subspace dimension is at
 most 16 in 24 seeds, and 16 seeds cross from `E > 16` to `F <= 16`. The finite
 penalty does not literally reduce the fitted `F x E` parameter count, but its
 shrinkage targets the subspace that a hard graph-aware estimator would use. The
+sealed replication shares this frozen geometry (`N_train = 16`, training noise
+sigma 0.02, noiseless held-out targets) on 33 further eligible seeds of the
+same family, and its hard-constraint arm performs exactly that dimension
+reduction. The
 large observed effect is therefore consistent with classical variance reduction
 in underdetermined system identification.
 
 ## 9. Limitations
 
-- **One synthetic linear lifting family.** 29 eligible generator seeds and one
-  training-set size. Nothing transfers automatically to real data or nonlinear
-  transformations.
+- **One synthetic linear lifting family.** 29 eligible generator seeds in the
+  historical campaign and 33 in the sealed v2 replication, one training-set
+  size (`N_train = 16`), and one noise level (`sigma = 0.02`). Nothing
+  transfers automatically to real data, unseen generator families, unseen
+  topologies, or nonlinear transformations.
 - **Seed-level inference.** Each primary replicate jointly instantiates topology,
-  data, and training noise. Intervals assume the 29 eligible seed-level paired
-  effects are exchangeable; pairing controls their shared realizations but does
-  not remove topology variance.
+  data, and training noise. Intervals assume the eligible seed-level paired
+  effects (29 historical, 33 in v2) are exchangeable; pairing controls their
+  shared realizations but does not remove topology variance. V2 inference
+  quantifies Monte Carlo variation over the frozen seed mechanism, not
+  uncertainty for real data.
 - **No unseen-topology learning.** A separate `W` is fitted and evaluated
-  within each topology. The campaign does not learn a shared converter that
+  within each topology. Neither campaign learns a shared converter that
   generalizes to a new graph.
 - **Noncanonical target coordinates.** NetworkX chooses one cycle basis among
   many. The penalty identifies the cycle subspace; paired labels identify that
   run's arbitrary basis coordinates.
-- **Strong structural side information and a missing oracle.** Although the
+- **Strong structural side information and a withheld-knowledge oracle.** Although the
   penalty does not directly use `B2` or response labels, `B1` determines the
   target cycle subspace, and the known deterministic generator makes `B2`
-  algorithmically recoverable from the graph. The unpenalized baseline ignores
-  `B1`; no analytic cycle-basis, Hodge-projection, or nullspace baseline was run.
+  algorithmically recoverable from the graph. The historical baseline ignores
+  `B1`. The v2 replication adds the kernel-restricted least-squares estimator,
+  a dimension-matched random-subspace control, and training-only ridge, and the
+  exact constraint wins; the exact generator-basis reconstruction appears only
+  as a withheld-knowledge oracle whose error is exactly zero on all 33 eligible
+  seeds and which no fitted arm attains.
 - **Favorable scarce-probe geometry.** `N_train = 16`; 21/29 seeds have
   `E > 16`, 24/29 have `F <= 16`, and 16/29 cross from the former ambient
   underdetermination to the latter hard-subspace dimension. Medians are
   `E = 23`, `F = 11`, while five seeds still have `F > 16`. The executed finite
   penalty is shrinkage, not a hard dimension reduction, and the effect may
-  diminish with more probes.
+  diminish with more probes. The v2 block shares the frozen geometry; its
+  ineligible-seed dimensions are disclosed in docs/33.
 - **Protocol implementation deviation.** The runner used an elementwise mean
   where frozen protocol 27 wrote a Frobenius sum. The result is not a pristine
   protocol replication.
-- **Regularization specificity is open.** No machine-verifiable tuned-ridge or
-  rank-matched random-subspace campaign is in the publication evidence.
+- **V2 retention gap.** The executed v2 runner did not retain or assert the
+  per-seed closed-form stationarity residual that protocol 31 §7.3 lists; the
+  residual was test-verified below `1e-10` before the seal, the affected
+  endpoint depends only on retained per-arm held-out MSEs, and rerunning a
+  sealed, consumed seed block is forbidden, so the gap is disclosed in docs/33
+  rather than repaired.
+- **Optimizer confounding in the soft penalty's finite-step form.** Finite-step
+  Adam does not reach the closed-form penalized optimum (per-seed solution gap
+  mean `0.8556475807071382`, maximum `4.005285286298402`), so part of the soft
+  penalty's margin over ambient Adam is optimizer slack; the closed-form H3
+  contrast is the confound-free comparison.
+- **Regularization specificity is established only within this family.** The
+  sealed v2 campaign is the matched-control campaign earlier drafts required:
+  the true cycle subspace beats a dimension-matched seeded random subspace
+  (H4), and training-only four-fold-selected ridge shows no detected benefit
+  over ambient minimum-norm least squares (H5, frozen and not supported). H5's
+  null does not prove ridge cannot help anywhere — only that no benefit was
+  detected under this frozen design.
 - **Outcome-informed same-family design.** The hypotheses, directions, endpoint,
   training size, and weights were selected after exploration on the same
   generator family. Exploratory seed identities were not retained, so overlap
-  with the frozen 20261001–20261030 block is unverifiable. This is prospectively
-  locked replication, not independent confirmation; an untouched disjoint
-  family or seed block remains necessary.
+  with the frozen 20261001–20261030 block is unverifiable. The v2 replication
+  supplies the untouched disjoint seed block the historical campaign lacked —
+  sealed and pushed before execution, never previewed — but it remains
+  outcome-informed and same-family: not an independent-lab or
+  independent-generator replication, and never pooled with v1. An untouched
+  disjoint generator family and any real-data validation remain open.
 - **The selection setting saturates.** Six of eight objectives reach exactly
   1.000, so its structural nulls cannot detect improvement. Its RTD-only loss
   consumes target batch geometry and is not an unsupervised control.
@@ -762,15 +1046,23 @@ in underdetermined system identification.
 - **Timing caveats.** All paths timed in fixed order inside one process; raw
   per-iteration timings not retained; identifiable runner reports p90 and routing
   runner p95, never pooled.
-- **Secondary analyses are unadjusted.** C1, the separate routing campaign, and
-  the corruption diagnostics lie outside the three primary lifting contrasts;
-  H5 has no valid inferential decision.
-- **C1 is a regularization-path association.** Within each eligible seed, its nine
-  fits share data and initialization and vary the common driver `lambda`. They
-  are not independent observations, so C1 does not establish independent
-  predictive information or off-path calibration.
-- **No equivalence test.** The RTD-inspired surrogate interval includes zero,
-  but no equivalence margin was specified.
+- **Secondary analyses are unadjusted.** The historical path C1 and the v2
+  off-path C1, the separate routing campaign, and the corruption diagnostics
+  lie outside the multiplicity-controlled families; the routing H5 has no valid
+  inferential decision, and the v2 C1 receives no support decision.
+- **The historical C1 is a regularization-path association.** Within each eligible seed,
+  its nine fits share data and initialization and vary the common driver
+  `lambda`. They are not independent observations, so that C1 does not
+  establish independent predictive information or off-path calibration. The v2
+  C1 replaces the path design with twelve independent training/noise replicates
+  per topology sharing one noiseless test set; its paired delta-z contrast
+  against a dimension-matched random-subspace defect is descriptive and remains
+  association, not causation.
+- **No equivalence test.** The historical RTD-inspired surrogate interval
+  includes zero, and no equivalence margin was specified for it. The v2 H7 is a
+  bounded-benefit/futility result at one prespecified margin (`log10(0.90)`):
+  it rules out a benefit of 10% or more but is not a noninferiority or
+  equivalence conclusion and cannot establish exact inertness.
 - **The distance surrogate is target-misaligned.** It asks a rank-`F` lifting to
   preserve full source geometry even though the truth intentionally discards
   cut-space components. Its no-detected-improvement result does not test or
@@ -780,31 +1072,56 @@ in underdetermined system identification.
 
 ## 10. Claim boundary
 
-This work provides evidence, on one synthetic family under a prospectively
-locked same-family replication with a disclosed implementation deviation, that
-an input-derived boundary-compatibility penalty improves an edge-to-cycle
-lifting relative to an unpenalized full-matrix baseline that ignores `B1`.
-The hypotheses, directions, endpoint, training size, and weights were
-outcome-informed by same-family exploration, and exploratory seed overlap is
-unverifiable; this is not independent confirmation. A prespecified, unadjusted
-secondary analysis finds that defect covaries with held-out error along the
-fixed penalty path, where `lambda` is a common driver. In the same primary family, a
-singular-value cone surrogate harms held-out performance, while an RTD-inspired
-normalized pairwise-distance surrogate shows no detected improvement.
+This work provides evidence, on one synthetic family, from a sealed
+untouched-seed, outcome-informed, same-generator-family replication (33
+eligible of 36 declared seeds), that graph-derived cycle-subspace information
+improves scarce-probe identification of an edge-to-cycle lifting. Six of seven
+prespecified claims are supported at one-sided Bonferroni `alpha = 0.05/7`:
+exact least squares restricted to `ker B1` improves over the graph-blind
+ambient minimum-norm solution (H2) and over the closed-form soft boundary
+penalty at its frozen weight (H3, by a modest geometric-mean ratio of
+`0.745769272372031`); the soft penalty improves over the graph-blind ambient
+Adam reference (H1), replicating the historical campaign's direction on an
+untouched block; the gain is specific to the true cycle subspace against a
+dimension-matched random subspace (H4); the singular-value cone surrogate's
+harm replicates (H6); and any benefit of the RTD-inspired surrogate is bounded
+below 10% of geometric-mean held-out MSE (H7, a bounded-benefit/futility result
+at the prespecified margin `log10(0.90)`). The frozen ridge claim (H5) is not
+supported. Every estimand is the mean paired `log10` MSE ratio conditional on
+connected, `F>=3` seeds of this generator family; intervals quantify Monte
+Carlo variation over the frozen seed mechanism, not uncertainty for real data.
+The historical campaign — prospectively locked, with a disclosed sum-versus-mean
+implementation deviation — is retained as the prior account and is never pooled
+with v2. A prespecified, unadjusted off-path secondary analysis finds that the
+cycle-projector defect covaries with held-out error across independent
+training/noise replicates where a dimension-matched random-subspace defect does
+not (paired Fisher-z contrast `+1.0880757279700473`, interval
+`[+0.8873984853168706, +1.288752970623224]`); it is descriptive and carries no
+support decision.
 
 It does **not** establish:
 
 - any general conclusion about mapping-cone homology or published RTD/SRTD as
   training objectives;
-- that a measured defect can select a representation; the frozen test of this
-  claim had an impossible decision rule;
-- lifting quality on real or out-of-distribution data, or any broader conversion
-  claim;
-- superiority to an analytic cycle-basis, Hodge-projection, or nullspace method;
-- independent replication on an untouched generator family or disjoint seed
-  block;
-- independent predictive information or off-path calibration from the C1
-  regularization-path association;
+- that a measured defect can select a representation; the frozen routing test
+  of this claim had an impossible decision rule;
+- lifting quality on real or out-of-distribution data, transfer to unseen
+  topologies or generator families, neural nonlinear translators, or sheaves,
+  or any broader conversion claim;
+- that any fitted arm attains the withheld generator-basis oracle, whose error
+  is exactly zero on every eligible seed; constrained least squares on
+  `ker B1` is classical and is not claimed as a new algorithm, and the soft
+  penalty is not claimed as a superior method;
+- an independent-lab or independent-generator replication: the v2 seed block
+  was untouched, disjoint, sealed, and pushed before execution, but the design
+  was outcome-informed and the generator family is shared with the historical
+  campaign;
+- that generic shrinkage cannot help this task under any design; H5's frozen
+  null covers training-only four-fold ridge under this frozen design only;
+- equality, inertness, or the absence of every benefit for the RTD-inspired
+  surrogate; H7 rules out only a benefit of 10% or more at its margin;
+- independent predictive information, calibration, causation, or routing
+  utility from the C1 associations (historical on-path; v2 off-path);
 - general equivalence between graphs, cellular complexes, and sheaves;
 - a general method for learning quasi-isomorphisms — the annulus candidates are
   preconstructed invertible chain maps, and the verified chain-map identity uses
@@ -812,8 +1129,9 @@ It does **not** establish:
 - any Langlands, eigensheaf, Fourier–Mukai, or category-theoretic result.
   Imposing a chain-map constraint by construction is not a categorical claim in
   the sense of [9] or [10]: we fix one finite hypothesis class by hand in §4.1,
-  while §4.2 optimizes a full matrix under a finite soft penalty rather than
-  learning inside a fixed nullspace.
+  §4.2 optimizes a full matrix under a finite soft penalty, and the v2
+  exact-constraint arm is classical equality-constrained least squares [15,
+  16] — none of these is a categorical construction.
 
 ## 11. Code and data availability
 
@@ -827,8 +1145,10 @@ duration of review through a read-only snapshot supplied to the handling editor.
 The snapshot is built by `scripts/build_review_snapshot.py`, which archives the
 repository at one commit together with the tracked `results/` bundle and its
 manifest and refuses to run against an uncommitted worktree. Reviewers can
-rehash the compact evidence, trace every reported value to it, rerun the CPU
-edge-to-cycle lifting campaign, run the test suite, and regenerate the figures and paper.
+rehash the compact evidence, trace every reported value to it, rerun the
+historical CPU edge-to-cycle lifting campaign (the sealed v2 replication record
+is verify-only by construction, §12), run the test suite, and regenerate the
+figures and paper.
 The snapshot intentionally excludes the 8.8 GB raw `artifacts/` tree. A full
 rerun of the GB10 annulus campaign or trained-checkpoint benchmarks therefore
 requires separately supplied raw artifacts/checkpoints and compatible GPU
@@ -839,15 +1159,28 @@ Readers outside the review process should treat this section as a description of
 what exists and how it is organised, not as a download.
 
 All code, configurations, and compact evidence are in that repository. The
-tracked bundle under `results/` contains 50 files with a `MANIFEST.json` recording
+tracked bundle under `results/` contains 51 files (4,034,915 bytes) with a
+`MANIFEST.json` recording
 path, byte count, SHA-256, generating commit, and generating command for each.
 
 | location | contents |
 |---|---|
-| `results/campaigns/` | the frozen edge-to-cycle lifting campaign record |
+| `results/campaigns/` | the frozen edge-to-cycle lifting campaign records, including the sealed untouched-seed v2 replication result |
 | `results/summaries/` | strict compact summaries for the annulus, gauge, compute, and routing campaigns |
 | `results/gate3/`, `results/gate3g/` | gate decisions and per-batch corruption-report derivatives |
 | `results/benchmarks/` | ten identifiable and five routing trained benchmark records |
+
+The v2 replication's sealed lineage is tracked alongside the bundle: the frozen
+protocol (`docs/31-independent-lifting-replication-protocol.md`), the
+machine-readable design seal
+(`docs/32-independent-lifting-replication-seal.json`), the dedicated runner
+(`scripts/run_lifting_replication_v2.py`), and the result
+(`results/campaigns/lifting-replication-v2.json`). Whenever the bundle is
+rebuilt, the exporter revalidates that record's sealed lineage — the seal
+schema, every embedded hash against the actual file bytes, the pinned design
+commit, the eligibility accounting, and the sealed seven-claim family — and
+fails closed on any mismatch; `--verify-only` re-hashes every bundle file, the
+v2 record included, against the manifest.
 
 Corruption reports are exported as per-batch derivatives: the `per_example` array
 is dropped and the `per_batch` array — the unit of analysis — retained. This is
@@ -876,6 +1209,22 @@ NumPy, base Torch version, generator, and frozen protocol match the recorded
 environment. Hiding CUDA keeps this float64 CPU run independent of accelerator
 occupancy.
 
+The sealed v2 replication is verified rather than rerun. Its canonical
+execution command was
+
+```bash
+env CUDA_VISIBLE_DEVICES=-1 .venv/bin/python \
+  scripts/run_lifting_replication_v2.py \
+  --output results/campaigns/lifting-replication-v2.json
+```
+
+The runner binds `--output` to the sealed path and fails before fitting if that
+output already exists, so the consumed seed block cannot be re-executed in
+place; any substantive change would create a new campaign with a new untouched
+seed block under protocol 31's freeze rules. The v2 record is instead checked through the
+exporter: rebuilding the bundle revalidates its sealed lineage (§11), and
+`--verify-only` re-hashes it against the manifest.
+
 With separately supplied raw campaign artifacts and checkpoints, the full
 private workspace additionally supports:
 
@@ -893,7 +1242,9 @@ caches. Its manifest carries no timestamp, so re-exporting unchanged evidence
 reproduces the bundle byte for byte.
 
 Thus the compact snapshot supports verification of every reported value and a
-fresh CPU conversion run. It does not, by itself, support a fresh GB10 campaign
+fresh run of the historical CPU conversion campaign; the sealed v2 replication
+record supports hash and sealed-lineage verification, not re-execution. It does
+not, by itself, support a fresh GB10 campaign
 or checkpoint benchmark; those require the excluded raw artifacts and hardware
 described in §11.
 

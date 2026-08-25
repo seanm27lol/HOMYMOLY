@@ -17,6 +17,23 @@ MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
+def _patch_frozen_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make environment-lock tests independent of the CI patch release."""
+
+    expected = MODULE.EXPECTED_CAMPAIGN_ENVIRONMENT
+    monkeypatch.setattr(MODULE.platform, "python_version", lambda: expected["python"])
+    monkeypatch.setattr(MODULE.torch, "__version__", f"{expected['torch_base']}+cpu")
+    installed = {
+        "networkx": expected["networkx"],
+        "numpy": expected["numpy"],
+    }
+    monkeypatch.setattr(
+        MODULE.importlib.metadata,
+        "version",
+        lambda name: installed[name],
+    )
+
+
 def test_correlation_is_conventional_pearson_not_sample_scaled() -> None:
     left = [float(value) for value in range(9)]
     right = [3.0 * value - 7.0 for value in left]
@@ -64,7 +81,8 @@ def test_frozen_generator_provenance_is_explicit_and_verified() -> None:
     }
 
 
-def test_campaign_environment_and_lockfile_are_pinned() -> None:
+def test_campaign_environment_and_lockfile_are_pinned(monkeypatch) -> None:
+    _patch_frozen_environment(monkeypatch)
     provenance = MODULE._environment_provenance(PROJECT_ROOT)
 
     assert provenance["matches_expected"] is True
@@ -74,6 +92,14 @@ def test_campaign_environment_and_lockfile_are_pinned() -> None:
         "sha256": MODULE.FROZEN_LOCKFILE_SHA256,
         "frozen_campaign_sha256": MODULE.FROZEN_LOCKFILE_SHA256,
     }
+
+
+def test_campaign_environment_mismatch_stops_before_any_fit(monkeypatch) -> None:
+    _patch_frozen_environment(monkeypatch)
+    monkeypatch.setattr(MODULE.platform, "python_version", lambda: "3.12.14")
+
+    with pytest.raises(RuntimeError, match="campaign environment does not match"):
+        MODULE._environment_provenance(PROJECT_ROOT)
 
 
 def test_generator_hash_mismatch_stops_before_campaign(tmp_path: Path) -> None:
@@ -144,6 +170,7 @@ def test_git_provenance_uses_the_requested_project_root(
 
 
 def test_report_uses_schema_v2_and_embeds_generator_provenance(monkeypatch) -> None:
+    _patch_frozen_environment(monkeypatch)
     seeds = tuple(range(10))
 
     class FakeDataset:
