@@ -9,6 +9,26 @@ This is the authoritative continuation record for taking the manuscript from an
 honest audited case study to the strongest journal-ready result attainable on
 the existing synthetic generator. Read it before running or changing anything.
 
+## 0. Progress after the initial handoff commit
+
+The corrected-v1 integration described in §§4–5 is now complete:
+
+- roundoff-tolerant, fail-closed routing validation was committed and pushed at
+  `7b0dc32`;
+- the evidence exporter and `--verify-only` both pass;
+- the bundle contains 50 files totaling 2,989,387 bytes;
+- corrected values and completed H5 withdrawal language are propagated through
+  the active README, manuscript, result record, and audit ledger;
+- campaign and recovery figures plus the 20-page PDF were regenerated;
+- all 20 PDF pages and every figure page were visually inspected without clipping
+  or overlap;
+- the full suite passes: `308 passed, 1` expected CUDA skip;
+- full Ruff lint passes, and all Python files touched by this correction pass
+  Ruff's format check.
+
+The next scientific milestone is §6 onward: commit the complete untouched-v2
+protocol and implementation before opening any sealed seed.
+
 ## 1. Scientific judgment
 
 HOMYMOLY is now credible research engineering with a real negative-results
@@ -110,7 +130,7 @@ Corrected H5 status:
   denominator, making every endpoint nonnegative while the frozen support rule
   required an upper bound below zero. No inferential H5 conclusion is possible.
 
-## 4. Immediate v1 integration blocker
+## 4. Resolved v1 integration blocker
 
 The first publication export after the canonical run failed with:
 
@@ -118,7 +138,9 @@ The first publication export after the canonical run failed with:
 publication evidence export failed: routing raw trials changed during the H5 audit correction
 ```
 
-This is not a scientific change. The rerun differs from the historical routing
+This was resolved at commit `7b0dc32` with the guarded `1e-12` comparison and a
+regression test. The following explanation is retained as audit context. The
+rerun differs from the historical routing
 rows only at roughly `1e-14` in a few repeated `graph_error` floats. Examples:
 
 - historical `1.3286839475087884`, rerun `1.3286839475087906`;
@@ -142,7 +164,7 @@ tolerance beyond what is needed for deterministic floating-point reruns.
 
 ## 5. Finish v1 evidence and manuscript
 
-After fixing the tolerance:
+These steps have been completed and remain the reproduction checklist:
 
 1. Regenerate and verify the compact evidence:
 
@@ -198,7 +220,7 @@ After fixing the tolerance:
 8. Run:
 
    ```bash
-   .venv/bin/ruff format scripts src tests
+   .venv/bin/ruff format <Python files changed by the milestone>
    .venv/bin/ruff check scripts src tests
    .venv/bin/python -m pytest -q
    git diff --check

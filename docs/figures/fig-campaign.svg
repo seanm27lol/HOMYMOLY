@@ -1,45 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="680" height="286" viewBox="0 0 680 286" role="img" aria-label="Conversion campaign primary contrasts">
-  <title>Conversion campaign primary contrasts</title>
-  <rect width="680" height="286" fill="#ffffff"/>
-  <text x="0.0" y="20.0" font-family="Arial, Helvetica, sans-serif" font-size="13.0" fill="#0b0b0b" text-anchor="start" font-weight="bold">Which homological term improves a learned conversion?</text>
-  <text x="0.0" y="37.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">Paired log10(held-out error with term / without), one value per topology. Negative means the term helps.</text>
-  <text x="0.0" y="52.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">29 topologies, 16 training pairs, preregistered in docs/27.</text>
-  <text x="0.0" y="67.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#7a7873" text-anchor="start" font-weight="normal">Thick bar: Bonferroni 98.33% (governs the decision).  Thin bar: unadjusted 95%.</text>
-  <line x1="219.9" y1="84.0" x2="219.9" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
-  <text x="219.9" y="240.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">-3</text>
-  <line x1="310.3" y1="84.0" x2="310.3" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
-  <text x="310.3" y="240.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">-2</text>
-  <line x1="400.7" y1="84.0" x2="400.7" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
-  <text x="400.7" y="240.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">-1</text>
-  <line x1="491.1" y1="84.0" x2="491.1" y2="224.0" stroke="#e3e2df" stroke-width="1.0"/>
-  <text x="491.1" y="240.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">0</text>
-  <line x1="491.1" y1="84.0" x2="491.1" y2="224.0" stroke="#52514e" stroke-width="1.4"/>
-  <text x="377.0" y="258.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#52514e" text-anchor="middle" font-weight="normal">log10 ratio of held-out error</text>
-  <text x="198.0" y="111.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="11.0" fill="#0b0b0b" text-anchor="end" font-weight="normal">exact</text>
-  <text x="198.0" y="125.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#7a7873" text-anchor="end" font-weight="normal">the implied complex satisfies d∘d = 0</text>
-  <line x1="253.5" y1="110.0" x2="343.6" y2="110.0" stroke="#2a78d6" stroke-width="2"/>
-  <line x1="237.8" y1="110.0" x2="359.3" y2="110.0" stroke="#2a78d6" stroke-width="6"/>
-  <circle cx="298.6" cy="110.0" r="4.5" fill="#ffffff" stroke="#2a78d6" stroke-width="2.5"/>
-  <text x="367.3" y="111.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#2a78d6" text-anchor="start" font-weight="bold">improves</text>
-  <text x="367.3" y="124.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.0" fill="#7a7873" text-anchor="start" font-weight="normal">[-2.802, -1.458]</text>
-  <text x="198.0" y="155.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="11.0" fill="#0b0b0b" text-anchor="end" font-weight="normal">cone</text>
-  <text x="198.0" y="169.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#7a7873" text-anchor="end" font-weight="normal">no implied 2-cell collapses</text>
-  <line x1="502.4" y1="154.0" x2="514.1" y2="154.0" stroke="#eb6834" stroke-width="2"/>
-  <line x1="500.4" y1="154.0" x2="516.2" y2="154.0" stroke="#eb6834" stroke-width="6"/>
-  <circle cx="508.3" cy="154.0" r="4.5" fill="#ffffff" stroke="#eb6834" stroke-width="2.5"/>
-  <text x="524.2" y="155.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#eb6834" text-anchor="start" font-weight="bold">harms</text>
-  <text x="524.2" y="168.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.0" fill="#7a7873" text-anchor="start" font-weight="normal">[+0.102, +0.277]</text>
-  <text x="198.0" y="199.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="11.0" fill="#0b0b0b" text-anchor="end" font-weight="normal">rtd</text>
-  <text x="198.0" y="213.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#7a7873" text-anchor="end" font-weight="normal">edge geometry survives the lift</text>
-  <line x1="491.3" y1="198.0" x2="494.2" y2="198.0" stroke="#1baf7a" stroke-width="2"/>
-  <line x1="490.8" y1="198.0" x2="494.7" y2="198.0" stroke="#1baf7a" stroke-width="6"/>
-  <circle cx="492.8" cy="198.0" r="4.5" fill="#ffffff" stroke="#1baf7a" stroke-width="2.5"/>
-  <text x="502.7" y="199.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#1baf7a" text-anchor="start" font-weight="bold">inert</text>
-  <text x="502.7" y="212.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.0" fill="#7a7873" text-anchor="start" font-weight="normal">[-0.003, +0.039]</text>
-  <rect x="0.0" y="265.0" width="9.0" height="9.0" rx="2" ry="2" fill="#2a78d6"/>
-  <text x="14.0" y="272.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">improves</text>
-  <rect x="72.8" y="265.0" width="9.0" height="9.0" rx="2" ry="2" fill="#eb6834"/>
-  <text x="86.8" y="272.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">harms</text>
-  <rect x="125.8" y="265.0" width="9.0" height="9.0" rx="2" ry="2" fill="#1baf7a"/>
-  <text x="139.8" y="272.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">inert</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="316" viewBox="0 0 680 316" role="img" aria-label="Edge-to-cycle lifting primary contrasts">
+  <title>Edge-to-cycle lifting primary contrasts</title>
+  <rect width="680" height="316" fill="#ffffff"/>
+  <text x="0.0" y="20.0" font-family="Arial, Helvetica, sans-serif" font-size="13.0" fill="#0b0b0b" text-anchor="start" font-weight="bold">Boundary compatibility improves edge-to-cycle lifting</text>
+  <text x="0.0" y="37.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">Paired log10 held-out-error ratio; negative favors the objective.</text>
+  <text x="0.0" y="52.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">One eligible seed jointly fixes topology, predictors, and training noise.</text>
+  <text x="0.0" y="67.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">29 eligible seeds, 16 noisy training probes; same-family replication.</text>
+  <text x="0.0" y="82.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#7a7873" text-anchor="start" font-weight="normal">Locked prospectively after outcome-informed weight selection; one execution deviation disclosed.</text>
+  <text x="0.0" y="97.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#7a7873" text-anchor="start" font-weight="normal">Thick bar: Bonferroni 98.33% (governs the decision).  Thin bar: unadjusted 95%.</text>
+  <line x1="239.4" y1="114.0" x2="239.4" y2="254.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="239.4" y="270.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">-3</text>
+  <line x1="324.6" y1="114.0" x2="324.6" y2="254.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="324.6" y="270.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">-2</text>
+  <line x1="409.9" y1="114.0" x2="409.9" y2="254.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="409.9" y="270.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">-1</text>
+  <line x1="495.2" y1="114.0" x2="495.2" y2="254.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="495.2" y="270.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">0</text>
+  <line x1="495.2" y1="114.0" x2="495.2" y2="254.0" stroke="#52514e" stroke-width="1.4"/>
+  <text x="389.5" y="288.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#52514e" text-anchor="middle" font-weight="normal">log10 ratio of held-out error</text>
+  <text x="223.0" y="141.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="11.0" fill="#0b0b0b" text-anchor="end" font-weight="normal">boundary compatibility</text>
+  <text x="223.0" y="155.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#7a7873" text-anchor="end" font-weight="normal">B₁Wᵀ = 0 (frozen key: exact)</text>
+  <line x1="271.1" y1="140.0" x2="356.0" y2="140.0" stroke="#2a78d6" stroke-width="2"/>
+  <line x1="260.8" y1="140.0" x2="366.4" y2="140.0" stroke="#2a78d6" stroke-width="6"/>
+  <circle cx="313.6" cy="140.0" r="4.5" fill="#ffffff" stroke="#2a78d6" stroke-width="2.5"/>
+  <text x="374.4" y="141.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#2a78d6" text-anchor="start" font-weight="bold">improves</text>
+  <text x="374.4" y="154.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.0" fill="#7a7873" text-anchor="start" font-weight="normal">[-2.749, -1.511]</text>
+  <text x="223.0" y="185.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="11.0" fill="#0b0b0b" text-anchor="end" font-weight="normal">singular-value cone surrogate</text>
+  <text x="223.0" y="199.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#7a7873" text-anchor="end" font-weight="normal">exp(-2·σ_min(W)); not mapping-cone homology</text>
+  <line x1="505.9" y1="184.0" x2="516.9" y2="184.0" stroke="#eb6834" stroke-width="2"/>
+  <line x1="504.5" y1="184.0" x2="518.2" y2="184.0" stroke="#eb6834" stroke-width="6"/>
+  <circle cx="511.4" cy="184.0" r="4.5" fill="#ffffff" stroke="#eb6834" stroke-width="2.5"/>
+  <text x="526.2" y="185.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#eb6834" text-anchor="start" font-weight="bold">harms</text>
+  <text x="526.2" y="198.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.0" fill="#7a7873" text-anchor="start" font-weight="normal">[+0.109, +0.270]</text>
+  <text x="223.0" y="229.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="11.0" fill="#0b0b0b" text-anchor="end" font-weight="normal">RTD-inspired distance surrogate</text>
+  <text x="223.0" y="243.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#7a7873" text-anchor="end" font-weight="normal">normalized pairwise-distance MSE</text>
+  <line x1="495.4" y1="228.0" x2="498.1" y2="228.0" stroke="#1baf7a" stroke-width="2"/>
+  <line x1="495.1" y1="228.0" x2="498.4" y2="228.0" stroke="#1baf7a" stroke-width="6"/>
+  <circle cx="496.8" cy="228.0" r="4.5" fill="#ffffff" stroke="#1baf7a" stroke-width="2.5"/>
+  <text x="506.4" y="229.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#1baf7a" text-anchor="start" font-weight="bold">no detected improvement</text>
+  <text x="506.4" y="242.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.0" fill="#7a7873" text-anchor="start" font-weight="normal">[-0.002, +0.038]</text>
+  <rect x="0.0" y="295.0" width="9.0" height="9.0" rx="2" ry="2" fill="#2a78d6"/>
+  <text x="14.0" y="302.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">improves</text>
+  <rect x="72.8" y="295.0" width="9.0" height="9.0" rx="2" ry="2" fill="#eb6834"/>
+  <text x="86.8" y="302.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">harms</text>
+  <rect x="125.8" y="295.0" width="9.0" height="9.0" rx="2" ry="2" fill="#1baf7a"/>
+  <text x="139.8" y="302.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">no detected improvement</text>
 </svg>

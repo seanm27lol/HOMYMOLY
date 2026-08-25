@@ -201,9 +201,20 @@
       "source_sha256": "56c806c298cd3481405f261c2b56753bbaefee53be278c00d136b55b937176c8"
     },
     {
+      "bytes": 102646,
+      "derivation": null,
+      "description": "Canonical corrected analysis of frozen conversion campaign v1; schema v2 records the Pearson and Bonferroni-interval corrections.",
+      "evidence_revision": "0c6fa574cb1f7d93e3382ad20e27d69520f9a14c",
+      "kind": "compact-summary",
+      "path": "campaigns/conversion-campaign-v1-corrected.json",
+      "sha256": "5ffb6f0ea241399373c792aa18856f726ac52fd1c6c20db11054774d23421b5f",
+      "source": "results/campaigns/conversion-campaign-v1-corrected.json",
+      "source_sha256": "5ffb6f0ea241399373c792aa18856f726ac52fd1c6c20db11054774d23421b5f"
+    },
+    {
       "bytes": 35642,
       "derivation": null,
-      "description": "Frozen conversion campaign v1, preregistered in docs/27.",
+      "description": "Historical frozen conversion campaign v1 with the original, mis-scaled C1 correlations and incorrectly calibrated adjusted intervals retained for auditability; not the canonical source for current claims.",
       "evidence_revision": "11644c68ec0b8c28416a14ce4d8799e4c9ca0860",
       "kind": "compact-summary",
       "path": "campaigns/conversion-campaign-v1.json",
@@ -624,6 +635,7 @@
   "schema_version": 1,
   "source_commit_note": "Generating revision recorded inside each exported artifact, with the number of exported files attributed to it. The routing confirmatory campaign was frozen before the identifiable-map campaign, so the two families legitimately carry different commits.",
   "source_commits": {
+    "0c6fa574cb1f7d93e3382ad20e27d69520f9a14c": 1,
     "11644c68ec0b8c28416a14ce4d8799e4c9ca0860": 1,
     "8021292e97abfec91768f1b5437c883a42c29c60": 47,
     "e69b07707950b6abe332366c51fe8c94254899f3": 1
@@ -631,12 +643,12 @@
   "summary": {
     "by_kind": {
       "benchmark-summary": 15,
-      "compact-summary": 4,
+      "compact-summary": 5,
       "corruption-report-derivative": 20,
       "endpoint-table": 1,
       "gate-decision": 9
     },
-    "bytes": 2886741,
-    "files": 49
+    "bytes": 2989387,
+    "files": 50
   }
 }

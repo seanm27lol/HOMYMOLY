@@ -29,8 +29,8 @@ regularization-path association with an unadjusted interval:
 
 | claim | evidence |
 |---|---|
-| boundary compatibility improves an edge-to-cycle lifting | Bonferroni-adjusted interval **[−2.802, −1.458]** on `log10` held-out map-recovery error |
-| compatibility defect covaries with damage along the penalty path (**C1**) | within-seed Pearson correlation **+0.854**, unadjusted CI [+0.831, +0.877], **29/29** eligible seeds |
+| boundary compatibility improves an edge-to-cycle lifting | Bonferroni-adjusted interval **[−2.749, −1.511]** on `log10` held-out map-recovery error |
+| compatibility defect covaries with damage along the penalty path (**C1**) | within-seed Pearson correlation **+0.961**, unadjusted CI [+0.935, +0.987], **29/29** eligible seeds |
 
 For C1, the nine fits within each topology reuse the same data and initialization
 and differ in the common driver `lambda`; they are not independent observations.

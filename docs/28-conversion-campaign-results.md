@@ -58,9 +58,9 @@ shown for reference.
 
 | objective | weight | 95% interval | Bonferroni 98.33% | sign test | decision |
 |---|---:|---|---|---:|---|
-| boundary compatibility (`exact`) | 3.0 | [−2.628, −1.632] | **[−2.802, −1.458]** | <1e-5 | **improves** |
-| singular-value cone surrogate (`cone`) | 0.01 | [+0.125, +0.254] | **[+0.102, +0.277]** | <1e-5 | **harms** |
-| RTD-inspired distance surrogate (`rtd`) | 0.1 | [+0.002, +0.034] | [−0.003, +0.039] | 0.458 | **no detected improvement** |
+| boundary compatibility (`exact`) | 3.0 | [−2.628, −1.632] | **[−2.749, −1.511]** | <1e-5 | **improves** |
+| singular-value cone surrogate (`cone`) | 0.01 | [+0.125, +0.254] | **[+0.109, +0.270]** | <1e-5 | **harms** |
+| RTD-inspired distance surrogate (`rtd`) | 0.1 | [+0.002, +0.034] | [−0.002, +0.038] | 0.458 | **no detected improvement** |
 
 **H1 supported for the executed objective, subject to the disclosed
 deviation.** Boundary compatibility improves held-out recovery of an
@@ -102,8 +102,8 @@ defect differs from the elementwise mean-square penalty used for training. Its
 
 | quantity | value |
 |---|---|
-| mean within-seed correlation | **+0.854** |
-| 95% interval | **[+0.831, +0.877]** |
+| mean within-seed correlation | **+0.961** |
+| 95% interval | **[+0.935, +0.987]** |
 | eligible seeds with positive correlation | **29 / 29** |
 
 **Scoped path covariation supported.** Within this synthetic family, defect
@@ -140,8 +140,9 @@ split threshold prevents in-sample tuning; it does not repair the endpoint.
 only 14 topology clusters. The historical df=27 interval treated those rows as
 independent, and the historical 25/28 selection count has the same dependence
 problem. Both are withdrawn from inferential use. The corrected canonical record
-will aggregate or cluster by topology and report a descriptive summary only; H5
-receives no hypothesis decision.
+reports the historical row-naive interval `[−0.111, +0.382]` and the
+topology-clustered descriptive interval `[−0.123, +0.393]`; neither is
+inferential, and H5 receives no hypothesis decision.
 
 The exploratory version of this in [`docs/26`](26-exactness-as-a-prior.md)
 appeared to beat both fixed strategies. It does not survive an out-of-sample
@@ -153,7 +154,7 @@ threshold. **That earlier routing result is withdrawn.**
 |---|---|
 | hold several views | built, works |
 | learn an edge-to-cycle-coordinate lifting | works, and is measurable |
-| defects as measurements | compatibility defect covaries with error along the fixed penalty path in an unadjusted secondary result, +0.854, 29/29; independent prediction remains untested |
+| defects as measurements | compatibility defect covaries with error along the fixed penalty path in an unadjusted secondary result, +0.961, 29/29; independent prediction remains untested |
 | structural terms to train the lifting | boundary compatibility improves subject to a protocol deviation and strong-side-information baseline gap; singular-value surrogate harms; target-misaligned distance surrogate shows no detected improvement |
 | defects to choose the view | frozen endpoint is non-informative by construction |
 
@@ -209,8 +210,9 @@ the frozen historical key `exact`, not exactness of a sequence.
   rank-`F` lifting discards cut-space geometry; its result does not test
   published RTD/SRTD.
 - H5's 28 rows comprise 14 topology clusters at two weights. Its naive df=27
-  interval and 25/28 count are withdrawn; the corrected record will report only
-  a topology-clustered descriptive summary and no decision.
+  interval and 25/28 count are withdrawn; the corrected record reports only the
+  row-naive `[−0.111, +0.382]` and topology-clustered `[−0.123, +0.393]`
+  descriptive intervals and no decision.
 - In the separate annulus setting, all six supervised objectives have perfect
   decoded transformation/cell accuracy; their mean map MSE spans `2.618e-17` to
   `2.504e-8`, versus 0.109 and 0.191 for the controls. The 10/10 engineering

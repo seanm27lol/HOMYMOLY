@@ -65,7 +65,8 @@ The corrected implementation uses the conventional centered dot product divided
 by the product of centered Euclidean norms and includes a regression test against
 an independent formula.
 
-**Corrected C1 point estimate and interval: PENDING CLEAN CANONICAL RERUN.**
+The clean canonical rerun gives mean Pearson `+0.9608082699`, unadjusted 95%
+interval `[+0.9347244618, +0.9868920780]`, positive in 29/29 eligible seeds.
 
 H4 is Pearson correlation across nine points of
 `log10(max(||B1 W^T||_F, 1e-30))` versus
@@ -86,11 +87,16 @@ used critical value `2.763262`, corresponding to 99% at 28 degrees of freedom.
 The protocol-required two-sided 98.333% critical value is approximately
 `2.546465`. All previously published adjusted intervals are withdrawn.
 
-**Corrected H1–H3 adjusted intervals: PENDING CLEAN CANONICAL RERUN.**
+The clean canonical rerun gives Bonferroni-adjusted 98.33% intervals:
+
+- boundary compatibility: `[−2.7491611963, −1.5110005341]`;
+- singular-value cone surrogate: `[+0.1088999144, +0.2699881016]`;
+- RTD-inspired distance surrogate: `[−0.0015726478, +0.0377992082]`.
 
 The paired observations, means, standard deviations, unadjusted intervals, and
-sign-test counts are unchanged. The governing qualitative decisions are expected
-to remain unchanged but will be stated only from the corrected canonical result.
+sign-test counts are unchanged. The governing qualitative decisions remain:
+boundary compatibility improves, the singular-value surrogate harms, and the
+RTD-inspired surrogate has no multiplicity-controlled conclusion.
 
 ## 4. Frozen-protocol implementation deviation
 
@@ -127,8 +133,9 @@ The original H5 analysis also pseudoreplicated its unit: 28 evaluation rows are
 two weights for each of only 14 topology clusters. The df=27 Student-t interval
 treated the rows as independent, and the 25/28 selection count has the same
 dependence problem. Both are withdrawn from inferential use. The corrected
-canonical record will aggregate or cluster by topology, report a descriptive
-summary only, and assign H5 no decision.
+canonical record reports the historical row-naive interval
+`[−0.1113835925, +0.3816648417]` and the topology-clustered descriptive interval
+`[−0.1230973860, +0.3933786352]`; neither is inferential, and H5 has no decision.
 
 ## 6. Annulus interpretation
 

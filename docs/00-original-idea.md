@@ -53,7 +53,7 @@ a typed chain map or conversion between complexes. This is not
 sequence exactness: `W = 0` satisfies `B1 Wᵀ = 0` without proving
 `im Wᵀ = ker B1`. A prospectively specified primary analysis in a locked
 same-generator-family replication gives an adjusted
-interval [−2.802, −1.458] on `log10` held-out error, subject to a disclosed
+interval [−2.749, −1.511] on `log10` held-out error, subject to a disclosed
 protocol deviation from a Frobenius sum to the executed elementwise mean. The
 design was outcome-informed by same-family exploration, and exploratory seed
 overlap cannot be audited, so this is not independent confirmation. Along the
