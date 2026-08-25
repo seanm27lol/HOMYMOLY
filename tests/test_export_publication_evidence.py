@@ -358,6 +358,148 @@ def test_lifting_replication_v2_record_rejects_tampered_hash_and_c1_decision() -
         MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered_c1)
 
 
+def _v2_document() -> dict:
+    result = PROJECT_ROOT / MODULE.LIFTING_REPLICATION_V2_RESULT
+    if not result.is_file():
+        pytest.skip("v2 lifting replication result has not landed yet")
+    return json.loads(result.read_text(encoding="utf-8"))
+
+
+def test_lifting_replication_v2_validator_recomputes_from_raw_rows() -> None:
+    """Altering a raw MSE must invalidate every statistic derived from it."""
+
+    document = _v2_document()
+    tampered = json.loads(json.dumps(document))
+    tampered["raw_primary"][0]["arms"]["ambient_adam"]["held_out_mse"] *= 1.01
+    with pytest.raises(ValueError, match="recomputation"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+    tampered = json.loads(json.dumps(document))
+    tampered["raw_c1"][3]["replicates"][5]["held_out_mse"] *= 1.01
+    with pytest.raises(ValueError, match="recomputation"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+
+def test_lifting_replication_v2_validator_rejects_altered_claim_statistics() -> None:
+    """An altered H2 estimate or bound must fail against the raw rows."""
+
+    document = _v2_document()
+    for field, offset in (
+        ("estimate", 0.01),
+        ("one_sided_upper_bound", -0.01),
+        ("standard_error", 0.001),
+    ):
+        tampered = json.loads(json.dumps(document))
+        claim = next(
+            row
+            for row in tampered["primary"]["claims"]
+            if row["id"] == "h2-hard-cycle-vs-ambient-ls"
+        )
+        claim[field] += offset
+        with pytest.raises(ValueError, match="h2-hard-cycle-vs-ambient-ls"):
+            MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+    tampered = json.loads(json.dumps(document))
+    claim = next(
+        row
+        for row in tampered["primary"]["claims"]
+        if row["id"] == "h2-hard-cycle-vs-ambient-ls"
+    )
+    claim["sensitivity_sign_test"]["negative"] += 1
+    with pytest.raises(ValueError, match="sign-test"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+    tampered = json.loads(json.dumps(document))
+    claim = next(
+        row
+        for row in tampered["primary"]["claims"]
+        if row["id"] == "h2-hard-cycle-vs-ambient-ls"
+    )
+    claim["critical_value"] = 2.0
+    with pytest.raises(ValueError, match="wrong t constants"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+
+def test_lifting_replication_v2_validator_rejects_altered_c1_correlation() -> None:
+    document = _v2_document()
+    tampered = json.loads(json.dumps(document))
+    tampered["raw_c1"][0]["cycle_projector_correlation"] += 0.01
+    with pytest.raises(ValueError, match="cycle correlation"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+    tampered = json.loads(json.dumps(document))
+    tampered["c1"]["cycle_projector_defect"]["mean_fisher_z"] += 0.01
+    with pytest.raises(ValueError, match="mean"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+
+def test_lifting_replication_v2_validator_enforces_the_omitted_protocol_checks() -> None:
+    """The checks the executed runner omitted are enforced on the raw rows."""
+
+    document = _v2_document()
+
+    tampered = json.loads(json.dumps(document))
+    metadata = tampered["raw_primary"][0]["arms"]["hard_cycle_ls"]["metadata"]
+    metadata["gelsd_returned_rank"] = 0
+    with pytest.raises(ValueError, match="gelsd rank"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+    tampered = json.loads(json.dumps(document))
+    metadata = tampered["raw_c1"][2]["replicates"][7]["metadata"]
+    metadata["gelsd_min_singular_value"] = 0.0
+    with pytest.raises(ValueError, match="strictly positive"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+    tampered = json.loads(json.dumps(document))
+    tampered["raw_c1"][1]["replicates"][4][
+        "boundary_compatibility_defect_frobenius"
+    ] = 0.0
+    with pytest.raises(ValueError, match="strictly positive"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+    tampered = json.loads(json.dumps(document))
+    tampered["raw_primary"][5]["arms"]["inner_cv_ridge"]["metadata"][
+        "cross_validation_by_alpha"
+    ][3]["fold_validation_mse"][0] *= 2.0
+    with pytest.raises(ValueError, match="inner_cv_ridge"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+    tampered = json.loads(json.dumps(document))
+    tampered["raw_primary"][0]["subseeds"]["primary-train-inputs"] += 1
+    with pytest.raises(ValueError, match="sub-seeds"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+    tampered = json.loads(json.dumps(document))
+    tampered["audit"]["mean_per_seed_log10_ratio_by_claim"][
+        "h4-hard-cycle-vs-hard-random"
+    ] += 0.01
+    with pytest.raises(ValueError, match="audit mean"):
+        MODULE.validate_lifting_replication_v2_record(PROJECT_ROOT, tampered)
+
+
+def test_lifting_replication_v2_seal_content_is_fully_bound() -> None:
+    """Seal tampering beyond claim ids -- direction, threshold, stop rules."""
+
+    seal_path = PROJECT_ROOT / MODULE.LIFTING_REPLICATION_V2_SEAL_PATH
+    seal = json.loads(seal_path.read_text(encoding="utf-8"))
+    MODULE._validate_v2_seal_contents(seal)
+
+    tampered = json.loads(json.dumps(seal))
+    tampered["primary_family"][0]["bound_direction"] = "greater"
+    with pytest.raises(ValueError, match="primary_family content"):
+        MODULE._validate_v2_seal_contents(tampered)
+
+    tampered = json.loads(json.dumps(seal))
+    tampered["primary_family"][4]["threshold"] = 0.5
+    with pytest.raises(ValueError, match="primary_family content"):
+        MODULE._validate_v2_seal_contents(tampered)
+
+    tampered = json.loads(json.dumps(seal))
+    tampered["stop_rules"][5] = "Reruns are allowed when the result is weak."
+    with pytest.raises(ValueError, match="stop_rules"):
+        MODULE._validate_v2_seal_contents(tampered)
+
+
 def test_primary_interval_validator_uses_df28_bonferroni_quantile() -> None:
     historical = json.loads(
         (PROJECT_ROOT / MODULE.HISTORICAL_CONVERSION_RESULT).read_text(encoding="utf-8")

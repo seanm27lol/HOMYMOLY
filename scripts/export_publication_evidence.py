@@ -29,6 +29,7 @@ import json
 import math
 import os
 import statistics
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, NamedTuple
@@ -966,6 +967,312 @@ def validate_corrected_conversion_record(
     _validate_withdrawn_routing(document, historical_document)
 
 
+# --- Independent recomputation of the sealed v2 lifting replication ---------
+#
+# Protocol 31 section 10 requires an independent validator that recomputes all
+# summaries solely from the retained raw rows and fails closed on missing rows,
+# duplicate seeds, arm imbalance, incorrect references, wrong t constants, or
+# any decision inconsistent with sections 8 or 9. The machinery below is that
+# validator: no serialized summary, certificate, or support decision is trusted
+# unless it is reproduced here from the raw per-seed rows.
+
+# SHA-256 of the v2 runner sealed at the design commit, and the revision the
+# sealed campaign executed at. The on-disk runner has since been hardened past
+# the sealed design (strict gelsd rank/positivity rejection, an asserted and
+# retained closed-form stationarity residual, the complete C1 positivity guard,
+# and full seal-content verification); the sealed bytes stay pinned here and
+# are re-verified against git history whenever the object store is available.
+LIFTING_REPLICATION_V2_RUNNER_SHA256 = (
+    "48d4df774cb1e65385e5ebbd11bce9f8a0e36ee2a5d8e9dec1b18fd29a75e8d7"
+)
+LIFTING_REPLICATION_V2_EXECUTION_COMMIT = (
+    "9baae6b8322120724e7f5aff3c47fd7ef343086c"
+)
+
+# Independent copies of the frozen Student-t critical values published in
+# protocol 31: one-sided Bonferroni alpha = 0.05/7, and unadjusted two-sided 95%.
+_V2_T_ONE_SIDED_BONFERRONI = {
+    29: 2.606750672048818,
+    30: 2.601227904110613,
+    31: 2.5960807947257787,
+    32: 2.5912722991315227,
+    33: 2.586770085672467,
+    34: 2.5825458097369376,
+    35: 2.5785745178415116,
+}
+_V2_T975 = {
+    29: 2.0452296421327034,
+    30: 2.0422724563012378,
+    31: 2.039513446396408,
+    32: 2.036933343460102,
+    33: 2.0345152974493383,
+    34: 2.0322445093177186,
+    35: 2.030107928250343,
+}
+# Absolute tolerance for serialized-versus-recomputed float comparisons. The
+# documented independent re-derivation agrees to 4.45e-16; this bound absorbs
+# only libm-level log10/atanh/tanh variation and still catches any material
+# tampering with a recorded value.
+_V2_RECOMPUTE_ATOL = 1e-12
+_V2_ARM_NAMES = (
+    "ambient_adam",
+    "ambient_min_norm_ls",
+    "soft_boundary_lambda3",
+    "soft_boundary_closed_form_lambda3",
+    "hard_cycle_ls",
+    "hard_random_subspace_ls",
+    "inner_cv_ridge",
+    "singular_value_surrogate",
+    "rtd_inspired_distance_surrogate",
+    "generator_cycle_basis_oracle",
+)
+_V2_LSTSQ_ARMS = (
+    "ambient_min_norm_ls",
+    "hard_cycle_ls",
+    "hard_random_subspace_ls",
+)
+_V2_ADAM_ARM_TERMS = {
+    "ambient_adam": (None, 0.0),
+    "soft_boundary_lambda3": ("boundary", 3.0),
+    "singular_value_surrogate": ("singular_value", 0.01),
+    "rtd_inspired_distance_surrogate": ("rtd_inspired", 0.1),
+}
+_V2_RIDGE_GRID = (1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 10.0, 100.0)
+_V2_PRIMARY_SUBSEED_LABELS = (
+    "primary-train-inputs",
+    "primary-training-noise",
+    "primary-test-inputs",
+    "matched-random-subspace",
+)
+_V2_CLAIMS = (
+    {
+        "id": "h1-soft-vs-ambient-adam",
+        "numerator": "soft_boundary_lambda3",
+        "denominator": "ambient_adam",
+        "direction": "less",
+        "threshold": 0.0,
+    },
+    {
+        "id": "h2-hard-cycle-vs-ambient-ls",
+        "numerator": "hard_cycle_ls",
+        "denominator": "ambient_min_norm_ls",
+        "direction": "less",
+        "threshold": 0.0,
+    },
+    {
+        "id": "h3-hard-cycle-vs-soft-closed-form",
+        "numerator": "hard_cycle_ls",
+        "denominator": "soft_boundary_closed_form_lambda3",
+        "direction": "less",
+        "threshold": 0.0,
+    },
+    {
+        "id": "h4-hard-cycle-vs-hard-random",
+        "numerator": "hard_cycle_ls",
+        "denominator": "hard_random_subspace_ls",
+        "direction": "less",
+        "threshold": 0.0,
+    },
+    {
+        "id": "h5-ridge-vs-ambient-ls",
+        "numerator": "inner_cv_ridge",
+        "denominator": "ambient_min_norm_ls",
+        "direction": "less",
+        "threshold": 0.0,
+    },
+    {
+        "id": "h6-singular-surrogate-harm",
+        "numerator": "singular_value_surrogate",
+        "denominator": "ambient_adam",
+        "direction": "greater",
+        "threshold": 0.0,
+    },
+    {
+        "id": "h7-rtd-bounded-benefit-futility",
+        "numerator": "rtd_inspired_distance_surrogate",
+        "denominator": "ambient_adam",
+        "direction": "greater",
+        "threshold": -0.045757490560675115,
+    },
+)
+_V2_SEAL_CLAIM_TEXT = {
+    "h1-soft-vs-ambient-adam": (
+        "theta >= 0",
+        "theta < 0",
+        (
+            "supported iff the one-sided Bonferroni upper bound (alpha = 0.05/7, "
+            "Student-t critical value for the eligible n) is below 0"
+        ),
+    ),
+    "h2-hard-cycle-vs-ambient-ls": (
+        "theta >= 0",
+        "theta < 0",
+        "supported iff the one-sided Bonferroni upper bound is below 0",
+    ),
+    "h3-hard-cycle-vs-soft-closed-form": (
+        "theta >= 0",
+        "theta < 0",
+        "supported iff the one-sided Bonferroni upper bound is below 0",
+    ),
+    "h4-hard-cycle-vs-hard-random": (
+        "theta >= 0",
+        "theta < 0",
+        "supported iff the one-sided Bonferroni upper bound is below 0",
+    ),
+    "h5-ridge-vs-ambient-ls": (
+        "theta >= 0",
+        "theta < 0",
+        "supported iff the one-sided Bonferroni upper bound is below 0",
+    ),
+    "h6-singular-surrogate-harm": (
+        "theta <= 0",
+        "theta > 0",
+        "supported iff the one-sided Bonferroni lower bound is above 0",
+    ),
+    "h7-rtd-bounded-benefit-futility": (
+        "theta <= log10(0.90)",
+        "theta > log10(0.90) is rejected as futile for a 10% benefit",
+        (
+            "bounded-benefit/futility supported iff the one-sided Bonferroni "
+            "lower bound exceeds log10(0.90) = -0.045757490560675115, ruling "
+            "out a benefit of 10% or more; this is not an equivalence test and "
+            "not noninferiority"
+        ),
+    ),
+}
+_V2_EXPECTED_STOP_RULES = (
+    (
+        "Fewer than 30 eligible seeds (connected, F >= 3) among "
+        "20270101..20270136: frozen design failure, status "
+        "design_failure_insufficient_eligible, no fits, no confirmatory claims."
+    ),
+    (
+        "Any generator exception: campaign failure, status design_failure, "
+        "before any fit; the failing seed is recorded, never excluded."
+    ),
+    (
+        "Any rank, dimension, orthogonality, nullspace-membership, or "
+        "stationarity validation failure: whole-campaign failure, status "
+        "design_failure; never delete only the offending seed."
+    ),
+    (
+        "Any nonfinite or nonpositive C1 defect or held-out MSE: whole-campaign "
+        "failure, status design_failure; never add an epsilon after outcomes."
+    ),
+    (
+        "No outcome-dependent stopping: all 36 candidate seeds are attempted "
+        "and all failures preserved regardless of intermediate results."
+    ),
+    (
+        "Never rerun with another seed block because the result is surprising "
+        "or weak."
+    ),
+    (
+        "Unexpected exception: status execution_failure with completed rows "
+        "preserved; KeyboardInterrupt: status interrupted."
+    ),
+    (
+        "Runner refuses to start on a dirty worktree, an existing output path, "
+        "a mismatched environment/lock/generator/protocol/runner fingerprint, "
+        "a seal record not committed at HEAD, available CUDA, more than one "
+        "PyTorch thread, or non-CPU non-float64 execution."
+    ),
+)
+
+
+def _v2_assert_close(observed: Any, expected: float, *, label: str) -> float:
+    if isinstance(observed, bool) or not isinstance(observed, (int, float)):
+        raise TypeError(f"v2 {label} is not a recorded float")
+    seen = float(observed)
+    if not math.isfinite(seen):
+        raise ValueError(f"v2 {label} is not finite")
+    if abs(seen - expected) > _V2_RECOMPUTE_ATOL:
+        raise ValueError(
+            f"v2 {label} does not match the raw-row recomputation: "
+            f"recorded {seen!r}, recomputed {expected!r}"
+        )
+    return seen
+
+
+def _v2_assert_close_list(observed: Any, expected: list[float], *, label: str) -> None:
+    if not isinstance(observed, list) or len(observed) != len(expected):
+        raise ValueError(f"v2 {label} does not have one value per eligible seed")
+    for index, (seen, recomputed) in enumerate(zip(observed, expected)):
+        _v2_assert_close(seen, recomputed, label=f"{label}[{index}]")
+
+
+def _v2_subseed(topology_seed: int, component: str, replicate: int = 0) -> int:
+    message = f"homymoly-lifting-v2:{topology_seed}:{component}:{replicate}"
+    digest = hashlib.sha256(message.encode("utf-8")).digest()
+    return int.from_bytes(digest[:8], "big", signed=False) & ((1 << 63) - 1)
+
+
+def _v2_paired_log10_ratios(
+    rows: list[dict[str, Any]], numerator: str, denominator: str
+) -> list[float]:
+    values = []
+    for row in rows:
+        arms = row.get("arms", {})
+        pair = (arms.get(numerator), arms.get(denominator))
+        if any(not isinstance(arm, dict) for arm in pair):
+            raise ValueError(f"v2 raw row {row.get('seed')} is missing a ratio arm")
+        mse_numerator = float(pair[0].get("held_out_mse"))
+        mse_denominator = float(pair[1].get("held_out_mse"))
+        if mse_numerator <= 0 or mse_denominator <= 0:
+            raise ValueError("v2 raw rows hold a nonpositive MSE entering a ratio")
+        values.append(math.log10(mse_numerator / mse_denominator))
+    return values
+
+
+def _v2_sign_test(values: list[float]) -> dict[str, Any]:
+    positive = sum(value > 0 for value in values)
+    negative = sum(value < 0 for value in values)
+    trials = positive + negative
+    pvalue = None
+    if trials:
+        tail = sum(
+            math.comb(trials, index) for index in range(min(positive, negative) + 1)
+        )
+        pvalue = min(1.0, 2.0 * tail / (2.0**trials))
+    return {
+        "pvalue_two_sided": pvalue,
+        "negative": negative,
+        "positive": positive,
+        "ties_discarded": len(values) - trials,
+    }
+
+
+def _v2_pearson(left: list[float], right: list[float]) -> float:
+    left_mean = statistics.fmean(left)
+    right_mean = statistics.fmean(right)
+    left_centred = [value - left_mean for value in left]
+    right_centred = [value - right_mean for value in right]
+    numerator = math.fsum(
+        a * b for a, b in zip(left_centred, right_centred, strict=True)
+    )
+    denominator = math.sqrt(
+        math.fsum(value * value for value in left_centred)
+        * math.fsum(value * value for value in right_centred)
+    )
+    if denominator == 0:
+        raise ValueError("v2 Pearson correlation is undefined for a constant vector")
+    return min(1.0, max(-1.0, numerator / denominator))
+
+
+def _v2_fisher_z(correlation: float) -> float:
+    limit = math.nextafter(1.0, 0.0)
+    return math.atanh(min(limit, max(-limit, correlation)))
+
+
+def _v2_two_sided_interval(values: list[float]) -> list[float]:
+    critical = _V2_T975.get(len(values) - 1)
+    if critical is None:
+        raise ValueError(f"no frozen 95% t critical value for df={len(values) - 1}")
+    half = critical * statistics.stdev(values) / math.sqrt(len(values))
+    mean = statistics.fmean(values)
+    return [mean - half, mean + half]
+
+
 def _is_full_git_revision(value: Any) -> bool:
     return (
         isinstance(value, str)
@@ -991,10 +1298,832 @@ def _support_decision_keys(node: Any, path: str = "c1") -> list[str]:
     return found
 
 
+def _v2_assert_sign_test(observed: Any, values: list[float], *, label: str) -> None:
+    expected = _v2_sign_test(values)
+    if not isinstance(observed, dict):
+        raise TypeError(f"v2 {label} is not a sign-test record")
+    for key in ("negative", "positive", "ties_discarded"):
+        if observed.get(key) != expected[key]:
+            raise ValueError(
+                f"v2 {label} sign-test {key} count does not match the raw rows"
+            )
+    seen = observed.get("pvalue_two_sided")
+    if expected["pvalue_two_sided"] is None:
+        if seen is not None:
+            raise ValueError(f"v2 {label} sign test must record a null p-value")
+    else:
+        _v2_assert_close(seen, expected["pvalue_two_sided"], label=f"{label} p-value")
+
+
+def _v2_number(node: Any, key: str, *, label: str) -> float:
+    if not isinstance(node, dict):
+        raise TypeError(f"v2 {label} is not a record")
+    value = node.get(key)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"v2 {label}.{key} is not a recorded number")
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError(f"v2 {label}.{key} is not finite")
+    return result
+
+
+def _v2_positive(node: Any, key: str, *, label: str, strict: bool = True) -> float:
+    value = _v2_number(node, key, label=label)
+    if strict and value <= 0:
+        raise ValueError(f"v2 {label}.{key} must be strictly positive")
+    if not strict and value < 0:
+        raise ValueError(f"v2 {label}.{key} must be nonnegative")
+    return value
+
+
+def _v2_int(node: Any, key: str, *, label: str) -> int:
+    if not isinstance(node, dict):
+        raise TypeError(f"v2 {label} is not a record")
+    value = node.get(key)
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise TypeError(f"v2 {label}.{key} is not a recorded integer")
+    return value
+
+
+def _validate_v2_seal_contents(seal: dict[str, Any]) -> None:
+    """Bind the seal's full claim content and stop rules, not only claim ids."""
+
+    expected_family = []
+    for definition in _V2_CLAIMS:
+        null, alternative, support_rule = _V2_SEAL_CLAIM_TEXT[definition["id"]]
+        expected_family.append(
+            {
+                "id": definition["id"],
+                "theta": (
+                    "mean over eligible seeds of log10(MSE_"
+                    f"{definition['numerator']} / MSE_{definition['denominator']})"
+                ),
+                "null": null,
+                "alternative": alternative,
+                "reference_arm": definition["denominator"],
+                "bound_direction": definition["direction"],
+                "threshold": definition["threshold"],
+                "support_rule": support_rule,
+            }
+        )
+    if seal.get("primary_family") != expected_family:
+        raise ValueError(
+            "v2 design seal primary_family content differs from the frozen "
+            "seven-claim family (direction, threshold, null, or support rule)"
+        )
+    if seal.get("stop_rules") != list(_V2_EXPECTED_STOP_RULES):
+        raise ValueError("v2 design seal stop_rules differ from the frozen set")
+    if seal.get("seed_interval") != {"first": 20270101, "last": 20270136}:
+        raise ValueError("v2 design seal seed interval differs from the sealed block")
+    declaration = seal.get("no_preview_declaration")
+    if not isinstance(declaration, str) or not declaration.strip():
+        raise ValueError("v2 design seal carries no no-preview declaration")
+    if seal.get("output_path") != LIFTING_REPLICATION_V2_RESULT:
+        raise ValueError("v2 design seal output path differs from the result path")
+
+
+def _validate_v2_git_lineage(project_root: Path, provenance: dict[str, Any]) -> None:
+    """Re-verify the sealed runner bytes and commit ancestry from git history.
+
+    The archived reviewer snapshot carries no ``.git`` object store, so these
+    checks are skipped there; the pinned hash chain above still binds. Wherever
+    the history is present (developer clones and CI, which fetches it fully),
+    the checks are mandatory and fail closed.
+    """
+
+    if not (project_root / ".git").exists():
+        return
+    design_commit = LIFTING_REPLICATION_V2_DESIGN_COMMIT
+    blob = subprocess.run(
+        (
+            "git",
+            "show",
+            f"{design_commit}:{LIFTING_REPLICATION_V2_RUNNER_PATH}",
+        ),
+        cwd=project_root,
+        check=False,
+        capture_output=True,
+        timeout=15,
+    )
+    if blob.returncode != 0:
+        raise ValueError(
+            "the sealed v2 runner is not retrievable from the design commit"
+        )
+    if _sha256_bytes(blob.stdout) != LIFTING_REPLICATION_V2_RUNNER_SHA256:
+        raise ValueError(
+            "the runner bytes at the v2 design commit do not match the seal"
+        )
+    execution_revision = provenance.get("execution_revision")
+    ancestry = subprocess.run(
+        ("git", "merge-base", "--is-ancestor", design_commit, execution_revision),
+        cwd=project_root,
+        check=False,
+        capture_output=True,
+        timeout=15,
+    )
+    if ancestry.returncode != 0:
+        raise ValueError(
+            "the v2 design commit is not an ancestor of the recorded execution "
+            "revision"
+        )
+
+
+def _validate_v2_raw_primary_rows(rows: Any, eligible_seeds: list[int]) -> None:
+    """Recompute nothing yet -- fail closed on any invalid or missing raw row."""
+
+    if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+        raise TypeError("v2 raw primary rows must be a list of records")
+    if [row.get("seed") for row in rows] != list(eligible_seeds):
+        raise ValueError(
+            "v2 raw primary rows do not match the 33 eligible seeds in order"
+        )
+    for row in rows:
+        seed = row["seed"]
+        label = f"raw primary row {seed}"
+        vertices = _v2_int(row, "vertices", label=label)
+        edges = _v2_int(row, "edges", label=label)
+        faces = _v2_int(row, "faces", label=label)
+        if vertices < 2 or edges < 1 or faces < 3:
+            raise ValueError(f"v2 {label} records impossible topology dimensions")
+        if edges - vertices + 1 != faces:
+            raise ValueError(
+                f"v2 {label} violates the connected-graph cycle-rank identity"
+            )
+        if not isinstance(row.get("sample_id"), str):
+            raise TypeError(f"v2 {label} has no sample id")
+        expected_subseeds = {
+            subseed_label: _v2_subseed(seed, subseed_label)
+            for subseed_label in _V2_PRIMARY_SUBSEED_LABELS
+        }
+        if row.get("subseeds") != expected_subseeds:
+            raise ValueError(
+                f"v2 {label} sub-seeds do not match the frozen SHA-256 derivation"
+            )
+        cycle_certificate = row.get("cycle_nullspace_certificate")
+        certificate_label = f"{label} cycle certificate"
+        if (
+            _v2_int(cycle_certificate, "observed_rank", label=certificate_label)
+            != vertices - 1
+            or _v2_int(cycle_certificate, "expected_rank", label=certificate_label)
+            != vertices - 1
+        ):
+            raise ValueError(f"v2 {certificate_label} rank is not V - 1")
+        _v2_positive(
+            cycle_certificate, "rank_tolerance", label=certificate_label
+        )
+        for defect_key in (
+            "boundary_defect_frobenius",
+            "orthonormality_defect_frobenius",
+        ):
+            defect = _v2_positive(
+                cycle_certificate, defect_key, label=certificate_label, strict=False
+            )
+            if defect > 1e-10:
+                raise ValueError(
+                    f"v2 {certificate_label} {defect_key} exceeds the frozen "
+                    "1e-10 basis tolerance"
+                )
+        if cycle_certificate.get("asserted_tolerance") != 1e-10:
+            raise ValueError(f"v2 {certificate_label} tolerance is not the frozen one")
+        if cycle_certificate.get("basis_shape") != [edges, faces]:
+            raise ValueError(f"v2 {certificate_label} basis shape is not [E, F]")
+        random_certificate = row.get("random_subspace_certificate")
+        random_label = f"{label} random-basis certificate"
+        _v2_positive(
+            random_certificate, "min_abs_diagonal_r", label=random_label
+        )
+        orthonormality = _v2_positive(
+            random_certificate,
+            "orthonormality_defect_frobenius",
+            label=random_label,
+            strict=False,
+        )
+        if orthonormality > 1e-10:
+            raise ValueError(
+                f"v2 {random_label} orthonormality exceeds the frozen tolerance"
+            )
+        if random_certificate.get("asserted_tolerance") != 1e-10:
+            raise ValueError(f"v2 {random_label} tolerance is not the frozen one")
+        if random_certificate.get("basis_shape") != [edges, faces]:
+            raise ValueError(f"v2 {random_label} basis shape is not [E, F]")
+        _v2_positive(
+            row.get("optimizer_descriptive"),
+            "soft_adam_vs_closed_form_solution_gap_frobenius",
+            label=label,
+            strict=False,
+        )
+
+        arms = row.get("arms")
+        # The record is serialized with sorted keys, so arm order in the file is
+        # alphabetical; the frozen check is on the arm set, not file order.
+        if not isinstance(arms, dict) or set(arms) != set(_V2_ARM_NAMES):
+            raise ValueError(f"v2 {label} arms differ from the frozen ten-arm list")
+        for arm_name, arm in arms.items():
+            arm_label = f"{label} arm {arm_name}"
+            mse = _v2_positive(
+                arm,
+                "held_out_mse",
+                label=arm_label,
+                strict=arm_name != "generator_cycle_basis_oracle",
+            )
+            _v2_positive(
+                arm,
+                "boundary_compatibility_defect_frobenius",
+                label=arm_label,
+                strict=False,
+            )
+            _v2_positive(
+                arm,
+                "matched_random_subspace_defect_frobenius",
+                label=arm_label,
+                strict=False,
+            )
+            metadata = arm.get("metadata")
+            if not isinstance(metadata, dict):
+                raise TypeError(f"v2 {arm_label} has no fit metadata")
+            if arm_name in _V2_LSTSQ_ARMS:
+                if (
+                    metadata.get("driver") != "gelsd"
+                    or metadata.get("rcond") != 1e-12
+                ):
+                    raise ValueError(
+                        f"v2 {arm_label} does not record the frozen gelsd convention"
+                    )
+                if _v2_int(metadata, "gelsd_returned_rank", label=arm_label) < 1:
+                    raise ValueError(
+                        f"v2 {arm_label} gelsd rank violates the protocol floor"
+                    )
+                _v2_positive(
+                    metadata, "gelsd_min_singular_value", label=arm_label
+                )
+                if arm_name != "ambient_min_norm_ls" and (
+                    _v2_int(metadata, "subspace_dimension", label=arm_label) != faces
+                ):
+                    raise ValueError(
+                        f"v2 {arm_label} subspace dimension is not the face count"
+                    )
+            elif arm_name == "soft_boundary_closed_form_lambda3":
+                if (
+                    metadata.get("rcond") != 1e-12
+                    or _v2_int(metadata, "pinv_effective_rank", label=arm_label) < 1
+                ):
+                    raise ValueError(
+                        f"v2 {arm_label} does not record the frozen pinv convention"
+                    )
+                _v2_positive(
+                    metadata, "pinv_min_singular_value", label=arm_label, strict=False
+                )
+                expected_scale = 3.0 * 16 / vertices
+                if metadata.get("normal_equation_boundary_scale") != expected_scale:
+                    raise ValueError(
+                        f"v2 {arm_label} boundary scale is not 3.0 * N_train / V"
+                    )
+            elif arm_name == "inner_cv_ridge":
+                if (
+                    metadata.get("grid") != [float(alpha) for alpha in _V2_RIDGE_GRID]
+                    or metadata.get("folds") != 4
+                ):
+                    raise ValueError(
+                        f"v2 {arm_label} does not record the frozen ridge grid"
+                    )
+                candidates = metadata.get("cross_validation_by_alpha")
+                if not isinstance(candidates, list) or [
+                    row_.get("alpha") for row_ in candidates
+                ] != [float(alpha) for alpha in _V2_RIDGE_GRID]:
+                    raise ValueError(
+                        f"v2 {arm_label} is missing per-alpha fold losses"
+                    )
+                scored = []
+                for candidate in candidates:
+                    fold_losses = candidate.get("fold_validation_mse")
+                    if (
+                        not isinstance(fold_losses, list)
+                        or len(fold_losses) != 4
+                        or not all(
+                            isinstance(loss, (int, float))
+                            and math.isfinite(loss)
+                            and loss >= 0
+                            for loss in fold_losses
+                        )
+                    ):
+                        raise ValueError(
+                            f"v2 {arm_label} records invalid ridge fold losses"
+                        )
+                    mean_loss = statistics.fmean(float(loss) for loss in fold_losses)
+                    _v2_assert_close(
+                        candidate.get("mean_validation_mse"),
+                        mean_loss,
+                        label=f"{arm_label} alpha {candidate.get('alpha')}",
+                    )
+                    scored.append((mean_loss, float(candidate["alpha"])))
+                if metadata.get("selected_alpha") != min(scored)[1]:
+                    raise ValueError(
+                        f"v2 {arm_label} selected alpha does not follow the "
+                        "frozen training-only selection rule"
+                    )
+            elif arm_name in _V2_ADAM_ARM_TERMS:
+                term, weight = _V2_ADAM_ARM_TERMS[arm_name]
+                if (
+                    metadata.get("term") != term
+                    or metadata.get("weight") != weight
+                    or metadata.get("steps") != 2500
+                    or metadata.get("learning_rate") != 0.05
+                ):
+                    raise ValueError(
+                        f"v2 {arm_label} does not record the frozen Adam setting"
+                    )
+                _v2_positive(
+                    metadata,
+                    "final_full_batch_gradient_norm",
+                    label=arm_label,
+                    strict=False,
+                )
+            else:  # generator_cycle_basis_oracle
+                target_second_moment = _v2_positive(
+                    arm, "mean_squared_test_target", label=arm_label
+                )
+                _v2_assert_close(
+                    arm.get("relative_error_to_mean_squared_test_target"),
+                    mse / target_second_moment,
+                    label=f"{arm_label} relative error",
+                )
+
+
+def _validate_v2_raw_c1_rows(rows: Any, eligible_seeds: list[int]) -> None:
+    """Fail closed on the raw C1 rows and recompute every seed correlation."""
+
+    if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+        raise TypeError("v2 raw C1 rows must be a list of records")
+    if [row.get("seed") for row in rows] != list(eligible_seeds):
+        raise ValueError("v2 raw C1 rows do not match the 33 eligible seeds in order")
+    for row in rows:
+        seed = row["seed"]
+        label = f"raw C1 row {seed}"
+        if row.get("shared_test_subseed") != _v2_subseed(seed, "c1-test-inputs"):
+            raise ValueError(f"v2 {label} test sub-seed is not the frozen derivation")
+        if (
+            row.get("shared_test_rows") != 3072
+            or row.get("replicate_zero_reuses_primary_train_inputs_and_noise")
+            is not True
+            or row.get("truth_used_only_for_responses") is not True
+        ):
+            raise ValueError(f"v2 {label} does not record the frozen C1 design")
+        replicates = row.get("replicates")
+        if not isinstance(replicates, list) or len(replicates) != 12:
+            raise ValueError(f"v2 {label} must retain exactly 12 replicates")
+        mse_values = []
+        cycle_defects = []
+        random_defects = []
+        for index, replicate in enumerate(replicates):
+            replicate_label = f"{label} replicate {index}"
+            if (
+                _v2_int(replicate, "replicate", label=replicate_label) != index
+                or replicate.get("reuses_primary_training_realisation")
+                is not (index == 0)
+            ):
+                raise ValueError(f"v2 {replicate_label} is out of frozen order")
+            if index == 0:
+                train_component = "primary-train-inputs"
+                noise_component = "primary-training-noise"
+            else:
+                train_component = "c1-train-inputs"
+                noise_component = "c1-training-noise"
+            if replicate.get("train_inputs_subseed") != _v2_subseed(
+                seed, train_component, index
+            ) or replicate.get("training_noise_subseed") != _v2_subseed(
+                seed, noise_component, index
+            ):
+                raise ValueError(
+                    f"v2 {replicate_label} sub-seeds do not match the frozen "
+                    "SHA-256 derivation"
+                )
+            # The full C1 positivity guard, including the raw boundary defect
+            # the executed runner omitted; a violation is a design failure.
+            mse_values.append(
+                _v2_positive(replicate, "held_out_mse", label=replicate_label)
+            )
+            cycle_defects.append(
+                _v2_positive(
+                    replicate,
+                    "cycle_projector_defect_frobenius",
+                    label=replicate_label,
+                )
+            )
+            random_defects.append(
+                _v2_positive(
+                    replicate,
+                    "matched_random_subspace_defect_frobenius",
+                    label=replicate_label,
+                )
+            )
+            _v2_positive(
+                replicate,
+                "boundary_compatibility_defect_frobenius",
+                label=replicate_label,
+            )
+            metadata = replicate.get("metadata")
+            if (
+                not isinstance(metadata, dict)
+                or metadata.get("driver") != "gelsd"
+                or metadata.get("rcond") != 1e-12
+                or _v2_int(metadata, "gelsd_returned_rank", label=replicate_label) < 1
+            ):
+                raise ValueError(
+                    f"v2 {replicate_label} does not record the frozen gelsd fit"
+                )
+            _v2_positive(
+                metadata, "gelsd_min_singular_value", label=replicate_label
+            )
+        log_error = [math.log10(value) for value in mse_values]
+        cycle_r = _v2_pearson(
+            [math.log10(value) for value in cycle_defects], log_error
+        )
+        random_r = _v2_pearson(
+            [math.log10(value) for value in random_defects], log_error
+        )
+        _v2_assert_close(
+            row.get("cycle_projector_correlation"),
+            cycle_r,
+            label=f"{label} cycle correlation",
+        )
+        _v2_assert_close(
+            row.get("cycle_projector_fisher_z"),
+            _v2_fisher_z(cycle_r),
+            label=f"{label} cycle Fisher z",
+        )
+        _v2_assert_close(
+            row.get("matched_random_correlation"),
+            random_r,
+            label=f"{label} random correlation",
+        )
+        _v2_assert_close(
+            row.get("matched_random_fisher_z"),
+            _v2_fisher_z(random_r),
+            label=f"{label} random Fisher z",
+        )
+
+
+def _validate_v2_design(design: Any) -> None:
+    if not isinstance(design, dict):
+        raise TypeError("v2 lifting replication has no frozen design record")
+    if design.get("declared_seeds") != list(range(20270101, 20270137)):
+        raise ValueError("v2 design record does not declare the sealed seed block")
+    if (
+        design.get("training_pairs") != 16
+        or design.get("held_out_pairs") != 3072
+        or design.get("minimum_eligible") != 30
+    ):
+        raise ValueError("v2 design record changed the frozen sample counts")
+    if design.get("training_label_noise") != {
+        "distribution": "independent zero-mean Gaussian",
+        "standard_deviation": 0.02,
+    }:
+        raise ValueError("v2 design record changed the frozen training noise")
+    if design.get("held_out_targets") != "noiseless ground-truth linear responses":
+        raise ValueError("v2 design record changed the held-out target identity")
+    if design.get("arms") != list(_V2_ARM_NAMES):
+        raise ValueError("v2 design record changed the frozen arm list")
+    if design.get("linear_algebra") != {
+        "lstsq_driver": "gelsd",
+        "lstsq_rcond": 1e-12,
+        "soft_closed_form_pinv_rcond": 1e-12,
+    }:
+        raise ValueError("v2 design record changed the frozen linear algebra")
+    ridge = design.get("inner_cv_ridge")
+    if (
+        not isinstance(ridge, dict)
+        or ridge.get("grid") != [float(alpha) for alpha in _V2_RIDGE_GRID]
+        or ridge.get("folds") != 4
+        or ridge.get("held_out_endpoint_used_for_selection") is not False
+    ):
+        raise ValueError("v2 design record changed the frozen ridge selection")
+    if design.get("rtd_margin_log10") != -0.045757490560675115:
+        raise ValueError("v2 design record changed the frozen RTD futility margin")
+    if design.get("h5_present") is not False:
+        raise ValueError("v2 design record must note the absent H5 routing")
+
+
+def _validate_v2_primary_inference(primary: dict[str, Any], rows: list[Any]) -> None:
+    """Recompute every primary statistic and decision from the raw rows."""
+
+    if (
+        primary.get("family_size") != 7
+        or primary.get("familywise_alpha") != 0.05
+        or primary.get("per_claim_alpha") != 0.05 / 7
+        or primary.get("method")
+        != "one-sided Student-t bounds with Bonferroni correction"
+    ):
+        raise ValueError("v2 primary family frame differs from the frozen design")
+    claims = primary.get("claims")
+    for definition, claim in zip(_V2_CLAIMS, claims, strict=True):
+        label = f"primary claim {definition['id']}"
+        numerator = definition["numerator"]
+        denominator = definition["denominator"]
+        if (
+            claim.get("numerator_arm") != numerator
+            or claim.get("reference_arm") != denominator
+            or claim.get("endpoint")
+            != f"log10(MSE_{numerator} / MSE_{denominator})"
+        ):
+            raise ValueError(f"v2 {label} arms differ from the frozen family")
+        if claim.get("direction") != definition["direction"]:
+            raise ValueError(f"v2 {label} direction differs from the frozen family")
+        threshold = claim.get("threshold")
+        if (
+            isinstance(threshold, bool)
+            or not isinstance(threshold, (int, float))
+            or float(threshold) != definition["threshold"]
+        ):
+            raise ValueError(f"v2 {label} threshold differs from the frozen family")
+        if claim.get("alternative") != (
+            f"mean {definition['direction']} {definition['threshold']}"
+        ):
+            raise ValueError(f"v2 {label} alternative is misstated")
+
+        values = _v2_paired_log10_ratios(rows, numerator, denominator)
+        count = len(values)
+        critical = _V2_T_ONE_SIDED_BONFERRONI.get(count - 1)
+        if critical is None:
+            raise ValueError(f"no frozen Bonferroni t critical value for n={count}")
+        mean = statistics.fmean(values)
+        deviation = statistics.stdev(values)
+        standard_error = deviation / math.sqrt(count)
+        half = critical * standard_error
+        if claim.get("n") != count:
+            raise ValueError(f"v2 {label} n disagrees with the raw rows")
+        _v2_assert_close(claim.get("estimate"), mean, label=f"{label} estimate")
+        _v2_assert_close(
+            claim.get("mean_log10_ratio"), mean, label=f"{label} mean"
+        )
+        _v2_assert_close(
+            claim.get("median_log10_ratio"),
+            statistics.median(values),
+            label=f"{label} median",
+        )
+        _v2_assert_close(
+            claim.get("sample_standard_deviation"),
+            deviation,
+            label=f"{label} sd",
+        )
+        _v2_assert_close(
+            claim.get("standard_error"), standard_error, label=f"{label} se"
+        )
+        _v2_assert_close(
+            claim.get("geometric_mean_ratio"),
+            10.0**mean,
+            label=f"{label} geometric mean",
+        )
+        if claim.get("critical_value") != critical or claim.get(
+            "critical_quantile"
+        ) != 1.0 - 0.05 / 7:
+            raise ValueError(f"v2 {label} uses wrong t constants")
+        if definition["direction"] == "less":
+            bound_key, absent_key = "one_sided_upper_bound", "one_sided_lower_bound"
+            bound = mean + half
+            supported = bound < definition["threshold"]
+        else:
+            bound_key, absent_key = "one_sided_lower_bound", "one_sided_upper_bound"
+            bound = mean - half
+            supported = bound > definition["threshold"]
+        if absent_key in claim:
+            raise ValueError(f"v2 {label} carries the wrong-sided bound")
+        _v2_assert_close(claim.get(bound_key), bound, label=f"{label} bound")
+        if claim.get("supported") is not supported:
+            raise ValueError(
+                f"v2 {label} support decision does not follow from the "
+                "recomputed bound and the frozen rule"
+            )
+        _v2_assert_close_list(
+            claim.get("per_seed_log10_ratio"),
+            values,
+            label=f"{label} per-seed ratios",
+        )
+        _v2_assert_close_list(
+            claim.get("two_sided_interval_95_descriptive"),
+            _v2_two_sided_interval(values),
+            label=f"{label} descriptive interval",
+        )
+        _v2_assert_sign_test(
+            claim.get("sensitivity_sign_test"), values, label=label
+        )
+
+
+def _validate_v2_c1_inference(c1: Any, rows: list[Any]) -> None:
+    """Recompute the C1 Fisher-z summaries from the raw replicate rows."""
+
+    if not isinstance(c1, dict):
+        raise TypeError("v2 lifting replication has no C1 record")
+    if c1.get("per_topology") != rows:
+        raise ValueError("v2 C1 summary rows differ from the retained raw C1 rows")
+    cycle_z = [float(row["cycle_projector_fisher_z"]) for row in rows]
+    random_z = [float(row["matched_random_fisher_z"]) for row in rows]
+    for key, values in (
+        ("cycle_projector_defect", cycle_z),
+        ("matched_random_subspace_defect", random_z),
+    ):
+        summary = c1.get(key)
+        if not isinstance(summary, dict):
+            raise TypeError(f"v2 C1 has no {key} summary")
+        if summary.get("n_topologies") != len(rows):
+            raise ValueError(f"v2 C1 {key} n_topologies disagrees with the raw rows")
+        mean = statistics.fmean(values)
+        interval = _v2_two_sided_interval(values)
+        _v2_assert_close(
+            summary.get("mean_fisher_z"), mean, label=f"C1 {key} mean"
+        )
+        _v2_assert_close_list(
+            summary.get("interval_95_fisher_z"), interval, label=f"C1 {key} interval"
+        )
+        _v2_assert_close(
+            summary.get("back_transformed_mean_r"),
+            math.tanh(mean),
+            label=f"C1 {key} back-transformed mean",
+        )
+        _v2_assert_close_list(
+            summary.get("back_transformed_interval_95_r"),
+            [math.tanh(value) for value in interval],
+            label=f"C1 {key} back-transformed interval",
+        )
+        _v2_assert_close_list(
+            summary.get("per_topology_fisher_z"),
+            values,
+            label=f"C1 {key} per-topology z",
+        )
+    delta = [left - right for left, right in zip(cycle_z, random_z, strict=True)]
+    block = c1.get("paired_specificity_delta_fisher_z")
+    if not isinstance(block, dict):
+        raise TypeError("v2 C1 has no paired specificity contrast")
+    _v2_assert_close(block.get("mean"), statistics.fmean(delta), label="C1 delta mean")
+    _v2_assert_close_list(
+        block.get("interval_95"), _v2_two_sided_interval(delta), label="C1 delta interval"
+    )
+    _v2_assert_close_list(
+        block.get("per_topology"), delta, label="C1 delta per-topology"
+    )
+
+
+def _validate_v2_descriptive(descriptive: Any, rows: list[Any]) -> None:
+    """Recompute every descriptive diagnostic from the raw primary rows."""
+
+    if not isinstance(descriptive, dict):
+        raise TypeError("v2 lifting replication has no descriptive block")
+    ambient = _v2_paired_log10_ratios(rows, "ambient_adam", "ambient_min_norm_ls")
+    block = descriptive.get("ambient_adam_vs_min_norm_ls")
+    if not isinstance(block, dict):
+        raise TypeError("v2 descriptive block has no ambient-Adam diagnostic")
+    _v2_assert_close(
+        block.get("mean_log10_ratio"),
+        statistics.fmean(ambient),
+        label="descriptive ambient mean",
+    )
+    _v2_assert_close(
+        block.get("median_log10_ratio"),
+        statistics.median(ambient),
+        label="descriptive ambient median",
+    )
+    _v2_assert_close_list(
+        block.get("per_seed_log10_ratio"), ambient, label="descriptive ambient ratios"
+    )
+    _v2_assert_sign_test(
+        block.get("sensitivity_sign_test"), ambient, label="descriptive ambient"
+    )
+    soft_gap = _v2_paired_log10_ratios(
+        rows, "soft_boundary_lambda3", "soft_boundary_closed_form_lambda3"
+    )
+    block = descriptive.get("soft_boundary_adam_vs_closed_form")
+    if not isinstance(block, dict):
+        raise TypeError("v2 descriptive block has no soft-optimizer diagnostic")
+    _v2_assert_close(
+        block.get("mean_log10_ratio"),
+        statistics.fmean(soft_gap),
+        label="descriptive soft-gap mean",
+    )
+    _v2_assert_close_list(
+        block.get("per_seed_log10_ratio"), soft_gap, label="descriptive soft-gap ratios"
+    )
+    oracle_mse = [
+        float(row["arms"]["generator_cycle_basis_oracle"]["held_out_mse"])
+        for row in rows
+    ]
+    oracle_relative = [
+        float(
+            row["arms"]["generator_cycle_basis_oracle"][
+                "relative_error_to_mean_squared_test_target"
+            ]
+        )
+        for row in rows
+    ]
+    block = descriptive.get("generator_cycle_basis_oracle")
+    if not isinstance(block, dict):
+        raise TypeError("v2 descriptive block has no oracle diagnostic")
+    _v2_assert_close(block.get("minimum_held_out_mse"), min(oracle_mse), label="oracle min")
+    _v2_assert_close(block.get("maximum_held_out_mse"), max(oracle_mse), label="oracle max")
+    _v2_assert_close(
+        block.get("median_held_out_mse"),
+        statistics.median(oracle_mse),
+        label="oracle median",
+    )
+    _v2_assert_close_list(
+        block.get("per_seed_held_out_mse"), oracle_mse, label="oracle per-seed mse"
+    )
+    _v2_assert_close(
+        block.get("maximum_relative_error_to_mean_squared_test_target"),
+        max(oracle_relative),
+        label="oracle max relative error",
+    )
+    _v2_assert_close_list(
+        block.get("per_seed_relative_error_to_mean_squared_test_target"),
+        oracle_relative,
+        label="oracle per-seed relative error",
+    )
+    audits = descriptive.get("optimization_audits")
+    if not isinstance(audits, dict):
+        raise TypeError("v2 descriptive block has no optimization audits")
+    gaps = [
+        float(
+            row["optimizer_descriptive"][
+                "soft_adam_vs_closed_form_solution_gap_frobenius"
+            ]
+        )
+        for row in rows
+    ]
+    gap_block = audits.get("soft_adam_vs_closed_form_solution_gap_frobenius")
+    if not isinstance(gap_block, dict):
+        raise TypeError("v2 optimization audits have no solution-gap record")
+    _v2_assert_close_list(gap_block.get("per_seed"), gaps, label="solution gaps")
+    _v2_assert_close(
+        gap_block.get("mean"), statistics.fmean(gaps), label="solution-gap mean"
+    )
+    _v2_assert_close(gap_block.get("maximum"), max(gaps), label="solution-gap max")
+    gradient_block = audits.get("adam_final_full_batch_gradient_norm")
+    if not isinstance(gradient_block, dict):
+        raise TypeError("v2 optimization audits have no gradient-norm record")
+    for arm_name in _V2_ADAM_ARM_TERMS:
+        norms = [
+            float(row["arms"][arm_name]["metadata"]["final_full_batch_gradient_norm"])
+            for row in rows
+        ]
+        arm_block = gradient_block.get(arm_name)
+        if not isinstance(arm_block, dict):
+            raise TypeError(f"v2 gradient norms are missing {arm_name}")
+        _v2_assert_close_list(
+            arm_block.get("per_seed"), norms, label=f"{arm_name} gradient norms"
+        )
+        _v2_assert_close(
+            arm_block.get("maximum"), max(norms), label=f"{arm_name} gradient max"
+        )
+
+
+def _validate_v2_audit_block(
+    audit: dict[str, Any], rows: list[Any], c1_rows: list[Any]
+) -> None:
+    """Recompute the audit block's raw-row-recomputable means."""
+
+    if (
+        audit.get("raw_primary_rows") != len(rows)
+        or audit.get("raw_c1_rows") != len(c1_rows)
+        or audit.get("c1_replicates_per_topology") != 12
+        or audit.get("arm_names") != list(_V2_ARM_NAMES)
+    ):
+        raise ValueError("v2 audit block counts disagree with the raw rows")
+    means = audit.get("mean_per_seed_log10_ratio_by_claim")
+    if not isinstance(means, dict) or set(means) != {
+        definition["id"] for definition in _V2_CLAIMS
+    }:
+        raise ValueError("v2 audit block does not carry exactly the seven means")
+    for definition in _V2_CLAIMS:
+        expected = statistics.fmean(
+            _v2_paired_log10_ratios(
+                rows, definition["numerator"], definition["denominator"]
+            )
+        )
+        _v2_assert_close(
+            means.get(definition["id"]),
+            expected,
+            label=f"audit mean {definition['id']}",
+        )
+    _v2_assert_close(
+        audit.get("mean_per_seed_log10_ratio_ambient_adam_vs_min_norm_ls"),
+        statistics.fmean(
+            _v2_paired_log10_ratios(rows, "ambient_adam", "ambient_min_norm_ls")
+        ),
+        label="audit ambient mean",
+    )
+
+
 def validate_lifting_replication_v2_record(
     project_root: Path, document: dict[str, Any]
 ) -> None:
-    """Reject a v2 replication result that cannot prove its sealed lineage."""
+    """Reject a v2 replication result that fails lineage or recomputation.
+
+    Beyond the sealed lineage (hashes, seal contents, commit ancestry), every
+    published statistic -- claim estimates, bounds, support decisions, sign
+    tests, C1 correlations and Fisher-z summaries, descriptive diagnostics, and
+    the audit block -- is recomputed here from the retained raw rows, and the
+    raw rows are checked against the protocol's validity conditions (positive
+    endpoints, gelsd rank and singular values, the full C1 positivity guard,
+    certificates, sub-seed derivations, and the frozen ridge selection rule).
+    """
 
     if document.get("schema") != {
         "name": "homymoly.independent-lifting-replication-result",
@@ -1034,6 +2163,17 @@ def validate_lifting_replication_v2_record(
         for row in ineligible
     ):
         raise ValueError("v2 ineligible rows must carry a seed and an explicit reason")
+    for row in ineligible:
+        faces = row.get("faces")
+        if (
+            not isinstance(faces, int)
+            or faces >= 3
+            or row["reason"] != f"num_faces={faces} < 3"
+        ):
+            raise ValueError(
+                "v2 ineligible rows must record a sub-threshold face count with "
+                "the frozen reason string"
+            )
     if set(eligible_seeds) | {row["seed"] for row in ineligible} != set(
         range(20270101, 20270137)
     ):
@@ -1069,10 +2209,12 @@ def validate_lifting_replication_v2_record(
         or recorded_seal.get("sha256") != _sha256(seal_path)
     ):
         raise ValueError("v2 provenance does not pin the committed design-seal record")
+    # The seal binds the complete frozen claim objects and stop rules, not
+    # merely the claim identifiers.
+    _validate_v2_seal_contents(seal)
 
     pinned = {
         "protocol": LIFTING_REPLICATION_V2_PROTOCOL_PATH,
-        "runner": LIFTING_REPLICATION_V2_RUNNER_PATH,
         "generator": FROZEN_GENERATOR_PATH,
     }
     for name, relative in pinned.items():
@@ -1087,6 +2229,29 @@ def validate_lifting_replication_v2_record(
             raise ValueError(f"v2 {name} provenance does not match the actual file")
         if seal.get(f"{name}_sha256") != digest:
             raise ValueError(f"v2 {name} hash disagrees with the design-seal record")
+    # The runner was hardened after the sealed execution (strict gelsd
+    # rank/positivity rejection, the asserted and retained closed-form
+    # stationarity residual, the complete C1 positivity guard, and full
+    # seal-content verification), so its working-tree bytes legitimately differ
+    # from the sealed hash. The v2 record pins the sealed fingerprint here, and
+    # the sealed bytes are re-verified from git history below whenever the
+    # object store is present.
+    runner_record = provenance.get("runner")
+    if not isinstance(runner_record, dict):
+        raise TypeError("v2 lifting replication has no runner provenance")
+    if (
+        runner_record.get("path") != LIFTING_REPLICATION_V2_RUNNER_PATH
+        or runner_record.get("sha256") != LIFTING_REPLICATION_V2_RUNNER_SHA256
+    ):
+        raise ValueError(
+            "v2 runner provenance does not pin the sealed runner fingerprint"
+        )
+    if seal.get("runner_sha256") != LIFTING_REPLICATION_V2_RUNNER_SHA256:
+        raise ValueError("v2 runner hash disagrees with the design-seal record")
+    if not (project_root / LIFTING_REPLICATION_V2_RUNNER_PATH).is_file():
+        raise ValueError(
+            f"v2 runner file is missing: {LIFTING_REPLICATION_V2_RUNNER_PATH}"
+        )
     environment = provenance.get("environment")
     lockfile = environment.get("lockfile") if isinstance(environment, dict) else None
     local_lock = project_root / FROZEN_LOCKFILE_PATH
@@ -1114,14 +2279,18 @@ def validate_lifting_replication_v2_record(
         execution_revision
     ):
         raise ValueError("v2 commits must be recorded as full 40-hex revisions")
-    # HEAD has legitimately advanced since the sealed execution, so the revision
-    # is checked only against the record itself, never against live git state.
+    # HEAD has legitimately advanced since the sealed execution, so the recorded
+    # revision is pinned as a constant; the git-history checks below verify the
+    # design commit's ancestry whenever the object store is present.
+    if execution_revision != LIFTING_REPLICATION_V2_EXECUTION_COMMIT:
+        raise ValueError("v2 execution revision is not the sealed-execution commit")
     if execution_revision != provenance.get("git_revision"):
         raise ValueError(
             "v2 execution revision disagrees with the recorded git revision"
         )
     if execution_revision == design_commit:
         raise ValueError("v2 execution revision must postdate the design commit")
+    _validate_v2_git_lineage(project_root, provenance)
 
     primary = document.get("primary")
     if not isinstance(primary, dict):
@@ -1152,6 +2321,18 @@ def validate_lifting_replication_v2_record(
         raise ValueError(
             f"v2 C1 must not carry support or multiplicity decisions: {forbidden}"
         )
+
+    # Protocol 31 section 10: recompute every summary solely from the retained
+    # raw rows and fail closed on any inconsistency with the frozen design.
+    raw_primary = document.get("raw_primary")
+    raw_c1 = document.get("raw_c1")
+    _validate_v2_raw_primary_rows(raw_primary, eligible_seeds)
+    _validate_v2_raw_c1_rows(raw_c1, eligible_seeds)
+    _validate_v2_design(document.get("design"))
+    _validate_v2_primary_inference(primary, raw_primary)
+    _validate_v2_c1_inference(c1, raw_c1)
+    _validate_v2_descriptive(document.get("descriptive"), raw_primary)
+    _validate_v2_audit_block(audit, raw_primary, raw_c1)
 
 
 # Where each evidence shape records the revision that generated it. The first

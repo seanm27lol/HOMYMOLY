@@ -58,6 +58,10 @@ uv sync --frozen --extra dev --python 3.12.3
 .venv/bin/python scripts/export_publication_evidence.py --verify-only
 ```
 
+The builder also re-hashes every manifest entry from the archived commit's git
+objects before packaging and refuses a mismatch, so this snapshot's `results/`
+bundle passed manifest verification at the recorded commit.
+
 The last command re-hashes every tracked evidence file and its retained source
 where available, then checks the bundle against `results/MANIFEST.json`. It
 prints `{{"verified": true, ...}}` on success. This is an integrity check, not a
@@ -124,6 +128,47 @@ def _git_file(project_root: Path, revision: str, relative_path: str) -> bytes:
     return result.stdout
 
 
+def _verify_archived_bundle(
+    project_root: Path, revision: str, manifest_bytes: bytes
+) -> None:
+    """Refuse to ship a snapshot whose archived evidence fails its manifest.
+
+    The exporter's ``--verify-only`` rechecks a working tree; a snapshot is
+    built from an arbitrary revision, so every manifest entry is instead
+    re-hashed straight from that revision's git objects. Sources under the
+    untracked ``artifacts/`` tree are absent from git by design and are skipped.
+    """
+
+    manifest = json.loads(manifest_bytes)
+    problems: list[str] = []
+    for entry in manifest.get("files", []):
+        relative = entry.get("path")
+        try:
+            blob = _git_file(project_root, revision, f"results/{relative}")
+        except FileNotFoundError:
+            problems.append(f"missing at {revision[:8]}: results/{relative}")
+            continue
+        digest = hashlib.sha256(blob).hexdigest()
+        if digest != entry.get("sha256"):
+            problems.append(f"hash mismatch at {revision[:8]}: results/{relative}")
+        if len(blob) != entry.get("bytes"):
+            problems.append(f"byte count mismatch at {revision[:8]}: results/{relative}")
+        source = entry.get("source")
+        source_sha256 = entry.get("source_sha256")
+        if source and source_sha256:
+            try:
+                source_blob = _git_file(project_root, revision, source)
+            except FileNotFoundError:
+                continue  # untracked raw-artifact source, excluded by design
+            if hashlib.sha256(source_blob).hexdigest() != source_sha256:
+                problems.append(f"source mismatch at {revision[:8]}: {source}")
+    if problems:
+        raise RuntimeError(
+            "the archived evidence fails manifest verification: "
+            + "; ".join(problems[:10])
+        )
+
+
 def build_snapshot(
     *,
     project_root: Path,
@@ -145,6 +190,7 @@ def build_snapshot(
     resolved = _git(project_root, "rev-parse", revision)
 
     manifest_bytes = _git_file(project_root, resolved, "results/MANIFEST.json")
+    _verify_archived_bundle(project_root, resolved, manifest_bytes)
     manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
     evidence_files = len(json.loads(manifest_bytes)["files"])
 

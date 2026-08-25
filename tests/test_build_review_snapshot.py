@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import subprocess
@@ -15,14 +16,29 @@ MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
+def _manifest_entry(project: Path, relative: str) -> dict:
+    payload = (project / "results" / relative).read_bytes()
+    return {
+        "path": relative,
+        "bytes": len(payload),
+        "sha256": hashlib.sha256(payload).hexdigest(),
+        "source": f"results/{relative}",
+        "source_sha256": hashlib.sha256(payload).hexdigest(),
+    }
+
+
 def _repository(tmp_path: Path) -> Path:
     project = tmp_path / "project"
     (project / "results").mkdir(parents=True)
     (project / "scripts").mkdir()
     (project / "LICENSE").write_text("Proprietary.\n", encoding="utf-8")
     (project / "scripts" / "thing.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (project / "results" / "a.json").write_text('{"a": 1}\n', encoding="utf-8")
+    (project / "results" / "b.json").write_text('{"b": 2}\n', encoding="utf-8")
     (project / "results" / "MANIFEST.json").write_text(
-        json.dumps({"files": [{"path": "a.json"}, {"path": "b.json"}]}),
+        json.dumps(
+            {"files": [_manifest_entry(project, name) for name in ("a.json", "b.json")]}
+        ),
         encoding="utf-8",
     )
     (project / ".gitignore").write_text("artifacts/\n", encoding="utf-8")
@@ -164,4 +180,20 @@ def test_a_missing_manifest_is_reported(tmp_path: Path) -> None:
     )
 
     with pytest.raises(FileNotFoundError, match="MANIFEST.json is missing"):
+        MODULE.build_snapshot(project_root=project, output=tmp_path / "s.tar.gz")
+
+
+def test_a_manifest_mismatch_in_the_archived_revision_is_refused(
+    tmp_path: Path,
+) -> None:
+    """The snapshot must not ship evidence that fails its own manifest."""
+
+    project = _repository(tmp_path)
+    (project / "results" / "b.json").write_text('{"b": "tampered"}\n', encoding="utf-8")
+    subprocess.run(("git", "add", "-A"), cwd=project, check=True, capture_output=True)
+    subprocess.run(
+        ("git", "commit", "-qm", "tamper"), cwd=project, check=True, capture_output=True
+    )
+
+    with pytest.raises(RuntimeError, match="manifest verification"):
         MODULE.build_snapshot(project_root=project, output=tmp_path / "s.tar.gz")

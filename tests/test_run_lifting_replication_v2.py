@@ -7,6 +7,7 @@ import json
 import math
 import re
 import statistics
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -150,8 +151,10 @@ def _seal_payload(output_path: str = "result.json", **overrides: object) -> dict
         "lock_sha256": "4" * 64,
         "seed_interval": {"first": 20270101, "last": 20270136},
         "no_preview_declaration": "no sealed seed was previewed before the seal",
-        "primary_family": [{"id": claim_id} for claim_id in MODULE.PRIMARY_CLAIM_IDS],
-        "stop_rules": ["any design violation stops the campaign"],
+        "primary_family": [
+            json.loads(json.dumps(entry)) for entry in MODULE._SEAL_PRIMARY_FAMILY
+        ],
+        "stop_rules": list(MODULE._SEAL_STOP_RULES),
         "output_path": output_path,
     }
     payload.update(overrides)
@@ -317,6 +320,39 @@ def test_soft_closed_form_satisfies_the_frozen_mean_normalised_normal_equation()
     assert fit.metadata["pinv_rank_cutoff"] > 0
     minimum = fit.metadata["pinv_min_singular_value"]
     assert math.isfinite(minimum) and minimum >= 0
+    # Protocol 31 section 7.3: the stationarity residual is asserted and retained.
+    retained = fit.metadata["stationarity_residual_frobenius"]
+    bound = fit.metadata["stationarity_bound_frobenius"]
+    assert fit.metadata["stationarity_relative_tolerance"] == 1e-10
+    assert bound == pytest.approx(
+        1e-10 * float(torch.linalg.matrix_norm(data.train_x.mT @ data.train_y))
+    )
+    assert 0 <= retained <= bound
+    assert retained == pytest.approx(float(torch.linalg.matrix_norm(residual)))
+
+
+def test_soft_closed_form_rejects_a_nonstationary_solution(monkeypatch) -> None:
+    sample = _hand_sample()
+    data = _data(sample)
+
+    def wrong_pinv(*_args, **_kwargs):
+        system = data.train_x.mT @ data.train_x
+        return torch.zeros_like(system)
+
+    monkeypatch.setattr(torch.linalg, "pinv", wrong_pinv)
+    with pytest.raises(MODULE.DesignFailureError, match="stationarity residual"):
+        MODULE._soft_boundary_closed_form_lambda3(
+            data.train_x, data.train_y, sample.boundary_1
+        )
+
+
+def test_lstsq_gelsd_rejects_a_rank_deficient_design() -> None:
+    """Protocol 31 section 6: rank < 1 or a nonpositive singular value fails."""
+
+    design = torch.zeros((MODULE.N_TRAIN, 5), dtype=torch.float64)
+    target = MODULE._normal((MODULE.N_TRAIN, 3), 7)
+    with pytest.raises(MODULE.DesignFailureError, match="nonpositive"):
+        MODULE._lstsq_gelsd(design, target)
 
 
 def test_inner_cv_ridge_uses_four_training_only_folds_and_records_all_losses() -> None:
@@ -513,6 +549,21 @@ def test_c1_rejects_zeroed_or_nonfinite_defects_without_epsilon_floor(
         MODULE._evaluate_c1(sample, OLD_TEST_SEED)
 
 
+def test_c1_positivity_guard_covers_the_raw_boundary_defect(monkeypatch) -> None:
+    """A zero raw boundary defect must fail C1 even when every other vector is
+    strictly positive."""
+
+    sample = _hand_sample()
+    monkeypatch.setattr(MODULE, "N_TEST", 32)
+    # Boundary defect exactly zero while the matched-random defect stays
+    # positive; the cycle-projector defect of a general fitted matrix is
+    # nonzero, so only the raw boundary vector violates the guard.
+    monkeypatch.setattr(MODULE, "_defects", lambda *_args: (0.0, 1.5))
+
+    with pytest.raises(MODULE.DesignFailureError, match="boundary defect"):
+        MODULE._evaluate_c1(sample, OLD_TEST_SEED)
+
+
 def test_primary_family_has_exactly_seven_one_sided_bonferroni_claims() -> None:
     inference = MODULE._primary_inference(_fake_primary_rows())
 
@@ -690,11 +741,47 @@ def test_load_seal_rejects_missing_keys_and_bad_commit(tmp_path: Path) -> None:
 
 
 def test_load_seal_rejects_altered_primary_family(tmp_path: Path) -> None:
-    family = [{"id": claim_id} for claim_id in MODULE.PRIMARY_CLAIM_IDS]
+    family = [
+        json.loads(json.dumps(entry)) for entry in MODULE._SEAL_PRIMARY_FAMILY
+    ]
     family[0] = {"id": "h1-renamed-after-sealing"}
     _write_seal(tmp_path, _seal_payload(primary_family=family))
 
-    with pytest.raises(RuntimeError, match="primary_family ids differ"):
+    with pytest.raises(RuntimeError, match="seven frozen claim objects"):
+        MODULE._load_seal(tmp_path, "seal.json")
+
+
+def test_load_seal_rejects_altered_claim_direction_threshold_or_null(
+    tmp_path: Path,
+) -> None:
+    """The seal binds the estimand and decision rule, not just claim ids."""
+
+    for field, value in (
+        ("bound_direction", "greater"),
+        ("threshold", -0.1),
+        ("null", "theta <= 0"),
+        ("reference_arm", "ambient_min_norm_ls"),
+        ("support_rule", "supported iff the lower bound is above 0"),
+    ):
+        family = [
+            json.loads(json.dumps(entry)) for entry in MODULE._SEAL_PRIMARY_FAMILY
+        ]
+        family[0][field] = value
+        _write_seal(tmp_path, _seal_payload(primary_family=family))
+        with pytest.raises(RuntimeError, match="seven frozen claim objects"):
+            MODULE._load_seal(tmp_path, "seal.json")
+
+
+def test_load_seal_rejects_watered_down_stop_rules(tmp_path: Path) -> None:
+    _write_seal(tmp_path, _seal_payload(stop_rules=["no stopping"]))
+
+    with pytest.raises(RuntimeError, match="frozen stop conditions"):
+        MODULE._load_seal(tmp_path, "seal.json")
+
+    rules = list(MODULE._SEAL_STOP_RULES)
+    rules[3] = "Any nonfinite C1 value: drop the offending seed and continue."
+    _write_seal(tmp_path, _seal_payload(stop_rules=rules))
+    with pytest.raises(RuntimeError, match="frozen stop conditions"):
         MODULE._load_seal(tmp_path, "seal.json")
 
 
@@ -759,6 +846,10 @@ def test_preflight_records_seal_fingerprints_environment_and_git(
         return "abc123" if args[0] == "rev-parse" else ""
 
     monkeypatch.setattr(MODULE, "_git_checked", fake_git)
+    # The ancestry check is exercised separately against a real tmp git repo.
+    monkeypatch.setattr(
+        MODULE, "_git_require_design_ancestry", lambda *_args: None
+    )
     result = MODULE._preflight(tmp_path, tmp_path / "result.json", seal="seal.json")
 
     assert result["git_revision"] == "abc123"
@@ -840,6 +931,53 @@ def test_preflight_rejects_output_path_mismatch_with_seal(
 
     with pytest.raises(RuntimeError, match="does not match --output"):
         MODULE._preflight(tmp_path, tmp_path / "result.json", seal="seal.json")
+
+
+def test_design_commit_ancestry_is_enforced_against_real_git_history(
+    tmp_path: Path,
+) -> None:
+    """The sealed design commit must be a strict ancestor of HEAD."""
+
+    project = tmp_path / "repo"
+    project.mkdir()
+
+    def git(*args: str) -> str:
+        result = subprocess.run(
+            ("git", *args),
+            cwd=project,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
+
+    git("init", "-q")
+    git("config", "user.email", "a@b.c")
+    git("config", "user.name", "t")
+    (project / "design.txt").write_text("design", encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-qm", "design")
+    design_commit = git("rev-parse", "HEAD")
+    (project / "seal.json").write_text("{}", encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-qm", "seal")
+    head = git("rev-parse", "HEAD")
+
+    MODULE._git_require_design_ancestry(project, design_commit)
+
+    with pytest.raises(RuntimeError, match="strict ancestor"):
+        MODULE._git_require_design_ancestry(project, head)
+
+    # A commit that exists but is unrelated to HEAD is not an ancestor.
+    git("checkout", "-q", "--orphan", "unrelated")
+    git("rm", "-q", "-rf", ".")
+    (project / "else.txt").write_text("else", encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-qm", "unrelated")
+    unrelated = git("rev-parse", "HEAD")
+    git("checkout", "-q", "master")
+    with pytest.raises(RuntimeError, match="not an ancestor of HEAD"):
+        MODULE._git_require_design_ancestry(project, unrelated)
 
 
 def test_runner_fingerprint_mismatch_is_a_stop_condition(
