@@ -106,7 +106,17 @@ def _legend(x: float, y: float, entries: list[tuple[str, str]]) -> list[str]:
 # Figure: exact recovery by ablation
 # --------------------------------------------------------------------------
 
-STRUCTURE_ONLY = {"cone_only", "rtd_only"}
+NO_TASK_OR_RECONSTRUCTION = {"cone_only", "rtd_only"}
+ABLATION_LABELS = {
+    "task_only": "task only",
+    "reconstruction_only": "reconstruction only",
+    "task_reconstruction": "task + reconstruction",
+    "task_reconstruction_cone": "task + recon + cone proxy",
+    "task_reconstruction_rtd": "task + recon + RTD-style",
+    "cone_only": "cone proxy only",
+    "rtd_only": "RTD-style surrogate only",
+    "combined": "task + recon + both proxies",
+}
 
 
 def _value_label(
@@ -133,8 +143,8 @@ def figure_recovery(summary: dict[str, Any]) -> str:
     # Grouped for legibility: supervised objectives first, then the two
     # identifiability controls. Within each group the frozen registry order is
     # preserved, and every declared ablation is shown.
-    order = [name for name in declared if name not in STRUCTURE_ONLY]
-    order += [name for name in declared if name in STRUCTURE_ONLY]
+    order = [name for name in declared if name not in NO_TASK_OR_RECONSTRUCTION]
+    order += [name for name in declared if name in NO_TASK_OR_RECONSTRUCTION]
     chance = float(
         summary["frozen_design"]["chance_baselines"]["transformation_accuracy"]
     )
@@ -152,7 +162,7 @@ def figure_recovery(summary: dict[str, Any]) -> str:
     ]
 
     width, height = 680.0, 342.0
-    label_width = 152.0
+    label_width = 198.0
     gap = 46.0
     panel_width = (width - label_width - gap - 46.0) / 2.0
     top = 80.0
@@ -163,11 +173,11 @@ def figure_recovery(summary: dict[str, Any]) -> str:
     right_x = label_width + panel_width + gap
 
     body: list[str] = [
-        _text(0, 20, "Exact recovery by training objective", size=13, weight="bold"),
+        _text(0, 20, "Recovery by training objective", size=13, weight="bold"),
         _text(
             0,
             36,
-            "Mean over five seeds. Structure-only objectives sit at chance.",
+            "Mean over five seeds. Objectives without task/reconstruction sit at chance.",
             size=10.5,
             fill=INK_SECONDARY,
         ),
@@ -209,9 +219,15 @@ def figure_recovery(summary: dict[str, Any]) -> str:
 
     for index, (name, accuracy, mse) in enumerate(rows):
         y = top + index * row_height
-        colour = SERIES[1] if name in STRUCTURE_ONLY else SERIES[0]
+        colour = SERIES[1] if name in NO_TASK_OR_RECONSTRUCTION else SERIES[0]
         body.append(
-            _text(label_width - 10, y + 11, name, size=10, anchor="end", family=MONO)
+            _text(
+                label_width - 10,
+                y + 11,
+                ABLATION_LABELS.get(name, name),
+                size=9.5,
+                anchor="end",
+            )
         )
         accuracy_span = accuracy * panel_width
         body.append(
@@ -257,11 +273,11 @@ def figure_recovery(summary: dict[str, Any]) -> str:
             height - 12,
             [
                 (SERIES[0], "task or reconstruction supervision"),
-                (SERIES[1], "structure-only control"),
+                (SERIES[1], "no task/reconstruction term"),
             ],
         )
     )
-    return _document(width, height, body, "Exact recovery by training objective")
+    return _document(width, height, body, "Recovery by training objective")
 
 
 # --------------------------------------------------------------------------
@@ -530,7 +546,7 @@ def figure_compute(compute: dict[str, Any]) -> str:
 
 
 # --------------------------------------------------------------------------
-# Figure: the frozen conversion campaign
+# Figure: the frozen edge-to-cycle lifting campaign
 # --------------------------------------------------------------------------
 
 TERM_LABEL = {
@@ -553,14 +569,17 @@ TERM_LABEL = {
 
 
 def figure_campaign(campaign: dict[str, Any]) -> str:
-    order = [name for name in ("exact", "cone", "rtd") if name in campaign["primary"]]
-    rows = [(name, campaign["primary"][name]) for name in order]
+    # H5 routing inference was withdrawn after audit and is deliberately not a
+    # figure input. This plot consumes only the three primary paired contrasts.
+    primary = campaign["primary"]
+    order = [name for name in ("exact", "cone", "rtd") if name in primary]
+    rows = [(name, primary[name]) for name in order]
 
     width = 680.0
     label_width = 235.0
     # Reserve room on the right for the verdict and the printed interval.
     plot_width = width - label_width - 136.0
-    top = 92.0
+    top = 122.0
     row_height = 44.0
     height = top + len(rows) * row_height + 62.0
 
@@ -577,29 +596,44 @@ def figure_campaign(campaign: dict[str, Any]) -> str:
         _text(
             0,
             20,
-            "Boundary compatibility improves a learned conversion",
+            "Boundary compatibility improves edge-to-cycle lifting",
             size=13,
             weight="bold",
         ),
         _text(
             0,
             37,
-            "Paired log10(held-out error with objective / without), one value per topology. "
-            "Negative means the objective helps.",
+            "Paired log10 held-out-error ratio; negative favors the objective.",
             size=10.5,
             fill=INK_SECONDARY,
         ),
         _text(
             0,
             52,
-            f"{campaign['design']['eligible_topologies']} topologies, "
-            f"{campaign['design']['training_pairs']} training pairs, preregistered in docs/27.",
+            "One eligible seed jointly fixes topology, predictors, and training noise.",
             size=10.5,
             fill=INK_SECONDARY,
         ),
         _text(
             0,
             67,
+            f"{campaign['design']['eligible_topologies']} eligible seeds, "
+            f"{campaign['design']['training_pairs']} noisy training probes; "
+            "same-family replication.",
+            size=10.5,
+            fill=INK_SECONDARY,
+        ),
+        _text(
+            0,
+            82,
+            "Locked prospectively after outcome-informed weight selection; "
+            "one execution deviation disclosed.",
+            size=10,
+            fill=INK_MUTED,
+        ),
+        _text(
+            0,
+            97,
             "Thick bar: Bonferroni 98.33% (governs the decision).  Thin bar: unadjusted 95%.",
             size=10,
             fill=INK_MUTED,
@@ -700,7 +734,7 @@ def figure_campaign(campaign: dict[str, Any]) -> str:
             ],
         )
     )
-    return _document(width, height, body, "Conversion campaign primary contrasts")
+    return _document(width, height, body, "Edge-to-cycle lifting primary contrasts")
 
 
 def main(argv: list[str] | None = None) -> int:

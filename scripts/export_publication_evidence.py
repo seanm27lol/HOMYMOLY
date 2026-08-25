@@ -48,11 +48,23 @@ FROZEN_GENERATOR_PATH = "src/homymoly/data/conversion.py"
 FROZEN_GENERATOR_SHA256 = (
     "c37ab1c725aa2101e88c1a0ad8fa3b279d72330feba35077e23fec930a4df69d"
 )
+FROZEN_LOCKFILE_PATH = "uv.lock"
+FROZEN_LOCKFILE_SHA256 = (
+    "05c6a5ad02db5b1651d426d157add170a8542634260ce8c265a3ee32693073bf"
+)
+EXPECTED_CAMPAIGN_ENVIRONMENT = {
+    "python": "3.12.3",
+    "torch_base": "2.13.0",
+    "networkx": "3.6.1",
+    "numpy": "2.5.2",
+}
 HISTORICAL_CONVERSION_SHA256 = (
     "836914d251db8d381aef9a2dcb0ac14a14562652f3e323dc840108b5f24d5ee1"
 )
 BONFERRONI_T_DF28 = 2.546465223
 T95_DF28 = 2.048407
+T95_DF27 = 2.051831
+T95_DF13 = 2.160368656
 UNAFFECTED_NUMERIC_FIELDS = [
     "primary.*.per_topology fit endpoints",
     "primary.*.mean_log10_ratio",
@@ -60,7 +72,10 @@ UNAFFECTED_NUMERIC_FIELDS = [
     "primary.*.sample_standard_deviation",
     "primary.*.interval_95",
     "primary.*.sensitivity_sign_test.pvalue_two_sided",
-    "routing numeric fields",
+    "routing.trials raw defect and error values",
+    "routing.threshold",
+    "routing.mean_log10_ratio",
+    "routing median error summaries",
 ]
 
 # Suffixes and directory names that must never reach a tracked results bundle.
@@ -259,10 +274,13 @@ def _reject_denied(relative: Path, label: str) -> None:
         )
 
 
-def _student_t_interval(values: list[float], critical: float) -> list[float]:
-    if len(values) != 29:
+def _student_t_interval(
+    values: list[float], critical: float, *, expected_n: int = 29
+) -> list[float]:
+    if len(values) != expected_n:
         raise ValueError(
-            "corrected conversion analysis must retain 29 topologies (df=28)"
+            f"corrected conversion analysis expected {expected_n} observations, "
+            f"found {len(values)}"
         )
     centre = statistics.mean(values)
     margin = critical * statistics.stdev(values) / math.sqrt(len(values))
@@ -440,9 +458,272 @@ def _validate_corrected_c1(
         raise ValueError("corrected C1 positive-topology count is inconsistent")
     supported = interval[0] > 0.0
     if c1.get("supported") is not supported:
-        raise ValueError("corrected C1 decision disagrees with its interval")
+        raise ValueError(
+            "corrected C1 path-association flag disagrees with its interval"
+        )
+    if c1.get("supported_claim") != (
+        "positive within-seed regularization-path association only"
+    ):
+        raise ValueError("corrected C1 supported claim is not narrowly identified")
+    if c1.get("does_not_establish") != [
+        "independent predictive information",
+        "off-path calibration",
+        "causal effect",
+    ]:
+        raise ValueError("corrected C1 claim limits are missing")
     if historical_c1.get("supported") is not supported:
-        raise ValueError("C1 support decision changed after correcting Pearson r")
+        raise ValueError("C1 path-association flag changed after correcting Pearson r")
+
+
+def _validate_locked_environment(project_root: Path, document: dict[str, Any]) -> None:
+    provenance = document.get("provenance")
+    environment = (
+        provenance.get("environment") if isinstance(provenance, dict) else None
+    )
+    if not isinstance(environment, dict):
+        raise TypeError("corrected campaign has no locked environment provenance")
+    if environment.get("expected") != EXPECTED_CAMPAIGN_ENVIRONMENT:
+        raise ValueError("corrected campaign records an unexpected locked environment")
+    if environment.get("matches_expected") is not True:
+        raise ValueError("corrected campaign did not run in its locked environment")
+    actual = environment.get("actual")
+    if not isinstance(actual, dict) or any(
+        actual.get(name) != expected
+        for name, expected in EXPECTED_CAMPAIGN_ENVIRONMENT.items()
+    ):
+        raise ValueError("recorded runtime does not match the lock-derived versions")
+    lockfile = environment.get("lockfile")
+    if lockfile != {
+        "path": FROZEN_LOCKFILE_PATH,
+        "sha256": FROZEN_LOCKFILE_SHA256,
+        "frozen_campaign_sha256": FROZEN_LOCKFILE_SHA256,
+    }:
+        raise ValueError("corrected campaign does not pin the frozen lockfile")
+    local_lock = project_root / FROZEN_LOCKFILE_PATH
+    if not local_lock.is_file() or _sha256(local_lock) != FROZEN_LOCKFILE_SHA256:
+        raise ValueError("frozen campaign lockfile is missing or has changed")
+    dependencies = provenance.get("dependencies")
+    if not isinstance(dependencies, dict) or any(
+        dependencies.get(name) != actual.get(name)
+        for name in ("torch", "networkx", "numpy")
+    ):
+        raise ValueError(
+            "top-level dependency provenance disagrees with the locked runtime"
+        )
+    execution = provenance.get("execution")
+    if not isinstance(execution, dict) or execution.get("tensor_device") != "cpu":
+        raise ValueError("corrected conversion campaign was not recorded as a CPU run")
+    runner = project_root / "scripts" / "run_conversion_campaign.py"
+    if not runner.is_file() or provenance.get("runner_sha256") != _sha256(runner):
+        raise ValueError("corrected campaign runner is missing or has changed")
+    if provenance.get("git_status") != "":
+        raise ValueError("corrected campaign provenance records a dirty worktree")
+
+
+def _validate_design_audit(document: dict[str, Any]) -> None:
+    design = document.get("design")
+    if not isinstance(design, dict):
+        raise TypeError("corrected campaign has no design record")
+    if design.get("training_pairs") != 16 or design.get("held_out_pairs") != 3072:
+        raise ValueError(
+            "corrected campaign changed the frozen train/test sample counts"
+        )
+    if design.get("training_label_noise") != {
+        "distribution": "independent zero-mean Gaussian",
+        "standard_deviation": 0.02,
+    }:
+        raise ValueError("corrected campaign does not disclose training-label noise")
+    if design.get("held_out_targets") != "noiseless ground-truth linear responses":
+        raise ValueError(
+            "corrected campaign does not identify noiseless held-out targets"
+        )
+    if design.get("primary_inference_unit") != (
+        "one eligible generator seed, jointly determining topology, training "
+        "predictors and noise, and noiseless held-out predictors"
+    ):
+        raise ValueError(
+            "corrected campaign does not identify the seed-level inference unit"
+        )
+    if design.get("exchangeability_assumption") != (
+        "eligible seed-level joint replicates are exchangeable for the Student-t "
+        "interval; the design does not separate topology heterogeneity from "
+        "data/noise-realisation heterogeneity"
+    ):
+        raise ValueError("corrected campaign omits the exchangeability limitation")
+
+    dimensions = design.get("eligible_topology_dimensions")
+    if not isinstance(dimensions, list) or not all(
+        isinstance(row, dict) for row in dimensions
+    ):
+        raise TypeError("corrected campaign has no topology-dimension audit")
+    if len(dimensions) != 29 or len({row.get("seed") for row in dimensions}) != 29:
+        raise ValueError("topology-dimension audit must retain 29 unique seeds")
+    edges = [int(row["edges"]) for row in dimensions]
+    faces = [int(row["faces"]) for row in dimensions]
+    computed = {
+        "training_pairs": 16,
+        "median_edges_per_output_row": statistics.median(edges),
+        "median_cycle_subspace_dimension": statistics.median(faces),
+        "full_row_regressions_with_edges_gt_training_pairs": sum(
+            value > 16 for value in edges
+        ),
+        "cycle_subspaces_with_faces_le_training_pairs": sum(
+            value <= 16 for value in faces
+        ),
+        "seeds_moving_from_edges_gt_n_to_faces_le_n": sum(
+            edge > 16 and face <= 16 for edge, face in zip(edges, faces, strict=True)
+        ),
+    }
+    canonical = {
+        "training_pairs": 16,
+        "median_edges_per_output_row": 23,
+        "median_cycle_subspace_dimension": 11,
+        "full_row_regressions_with_edges_gt_training_pairs": 21,
+        "cycle_subspaces_with_faces_le_training_pairs": 24,
+        "seeds_moving_from_edges_gt_n_to_faces_le_n": 16,
+    }
+    geometry = design.get("scarce_probe_geometry")
+    if not isinstance(geometry, dict):
+        raise TypeError("corrected campaign has no scarce-probe geometry audit")
+    if computed != canonical or any(
+        geometry.get(key) != value for key, value in canonical.items()
+    ):
+        raise ValueError(
+            "scarce-probe geometry counts do not match the canonical 29 seeds"
+        )
+
+    definitions = design.get("objective_definitions")
+    compatibility = definitions.get("exact") if isinstance(definitions, dict) else None
+    rtd = definitions.get("rtd") if isinstance(definitions, dict) else None
+    if not isinstance(compatibility, dict) or any(
+        (
+            compatibility.get("display_name") != "boundary-compatibility penalty",
+            compatibility.get("formula") != "mean((B1 @ W.T)^2)",
+            compatibility.get("frozen_key_is_historical_shorthand") is not True,
+            compatibility.get("is_exactness_of_a_sequence") is not False,
+        )
+    ):
+        raise ValueError(
+            "frozen key 'exact' is not explicitly identified as boundary compatibility"
+        )
+    if compatibility.get("structural_side_information") != (
+        "B1 determines the target cycle subspace ker(B1); the penalty does not "
+        "directly use B2 or response labels, but the committed deterministic "
+        "generator algorithm can recover its noncanonical B2 basis from the graph"
+    ):
+        raise ValueError("boundary-compatibility side information is not disclosed")
+    if (
+        not isinstance(rtd, dict)
+        or rtd.get("is_representation_topology_divergence") is not False
+        or rtd.get("target_alignment")
+        != (
+            "the generated truth discards cut-space directions while this surrogate "
+            "asks the lower-dimensional output to preserve the full source distance geometry"
+        )
+    ):
+        raise ValueError("RTD-inspired surrogate target misalignment is not disclosed")
+
+
+def _validate_withdrawn_routing(
+    corrected: dict[str, Any], historical: dict[str, Any]
+) -> None:
+    routing = corrected.get("routing")
+    previous = historical.get("routing")
+    if not isinstance(routing, dict) or not isinstance(previous, dict):
+        raise TypeError("conversion evidence has no routing audit")
+    if "interval_95" in routing:
+        raise ValueError("withdrawn H5 must not expose an inferential interval_95")
+    if (
+        routing.get("supported") is not None
+        or routing.get("decision") != "withdrawn-non-informative"
+        or routing.get("decision_informative") is not False
+    ):
+        raise ValueError("H5 inferential support was not withdrawn")
+    if routing.get("trials") != previous.get("trials"):
+        raise ValueError("routing raw trials changed during the H5 audit correction")
+    for key in (
+        "threshold",
+        "mean_log10_ratio",
+        "median_routed",
+        "median_always_cell",
+        "median_always_graph",
+    ):
+        if routing.get(key) != previous.get(key):
+            raise ValueError(f"routing {key} changed during the H5 audit correction")
+
+    trials = routing.get("trials")
+    if not isinstance(trials, list) or not all(isinstance(row, dict) for row in trials):
+        raise TypeError("routing audit has no retained trial records")
+    evaluation = [row for row in trials if row.get("split") == "evaluation"]
+    threshold = float(routing["threshold"])
+    values: list[float] = []
+    clustered: dict[int, list[float]] = {}
+    selected_lower = 0
+    for row in evaluation:
+        cell = float(row["cell_error"])
+        graph = float(row["graph_error"])
+        routed = cell if float(row["defect"]) <= threshold else graph
+        best = min(cell, graph)
+        if routed == best:
+            selected_lower += 1
+        value = math.log10(routed / best)
+        if value < -1e-12:
+            raise ValueError("routing endpoint violates its algebraic nonnegativity")
+        values.append(value)
+        clustered.setdefault(int(row["seed"]), []).append(value)
+    if (
+        len(values) != 28
+        or len(clustered) != 14
+        or any(len(seed_values) != 2 for seed_values in clustered.values())
+    ):
+        raise ValueError("H5 audit must retain 14 topology clusters with two fits each")
+    naive = _student_t_interval(values, T95_DF27, expected_n=28)
+    if not _same_interval(
+        routing.get("historical_pseudoreplicated_interval_95"), naive
+    ):
+        raise ValueError(
+            "historical row-naive H5 interval was not independently reproduced"
+        )
+    if not _same_interval(previous.get("interval_95"), naive):
+        raise ValueError("schema-v1 H5 interval does not match its retained raw trials")
+
+    cluster_means = [statistics.mean(clustered[seed]) for seed in sorted(clustered)]
+    descriptive = _student_t_interval(cluster_means, T95_DF13, expected_n=14)
+    if not _same_interval(
+        routing.get("topology_clustered_descriptive_interval_95"), descriptive
+    ):
+        raise ValueError("topology-clustered descriptive H5 interval is inconsistent")
+    summaries = routing.get("topology_cluster_summaries")
+    if not isinstance(summaries, list) or len(summaries) != 14:
+        raise ValueError("H5 audit must publish one summary per topology cluster")
+    by_seed = {row.get("seed"): row for row in summaries if isinstance(row, dict)}
+    if set(by_seed) != set(clustered):
+        raise ValueError("H5 cluster summaries do not match evaluation topology seeds")
+    for seed, seed_values in clustered.items():
+        summary = by_seed[seed]
+        if summary.get("n_correlated_fits") != 2 or not _same_interval(
+            [summary.get("mean_log10_ratio"), summary.get("mean_log10_ratio")],
+            [statistics.mean(seed_values), statistics.mean(seed_values)],
+            atol=1e-12,
+        ):
+            raise ValueError("H5 cluster summary is inconsistent with retained trials")
+        observed_values = summary.get("endpoint_values")
+        if (
+            not isinstance(observed_values, list)
+            or len(observed_values) != 2
+            or any(
+                not math.isclose(float(actual), expected, rel_tol=0.0, abs_tol=1e-12)
+                for actual, expected in zip(observed_values, seed_values, strict=True)
+            )
+        ):
+            raise ValueError("H5 cluster endpoint values are inconsistent")
+    if (
+        routing.get("evaluation_trials") != 28
+        or routing.get("evaluation_topology_clusters") != 14
+    ):
+        raise ValueError("H5 routing counts do not declare 28 rows in 14 clusters")
+    if routing.get("selected_lower_error_rows") != selected_lower:
+        raise ValueError("H5 selected-lower-error count is inconsistent")
 
 
 def validate_corrected_conversion_record(
@@ -483,11 +764,12 @@ def validate_corrected_conversion_record(
     ):
         raise TypeError("analysis correction reasons must be a list of records")
     by_id = {reason.get("id"): reason for reason in reasons}
-    if len(reasons) != 2 or set(by_id) != {
+    if len(reasons) != 3 or set(by_id) != {
         "c1-pearson-normalisation",
         "bonferroni-critical-value",
+        "h5-pseudoreplication-and-impossible-decision",
     }:
-        raise ValueError("analysis correction does not identify both corrected issues")
+        raise ValueError("analysis correction does not identify all three audit issues")
     if by_id["c1-pearson-normalisation"].get("corrected_estimator") != (
         "sum((x-x_bar)*(y-y_bar)) / sqrt(sum((x-x_bar)^2)*sum((y-y_bar)^2))"
     ):
@@ -500,6 +782,16 @@ def validate_corrected_conversion_record(
         raise ValueError(
             "interval correction does not name the frozen Bonferroni quantile"
         )
+    if by_id["h5-pseudoreplication-and-impossible-decision"].get(
+        "corrected_handling"
+    ) != (
+        "withdraw inferential support; retain the historical naive interval by "
+        "name and add a topology-clustered descriptive interval over 14 "
+        "within-topology means"
+    ):
+        raise ValueError(
+            "H5 correction does not name the withdrawal and clustered audit"
+        )
     if correction.get("decision_changes") != {
         "exact": False,
         "cone": False,
@@ -511,6 +803,12 @@ def validate_corrected_conversion_record(
         raise ValueError(
             "analysis correction does not enumerate the granular unchanged fields"
         )
+    withdrawal = correction.get("decision_withdrawals")
+    if not isinstance(withdrawal, dict) or withdrawal.get("routing") != (
+        "the endpoint's support rule was impossible and its schema-v1 interval "
+        "treated correlated rows as independent"
+    ):
+        raise ValueError("analysis correction does not withdraw the routing decision")
 
     supersedes = correction.get("supersedes")
     if not isinstance(supersedes, dict):
@@ -593,23 +891,11 @@ def validate_corrected_conversion_record(
     ):
         raise ValueError("frozen conversion generator is missing or has changed")
 
-    design = document.get("design")
-    definitions = (
-        design.get("objective_definitions") if isinstance(design, dict) else None
-    )
-    compatibility = definitions.get("exact") if isinstance(definitions, dict) else None
-    if compatibility != {
-        "display_name": "boundary-compatibility penalty",
-        "formula": "mean((B1 @ W.T)^2)",
-        "frozen_key_is_historical_shorthand": True,
-        "is_exactness_of_a_sequence": False,
-    }:
-        raise ValueError(
-            "frozen key 'exact' is not explicitly identified as boundary compatibility"
-        )
-
+    _validate_locked_environment(project_root, document)
+    _validate_design_audit(document)
     _validate_corrected_primary_intervals(document, historical_document)
     _validate_corrected_c1(document, historical_document)
+    _validate_withdrawn_routing(document, historical_document)
 
 
 # Where each evidence shape records the revision that generated it. The first

@@ -39,15 +39,17 @@ loud what survived, rather than leaving the reader to infer it.
 | which target features are unreachable | implemented as the cokernel; **untested** as a predictor |
 | what fails to return under a reverse conversion | machinery exists; **no ablation** |
 | whether conversion paths agree | **never tested** |
-| whether a richer representation justifies its cost | **accuracy unresolved; compute characterized.** The frozen defect-routing endpoint was impossible to support. Separately, routed inference is 1.532× faster than dense evaluation but 2.269× slower than the fastest fixed route |
+| whether a richer representation justifies its cost | **accuracy unresolved; compute characterized.** The frozen defect-routing endpoint was impossible to support and pseudoreplicated 14 topology clusters as 28 rows. Separately, across five seeds mean dense/routed is 1.532 (t95 CI [1.489, 1.575]) and mean routed/fastest-fixed is 2.269 ([2.215, 2.322]) |
 
 The transcript's own phrase — *"taking the quotient between the [kernel] and the
 image"* — is homology, and it turned out to be closer to the mark than the
 constructions built on top of it.
 
 **What survived is one clause, sharpened and renamed.** Boundary compatibility —
-the requirement that `d∘d = 0` on the complex implied by the conversion — is a
-strong prior on a learned conversion when paired data are scarce. This is not
+the requirement that `d∘d = 0` on the complex implied by the learned lifting — is a
+strong prior on an edge-to-cycle-coordinate lifting when paired data are scarce.
+Here `W: R^E -> R^F` is degree-changing and `W^T` is a candidate `d2`; it is not
+a typed chain map or conversion between complexes. This is not
 sequence exactness: `W = 0` satisfies `B1 Wᵀ = 0` without proving
 `im Wᵀ = ker B1`. A prospectively specified primary analysis in a locked
 same-generator-family replication gives an adjusted
@@ -56,17 +58,35 @@ protocol deviation from a Frobenius sum to the executed elementwise mean. The
 design was outcome-informed by same-family exploration, and exploratory seed
 overlap cannot be audited, so this is not independent confirmation. Along the
 prespecified compatibility-penalty path, a secondary analysis finds positive
-within-topology defect/error covariation in 29 of 29 topologies; its interval is
+within-seed defect/error covariation in 29 of 29 eligible seeds; its interval is
 unadjusted. The common driver `lambda` and reused data/initialization mean the
 nine path fits are not independent and do not establish independent prediction
 or off-path calibration.
 
+The structural term does not directly use `B2` or response labels, but it uses
+`B1`, which determines the target cycle subspace. Paired responses generated
+from `B2` supply the ordinary supervised signal, and the deterministic generator
+makes `B2` algorithmically recoverable from the graph. The unpenalized baseline
+ignores `B1`, and no analytic cycle-basis, Hodge-projection, or nullspace oracle
+was tested. The result is therefore a comparison against a graph-blind baseline
+using strong input-derived structural side information.
+
+The effect also occurs in favorable scarce-probe geometry: with 16 training
+probes, 21/29 seeds have `E > 16`, 24/29 have `F <= 16`, and 16/29 cross from
+an underdetermined ambient system to a potentially identifiable hard cycle-
+subspace system (median `E = 23`, `F = 11`; five have `F > 16`). The actual
+finite penalty does not hard-reduce parameters; it only shrinks toward that
+subspace.
+
 **What did not survive is the part the project spent its campaigns on.** The
 continuous campaign's singular-value cone surrogate harms at the tested weight,
 while its RTD-inspired normalized pairwise-distance surrogate shows no detected
-improvement. Those results do not test mapping-cone homology or published
-RTD/SRTD. The frozen routing endpoint is non-informative because its oracle
-denominator made support impossible. Nothing in the derived-category,
+improvement. The latter asks an intentionally lossy rank-`F` lifting to preserve
+full source geometry and is target-misaligned. Those results do not test
+mapping-cone homology or published RTD/SRTD. The frozen routing endpoint is
+non-informative because its oracle denominator made support impossible; its 28
+rows also comprise only 14 topology clusters, invalidating the naive df=27
+interval and 25/28 count. Nothing in the derived-category,
 Fourier–Mukai, eigensheaf, or Langlands direction was ever implemented, and
 nothing here bears on it.
 
@@ -75,6 +95,12 @@ first executable version, although historical names such as
 `ExactChainMapLayer` blurred exact satisfaction of an equation with exactness
 of a sequence. The penalty that helped was in the architecture's mathematical
 vocabulary while the initial research emphasis lay elsewhere.
+
+In the separate annulus typed-chain-map setting, all six supervised objectives
+have perfect decoded transformation and cell accuracy. Their mean map MSE spans
+`2.618e-17` to `2.504e-8`, versus 0.109 and 0.191 for the two controls; the 10/10
+engineering gate applies only to `task_reconstruction` and `combined`, five
+seeds each.
 
 Full records: [`docs/26`](26-exactness-as-a-prior.md) for the exploratory work,
 [`docs/27`](27-conversion-campaign-protocol.md) for the frozen protocol, and

@@ -64,6 +64,18 @@ def test_frozen_generator_provenance_is_explicit_and_verified() -> None:
     }
 
 
+def test_campaign_environment_and_lockfile_are_pinned() -> None:
+    provenance = MODULE._environment_provenance(PROJECT_ROOT)
+
+    assert provenance["matches_expected"] is True
+    assert provenance["expected"] == MODULE.EXPECTED_CAMPAIGN_ENVIRONMENT
+    assert provenance["lockfile"] == {
+        "path": "uv.lock",
+        "sha256": MODULE.FROZEN_LOCKFILE_SHA256,
+        "frozen_campaign_sha256": MODULE.FROZEN_LOCKFILE_SHA256,
+    }
+
+
 def test_generator_hash_mismatch_stops_before_campaign(tmp_path: Path) -> None:
     generator = tmp_path / MODULE.GENERATOR_SOURCE
     generator.parent.mkdir(parents=True)
@@ -186,6 +198,7 @@ def test_report_uses_schema_v2_and_embeds_generator_provenance(monkeypatch) -> N
     assert {reason["id"] for reason in report["correction"]["reasons"]} == {
         "c1-pearson-normalisation",
         "bonferroni-critical-value",
+        "h5-pseudoreplication-and-impossible-decision",
     }
     assert report["correction"]["decision_changes"] == {
         "exact": False,
@@ -199,11 +212,31 @@ def test_report_uses_schema_v2_and_embeds_generator_provenance(monkeypatch) -> N
         "compatibility-mean-normalisation"
     )
     assert report["provenance"]["generator"]["matches_frozen_campaign"] is True
+    assert report["provenance"]["environment"]["matches_expected"] is True
     assert report["design"]["held_out_pairs"] == MODULE.N_HELD_OUT
-    assert report["design"]["observation_noise_standard_deviation"] == MODULE.NOISE
+    assert report["design"]["training_label_noise"] == {
+        "distribution": "independent zero-mean Gaussian",
+        "standard_deviation": MODULE.NOISE,
+    }
+    assert report["design"]["held_out_targets"].startswith("noiseless")
+    assert report["design"]["primary_inference_unit"].startswith("one eligible")
     assert report["design"]["fit_scope"].startswith("one independently trained")
     assert report["design"]["free_parameters"]["median"] == 30
+    assert report["design"]["scarce_probe_geometry"] == {
+        "training_pairs": MODULE.N_TRAIN,
+        "median_edges_per_output_row": 10.0,
+        "median_cycle_subspace_dimension": 3.0,
+        "full_row_regressions_with_edges_gt_training_pairs": 0,
+        "cycle_subspaces_with_faces_le_training_pairs": 10,
+        "seeds_moving_from_edges_gt_n_to_faces_le_n": 0,
+        "interpretation": (
+            "reference geometry of the penalty's zero set only; the executed "
+            "finite penalty leaves all F*E parameters trainable"
+        ),
+    }
     assert report["c1"]["inference_role"].startswith("prespecified secondary")
+    assert report["c1"]["supported_claim"].endswith("association only")
+    assert "independent predictive information" in report["c1"]["does_not_establish"]
     first_c1 = report["c1"]["per_topology"][0]
     assert first_c1["seed"] == seeds[0]
     assert [fit["weight"] for fit in first_c1["fits"]] == list(MODULE.C1_WEIGHTS)
@@ -227,6 +260,16 @@ def test_report_uses_schema_v2_and_embeds_generator_provenance(monkeypatch) -> N
         is False
     )
     assert report["routing"]["decision_informative"] is False
+    assert report["routing"]["supported"] is None
+    assert report["routing"]["decision"] == "withdrawn-non-informative"
+    assert report["routing"]["evaluation_trials"] == 10
+    assert report["routing"]["evaluation_topology_clusters"] == 5
+    assert len(report["routing"]["topology_cluster_summaries"]) == 5
+    assert "interval_95" not in report["routing"]
+    assert (
+        report["routing"]["historical_pseudoreplicated_interval_95"]
+        != (report["routing"]["topology_clustered_descriptive_interval_95"])
+    )
     for term in report["primary"].values():
         assert set(term["sensitivity_sign_test"]) == {
             "pvalue_two_sided",

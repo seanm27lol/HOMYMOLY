@@ -97,15 +97,15 @@ def test_dihedral_basis_is_signed_orthogonal_and_closed_in_all_degrees() -> None
             assert len(common_matches) == 1
 
 
-def test_cone_and_rtd_signals_are_constant_across_the_whole_hypothesis_space() -> None:
-    """Lock the structural claim in docs/18-paper.md section 6.3.
+def test_exact_cone_and_isometry_certificates_hold_on_hard_vertices() -> None:
+    """Establish two certificates only for the twelve hard decoded maps.
 
     Every basis map is a signed permutation, so every candidate is an
-    isomorphism of chain complexes and an isometry on signals. Cone acyclicity
-    and any distance-based divergence therefore take the same value on all
-    twelve hypotheses and carry zero information about which one was planted.
-    This is why ``cone_only`` and ``rtd_only`` sit at chance: not an
-    optimization failure, but a degenerate objective.
+    isomorphism of chain complexes and an isometry when one fixed map acts on a
+    signal batch. Exact cone acyclicity and this within-map distance certificate
+    therefore cannot distinguish the twelve hard vertices. This test makes no
+    claim that the differentiable soft-mixture objectives are constant and does
+    not explain the empirical ``cone_only`` or ``rtd_only`` chance rates.
     """
 
     system = build_annulus_map_system(6)
@@ -127,8 +127,9 @@ def test_cone_and_rtd_signals_are_constant_across_the_whole_hypothesis_space() -
     )
     assert set(acyclic) == {(0, 0, 0, 0)}
 
-    # Every candidate preserves pairwise distances, so the paired dissimilarity
-    # matrices RTD consumes are identical and the divergence cannot discriminate.
+    # Each fixed hard candidate preserves within-batch pairwise distances. The
+    # historical RTD-style training loss is a different, target-conditioned
+    # cross-example construction, so no constancy claim about that loss follows.
     generator = torch.Generator().manual_seed(20260823)
     signals = torch.randn(
         (48, system.num_edges), generator=generator, dtype=torch.float64

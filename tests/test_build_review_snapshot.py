@@ -92,8 +92,43 @@ def test_review_note_records_the_commit_and_the_manifest_hash(tmp_path: Path) ->
         in note
     )
     assert "tests and CPU campaign also require no GPU" in prose
+    assert "uv sync --frozen --extra dev --python 3.12.3" in note
+    assert "CUDA_VISIBLE_DEVICES=-1" in note
+    assert "pip install" not in note
     assert "cannot be rerun from this snapshot alone" in prose
     assert "Every number in the manuscript is recomputable" not in note
+
+
+def test_requested_revision_uses_that_revisions_manifest(tmp_path: Path) -> None:
+    """Never label an old archive with the current HEAD manifest."""
+
+    project = _repository(tmp_path)
+    old_revision = subprocess.run(
+        ("git", "rev-parse", "HEAD"),
+        cwd=project,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    old_manifest = (project / "results" / "MANIFEST.json").read_bytes()
+    (project / "results" / "MANIFEST.json").write_text(
+        json.dumps({"files": [{"path": "new-only.json"}]}), encoding="utf-8"
+    )
+    subprocess.run(("git", "add", "-A"), cwd=project, check=True)
+    subprocess.run(("git", "commit", "-qm", "new manifest"), cwd=project, check=True)
+
+    summary = MODULE.build_snapshot(
+        project_root=project,
+        output=tmp_path / "old.tar.gz",
+        revision=old_revision,
+    )
+
+    assert summary["revision"] == old_revision
+    assert summary["evidence_files"] == 2
+    assert (
+        summary["manifest_sha256"]
+        == __import__("hashlib").sha256(old_manifest).hexdigest()
+    )
 
 
 def test_a_dirty_worktree_is_refused(tmp_path: Path) -> None:

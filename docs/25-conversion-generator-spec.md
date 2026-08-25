@@ -1,8 +1,20 @@
-# Specification: a generator where conversion is actually learnable
+# Historical specification for a learnable conversion generator
 
-Status: **specification**. The blocking analysis and the identifiability gate in
-§4 have been run and are reported with their numbers. The generator itself is not
-built.
+> **SUPERSEDED DESIGN SPECIFICATION — 2026-08-24.** The generator was built, but
+> the audited campaign fits a separate degree-changing edge-to-cycle-coordinate
+> operator `W` for each topology; it does **not** execute the typed graph-to-cell
+> chain-map conversion envisioned below. The graph canonically determines its **cycle
+> subspace**, not a unique cycle-basis coordinate system. The implemented
+> generator uses NetworkX `cycle_basis`, whose basis and coordinate ordering are
+> noncanonical. Statements below calling the basis canonical should be read as
+> statements about the cycle subspace. This is a historical design specification;
+> the audited campaign interpretation is in [`docs/28`](28-conversion-campaign-results.md)
+> and [`docs/29`](29-audit-corrections.md).
+
+Status: **historical specification**. The blocking analysis, identifiability
+gate, and generator implementation exist. Sections below preserve the original
+typed-conversion design intent; they are not a description of the audited
+edge-to-cycle lifting experiment.
 
 This document specifies the one piece of data infrastructure that every real test
 of the project's original idea is blocked behind.
@@ -74,9 +86,11 @@ frame; edge features carry a scalar cochain plus noise.
 
 ### 3.3 Cell layer — determined by the graph
 
-The 2-cells are a **cycle basis of the graph**. This is canonical: the graph
-determines its own cycle space, so the cell complex is a function of the graph
-rather than an independent draw.
+The 2-cells are a **NetworkX-chosen cycle basis of the graph**. The graph
+canonically determines its cycle subspace, while `cycle_basis` supplies one
+noncanonical basis and coordinate ordering. The cell complex is therefore a
+deterministic function of the graph and the generator algorithm rather than an
+independent draw.
 
 Face activity is a function of graph observables — for example, a face is active
 when the circulation of the edge cochain around its cycle exceeds a threshold.
@@ -121,7 +135,7 @@ All the variation lives in the kernel. Any claim about unreachable structure
 needs a conversion that is *not* an inclusion, and this spec does not provide
 one.
 
-## 5. What this unblocks
+## 5. What the historical specification intended to unblock
 
 In dependency order:
 

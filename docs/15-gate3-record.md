@@ -247,7 +247,7 @@ map, and no direct mapping-cone objective was trained.
   structural loss with relative improvement), explicitly not evidence for
   the mechanism — its own label already says so.
 - Per the plan, the mechanism needs a revised benchmark/model design
-  before structural claims advance: a task family where exactness damage
+  before structural claims advance: a task family where chain-map or induced-homology damage
   is the bottleneck (e.g., tasks whose labels are homology-determined with
   continuous corruption of the chain data, so cone/holonomy defects are
   the natural sufficient statistic), and a consistency surrogate without

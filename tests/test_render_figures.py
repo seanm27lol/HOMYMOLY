@@ -46,7 +46,9 @@ def test_recovery_figure_is_well_formed_and_reads_its_values_from_the_summary() 
     assert root.tag.endswith("svg")
     # Every declared ablation appears, and none is silently dropped.
     for name in ("task_only", "cone_only", "combined", "rtd_only"):
-        assert name in markup
+        assert MODULE.ABLATION_LABELS[name] in markup
+    assert "cone proxy only" in markup
+    assert "RTD-style surrogate only" in markup
     # The chance annotation is read from the summary, not hardcoded.
     assert "chance 0.0833" in markup
     # Structure-only controls are drawn in the second categorical slot.
@@ -57,7 +59,7 @@ def test_recovery_figure_groups_controls_after_supervised_objectives() -> None:
     markup = MODULE.figure_recovery(_summary())
 
     positions = {
-        name: markup.index(f">{name}<")
+        name: markup.index(f">{MODULE.ABLATION_LABELS[name]}<")
         for name in ("task_only", "combined", "cone_only", "rtd_only")
     }
     assert positions["task_only"] < positions["combined"]
@@ -141,6 +143,11 @@ def test_conversion_campaign_names_proxy_objectives_as_surrogates() -> None:
                 ("rtd", [-0.2, 0.3]),
             )
         },
+        "routing": {
+            "decision": "H5-WITHDRAWN-SENTINEL",
+            "historical_pseudoreplicated_interval_95": [-999.0, 999.0],
+            "topology_clustered_descriptive_interval_95": [-998.0, 998.0],
+        },
     }
 
     markup = MODULE.figure_campaign(campaign)
@@ -149,11 +156,22 @@ def test_conversion_campaign_names_proxy_objectives_as_surrogates() -> None:
     assert "RTD-inspired distance surrogate" in markup
     assert "exp(-2·σ_min(W)); not mapping-cone homology" in markup
     assert "normalized pairwise-distance MSE" in markup
-    assert "Boundary compatibility improves" in markup
+    assert "Boundary compatibility improves edge-to-cycle lifting" in markup
     assert "B₁Wᵀ = 0 (frozen key: exact)" in markup
     assert ">exact<" not in markup
     assert "no detected improvement" in markup
     assert ">inert<" not in markup
+    assert (
+        "eligible seed jointly fixes topology, predictors, and training noise" in markup
+    )
+    assert "same-family replication" in markup
+    assert "Locked prospectively after outcome-informed weight selection" in markup
+    assert "one execution deviation disclosed" in markup
+    assert "preregistered" not in markup
+    assert "one value per topology" not in markup
+    assert "learned conversion" not in markup
+    assert "H5-WITHDRAWN-SENTINEL" not in markup
+    assert "-999" not in markup
 
 
 def test_committed_figures_match_a_fresh_render(tmp_path: Path) -> None:

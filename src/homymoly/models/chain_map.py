@@ -85,8 +85,8 @@ class ExactChainMapLayer(nn.Module):
 
     The source boundary has shape ``[C0, C1]`` and the target boundary has
     shape ``[D0, D1]``. Parameters are coordinates in the nullspace of the
-    linear chain-map constraint. This makes exactness architectural rather
-    than a soft penalty.
+    linear chain-map constraint. This makes chain-map compatibility
+    architectural rather than a soft penalty.
     """
 
     def __init__(

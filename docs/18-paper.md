@@ -1,4 +1,4 @@
-# Boundary Compatibility, Not Acyclicity: Which Structural Constraints Improve a Learned Conversion Between Structured Representations
+# Boundary Compatibility, Not Acyclicity: Structural Penalties for Learning an Edge-to-Cycle Lifting
 
 **Sean Mahdavian**
 
@@ -12,50 +12,60 @@ Phillips Exeter Academy · ORCID
 Moving data between structured representations — graphs, cell complexes, sheaves
 — can lose information, and homological algebra supplies exact tools for measuring
 what a map destroys. It is natural to hope that related constraints can also
-*improve* a learned conversion when used as training objectives. We test a
-boundary-of-boundary penalty and two motivated surrogates. Their behavior
-differs, and two cheap analytic diagnostics illuminate the observed differences.
+*improve* a learned transformation when used as training objectives. We study
+two different tasks: selection of a genuine degree-preserving chain map on an
+annulus, and a primary continuous edge-to-cycle-coordinate lifting. The latter
+fits `W: R^E -> R^F`; its transpose is a candidate degree-2 differential, not a
+chain map between complexes. We test a boundary-of-boundary penalty and two
+motivated surrogates. Their behavior differs, and cheap analytic diagnostics
+illuminate the observed differences.
 
 In a prospectively locked same-generator-family replication — with a disclosed
 sum-versus-mean implementation deviation in the compatibility penalty — on 29
-topologies of a generator built so that conversion is learnable and structural
-defects vary, we fit one separate map per topology. The hypotheses, directions,
+eligible generator seeds, each a joint topology/data/noise realization, we fit
+one separate map per topology. The hypotheses, directions,
 endpoint, training size, and weights were informed by earlier work on the same
 family, whose seed identities were not retained; this is not an independent
 confirmation or pristine preregistration. A
-**boundary-compatibility** penalty improves a learned conversion by roughly two orders of
-magnitude in held-out error: Bonferroni-adjusted interval [−2.802, −1.458] on the
-paired `log10` ratio. The penalty is not leaked supervision — it is built from
-the graph the model already observes, while the answer is withheld. In a
+**boundary-compatibility** penalty improves held-out recovery of the learned
+lifting: Bonferroni-adjusted interval [−2.802, −1.458] on the
+paired `log10` ratio. Paired responses encode `B2`; the structural penalty itself
+does not directly use `B2` or the responses, but uses `B1`, which determines the
+target cycle subspace and is strong side information that the unpenalized
+baseline ignores. In a
 prespecified secondary analysis, **defect covaries with held-out error along the
-compatibility-penalty path**: the mean within-topology Pearson correlation is
+compatibility-penalty path**: the mean within-seed Pearson correlation is
 +0.854, with an unadjusted 95% interval [+0.831, +0.877], and is positive in 29
-of 29 topologies. The common penalty weight drives both quantities, and the nine
+of 29 eligible seeds. The common penalty weight drives both quantities, and the nine
 fits within a topology are not independent observations; this path result does
 not establish independent predictive information or off-path calibration.
 
 The same campaign rejects one surrogate objective and finds no improvement from
 another. A **singular-value cone surrogate**, `exp(−2·σ_min(W))`, does not
-merely fail to help; it harms, adjusted interval [+0.102, +0.277]. For an
+merely fail to help; it harms the lifting, adjusted interval [+0.102, +0.277]. For an
 **RTD-inspired normalized pairwise-distance surrogate**, the adjusted interval
-[−0.003, +0.039] includes zero. These are not mapping-cone homology and the
+[−0.003, +0.039] includes zero. The latter asks an intentionally lossy lifting to
+preserve full source geometry. These are not mapping-cone homology and the
 published RTD/SRTD statistic, respectively.
 
 We identify two distinct mechanisms. In a second setting — selection among a
 fixed family of twelve maps on a cellular annulus — every **hard decoded map** is
-a signed permutation and therefore an isomorphism. Exact cone acyclicity cannot
+a chain isomorphism and therefore a quasi-isomorphism. Exact cone acyclicity cannot
 distinguish those twelve vertices: the cone-only model identifies at chance while
 all 6,000 hard decoded predictions have acyclic cones. Its differentiable
 soft-mixture objective can vary during training, so this is a limitation of the
 hard certificate, not a proof that the optimization signal is constant. In the
-learned-conversion setting the singular-value surrogate monotonically rewards
+continuous-lifting setting the singular-value surrogate monotonically rewards
 inflating the smallest singular value beyond its ground-truth value and imposed a
-harmful bias here. These pre-fit observations are diagnostics, not necessary or
-sufficient conditions for improved finite-sample prediction.
+harmful bias here. These mechanisms were identified retrospectively during the
+post-campaign audit. They require no fitting and are proposed as screens for
+future objectives, but they were not prospective checks for the reported
+campaigns and are neither necessary nor sufficient conditions for improved
+finite-sample prediction.
 
 We do not claim that homological structure teaches a model. We claim that one
-specific penalty, derivable from the input, measurably improves a learned
-conversion in this same-family replication. Along its prespecified weight path,
+specific penalty, derivable from the input, measurably improves an edge-to-cycle
+lifting in this same-family replication. Along its prespecified weight path,
 compatibility defect covaries with held-out error; the two tested surrogates do
 not improve this task.
 
@@ -63,15 +73,20 @@ not improve this task.
 
 ### 1.1 The question
 
-Given two structured representations of the same object, a conversion between
-them is a **typed map**: a family of linear maps, one per degree, required to
-commute with the boundary operators. Homological algebra measures what such a map
-destroys (the kernel of the induced map on homology), what it cannot reach (the
-cokernel), and whether it is an isomorphism (the acyclicity of its mapping cone).
+Two mathematically different learning tasks must be separated. A conversion
+between chain complexes is a **typed map**: one degree-preserving component per
+degree, satisfying the chain-map equations. The annulus experiment selects such
+a map from a finite family. Homological algebra measures what a chain map
+destroys (the kernel of its induced homology map), cannot reach (the cokernel),
+and whether it is a quasi-isomorphism (equivalently, whether its mapping cone is
+acyclic).
 
-The practical hope is that these measurements can serve as training signal — that
-attaching one as a loss term will make a learned conversion better. This paper
-asks which of them, if any, does.
+The primary continuous experiment is narrower. It learns
+`W: R^E -> R^F`, from edge signals to coordinates in a chosen cycle basis;
+`W^T: R^F -> R^E` is a candidate degree-2 differential. This degree-changing
+lifting is not itself a typed chain map or a conversion between two complexes.
+The practical question is whether structural penalties on its implied complex
+improve recovery of that lifting.
 
 ### 1.2 What is and is not new
 
@@ -90,8 +105,8 @@ structure a learned map should respect.
 Our contribution is narrow and largely negative-with-a-mechanism:
 
 1. A prospectively specified analysis in a **same-generator-family replication**
-   showing that an input-derivable **boundary-compatibility penalty** improves a
-   learned conversion under scarce paired data, subject to the disclosed
+   showing that an input-derivable **boundary-compatibility penalty** improves an
+   edge-to-cycle lifting under scarce paired data, subject to the disclosed
    protocol implementation deviation and outcome-informed design.
 2. A prespecified secondary result, reported with an unadjusted interval, that
    the **compatibility defect covaries with held-out damage along the fixed
@@ -99,14 +114,14 @@ Our contribution is narrow and largely negative-with-a-mechanism:
 3. Multiplicity-controlled primary results showing harm from a
    **singular-value cone surrogate** and no detected improvement from an
    **RTD-inspired normalized pairwise-distance surrogate**.
-4. Two **pre-fit diagnostic heuristics** for detecting constant or
-   target-misaligned signals, and a benchmark generator in which homological
-   defects genuinely vary.
+4. Two **retrospective no-fit diagnostic heuristics**, proposed as prospective
+   screens for future work, for detecting constant or target-misaligned signals,
+   and a benchmark generator in which homological defects genuinely vary.
 
 This is not a new theorem or algorithm for equality-constrained least squares or
 Hodge decomposition. Its narrow contribution is an evidence-traceable evaluation
 of an input-derived cycle-subspace penalty on one deterministic synthetic
-conversion family. We make no claim of priority over any cited system, and §3 is
+lifting family. We make no claim of priority over any cited system, and §3 is
 positioning rather than systematic review.
 
 ## 2. Background and definitions
@@ -136,13 +151,16 @@ The left-hand side is the **chain-map defect**. Our historically named
 `ExactChainMapLayer` parameterizes `(F0, F1)` inside the nullspace of that
 expression, so the chain-map equation holds exactly rather than being penalized.
 This use of “exactly” means equality to numerical tolerance; it does **not** mean
-that a sequence is exact in the algebraic sense `im d_(n+1) = ker d_n`.
+that a sequence is exact in the algebraic sense `im d_(n+1) = ker d_n`. That
+utility layer is not used in either campaign reported here: the annulus model
+mixes a fixed basis of exact chain maps, while the continuous lifting uses a
+soft penalty.
 
 ### 2.3 The implied complex
 
 This paper's central move. When a model learns a lift `W` from edge signals to
-face signals, `Wᵀ` is a candidate face boundary. The learned conversion therefore
-**implies a complex** with boundaries `(B1, Wᵀ)`, and that complex is legitimate
+cycle-basis coordinates, `Wᵀ` is a candidate face boundary. The learned lifting
+therefore **implies a complex** with boundaries `(B1, Wᵀ)`, and that complex is legitimate
 only if `B1 Wᵀ = 0`. Every structural term below is written as a condition on the
 implied complex rather than bolted on:
 
@@ -194,11 +212,11 @@ Diffusion [7] and Knowledge Sheaves [8] for learned sheaf transports; DeepMoE
 
 Categorical deep learning [9] argues architectures are usefully described as
 algebras over a theory, and functor learning [10] gives an instance where the
-learned object must preserve structure rather than merely fit data. Our
-separate nullspace-constrained annulus map sits in that tradition operationally;
-the continuous conversion experiment instead optimizes an unconstrained matrix
-with a finite compatibility penalty. §10 states plainly that neither validates a
-categorical claim.
+learned object must preserve structure rather than merely fit data. Our annulus
+model forms a softmax convex mixture of twelve fixed chain-map templates, so its
+chain law is inherited from that basis; the continuous lifting experiment
+instead optimizes an unconstrained matrix with a finite compatibility penalty.
+§10 states plainly that neither validates a categorical claim.
 
 Equality-constrained least squares is classical: Björck [15] surveys constrained
 least-squares methods, and Eldén [16] develops a direct method for the
@@ -208,15 +226,15 @@ Schaub [18] connect edge flows and higher-order cell-complex structure. These
 works explain why constraining or shrinking a linear estimator toward a correct
 cycle subspace can reduce variance. Our contribution is not that mechanism; it
 is the controlled evaluation and audit trail for deriving the soft penalty from
-the observed input in this conversion generator.
+the observed input in this lifting generator.
 
 ## 4. Two settings
 
 ### 4.1 Selection over a fixed family
 
 <figure>
-  <img src="figures/architecture.svg" alt="Architecture and data flow of the identifiable typed-map experiment: a planted group element, a marker-only selector, a fixed twelve-element basis, the nullspace-constrained chain-map layer, and four scored outputs." width="680">
-  <figcaption><strong>Figure 1. The selection setting.</strong> A group element is planted in a six-sector cellular annulus (12 vertices, 18 edges, 6 faces, Betti (1, 1, 0)). The selector observes only identifying markers and never sees the target complex. It chooses one member of a fixed twelve-element basis, and the resulting typed map is scored four ways. The chain-map constraint is structural — it holds for every parameter value — so the residual is a numerical check, not a learned objective.</figcaption>
+  <img src="figures/architecture.svg" alt="Architecture and data flow of the identifiable typed-map experiment: a planted group element, a selector over all source node and edge features, a fixed twelve-map basis, its softmax convex mixture, and four scored outputs." width="680">
+  <figcaption><strong>Figure 1. The selection setting.</strong> A group element is planted in a six-sector cellular annulus (12 vertices, 18 edges, 6 faces, Betti (1, 1, 0)). The flattened MLP consumes all source node and edge features; identifying markers carry the target identity among nuisance channels. No per-example target signals or labels enter selector inference, but the fixed annulus boundaries and twelve action templates are built into the hypothesis class, and target signals supervise the declared training objectives. During training the model forms a softmax convex mixture of the twelve fixed signed chain maps; hard evaluation uses the argmax vertex. Every mixture satisfies the chain law because every template does, so the residual is a numerical check rather than a learned objective.</figcaption>
 </figure>
 
 Twelve dihedral maps act on the annulus. Each is built as a **signed permutation
@@ -225,12 +243,22 @@ orientation sign, `F2` is fixed by matching the mapped boundary to a unique
 oriented face. We verify numerically that all twelve satisfy `Fᵀ F = I` at
 degrees 0, 1, and 2.
 
+The executed `IdentifiableTypedMapModel` encodes the complete source node and
+edge feature tensors with a flattened MLP, predicts twelve logits, and uses
+their softmax weights to linearly mix the fixed degree-wise templates. It does
+not instantiate `ExactChainMapLayer` or a generic nullspace parameterization.
+The fixed source/target boundaries and all twelve action templates are registered
+inside the model; only per-example target signals and labels are absent from the
+selector's forward inputs.
+An argmax over the same logits supplies the hard decoded transformation used by
+the discrete accuracy and exact-cone evaluations.
+
 That property determines the exact hard-map certificate in this setting; it does
 not determine the behavior of soft mixtures during training (§5).
 
-### 4.2 Learned continuous conversion
+### 4.2 Learned continuous edge-to-cycle lifting
 
-A generator in which conversion is genuinely learnable. Its design is forced by a
+We use a generator in which the lifting is learnable. Its design is forced by a
 conflict: the routing benchmark used elsewhere in this project deliberately hides
 cell structure from the graph observation so a router cannot shortcut, which
 makes conversion impossible by construction. Routing needs targets *not*
@@ -239,10 +267,10 @@ serve both, so this is a separate one.
 
 - The **2-cells are a cycle basis of the graph**, so the cell complex is
   determined by the graph rather than drawn beside it. Graph size and density
-  vary, so the cycle rank varies, and the defect of a conversion varies with it.
+  vary, so the cycle rank varies, and the lifting defect varies with it.
 - **Face activity thresholds the circulation** of the edge cochain around each
   cycle — exactly `B2ᵀ x1`. Integrating an edge feature around a cycle is the
-  operation a converter must perform.
+  operation the lifting must perform.
 - **Sheaf transport** combines an endpoint frame difference with a per-edge
   twist. The frame difference telescopes to the identity around any closed cycle,
   so without the twist every holonomy would be trivially zero; the twist rides a
@@ -250,9 +278,13 @@ serve both, so this is a separate one.
   twice.
 
 **The learning task.** For each topology, fit a separate
-`W: R^E → R^F` with the cycle basis `B2` **withheld**; there is no shared model
-that generalizes `W` to a new topology. `B1` is observable because it is the
-graph. Ground truth is `W = B2ᵀ`, a median of 242 free parameters across the 29
+`W: R^E → R^F` from edge signals to cycle-basis coordinates. Its transpose
+`Wᵀ: R^F → R^E` is a candidate `d2`; `W` is degree-changing and is not a typed
+chain map between complexes. `B2` is not supplied explicitly to the optimizer,
+but paired responses generated as `Y = X B2 + epsilon` provide ordinary
+supervised signal about it. There is no shared model that generalizes `W` to a
+new topology. `B1` is observable because it is the graph. Ground truth is
+`W = B2ᵀ`, a median of 242 free parameters across the 29
 eligible topologies (range 30–770). The generator uses NetworkX
 `cycle_basis`, whose basis coordinates are noncanonical. The
 boundary-compatibility objective identifies the cycle **subspace**, not an
@@ -260,15 +292,59 @@ arbitrary choice of basis coordinates; paired targets supply the coordinate
 convention for each fitted topology. The generator enforces `B1 B2 = 0`; the
 degree-1 kernel of the canonical inclusion equals the graph's cycle rank.
 
-## 5. Pre-fit diagnostics for structural objectives
+This non-explicit provision is not an information-theoretic barrier. With the
+deterministic generator algorithm known, the NetworkX basis `B2` is algorithmically
+recoverable from the observed graph, and `B1` alone determines the target cycle
+subspace `ker B1`. The penalty is therefore strong input-derived structural side
+information, not direct use of `B2` or response labels. The unpenalized baseline
+ignores `B1`. The campaign omits stronger graph-aware analytic comparators: one
+could reconstruct the generator's cycle basis directly, parameterize the rows of
+`W` in `ker B1`, or project an estimator into that subspace with a Hodge/nullspace
+operator. The reported contrast is against a graph-blind full-matrix baseline,
+not against an optimal cycle-basis or Hodge oracle.
 
-Two inexpensive checks can expose obvious mismatches before training:
+For each eligible seed, the executed estimation problem is
 
-1. **Selection variability:** does the proposed quantity vary over the reachable
-   candidates? A constant objective cannot distinguish among them.
-2. **Target alignment:** is the ground-truth map at, or locally favored by, the
-   objective's optimum? If not, the objective introduces bias away from the
-   target.
+    X_train[i,:] ~ N(0, I_E)
+    Y_train = X_train B2 + epsilon,   epsilon[i,:] ~ N(0, 0.02^2 I_F)
+    X_test[i,:] ~ N(0, I_E),         Y_test = X_test B2
+    W_hat_lambda = argmin_W mean((X_train W^T - Y_train)^2) + lambda R(W).
+
+The optimizer is Adam for 2,500 steps at learning rate 0.05, initialized at
+`W = 0` in float64. The held-out target is noiseless, so its MSE evaluates map
+recovery. For the distance surrogate, `R(W)` forms the two `16 x 16` matrices
+`cdist(X_train, X_train)` and
+`cdist(X_train W^T, X_train W^T)`, including their zero diagonals; each matrix is
+divided by its own full-matrix mean plus `1e-12`, and the elementwise squared
+difference is averaged.
+
+The sample geometry makes the regularization problem deliberately data-scarce.
+With `N_train = 16`, the unconstrained row-wise linear system has `E > 16` in 21
+of 29 eligible seeds. For a connected graph, each row in the compatibility-zero
+set lies in the `F`-dimensional cycle space; `F <= 16` in 24 seeds. Sixteen seeds
+therefore move from an underdetermined ambient system (`E > 16`) to a
+potentially identifiable hard cycle-subspace system (`F <= 16`). Median
+dimensions are `E = 23`, `F = 11`; five seeds still have `F > 16`. The executed finite
+penalty does **not** perform that hard dimension reduction, but it shrinks toward
+the lower-dimensional subspace. A large gain is therefore plausible as
+scarce-probe system identification, without implying a general advantage in
+well-sampled regimes.
+
+## 5. Retrospective no-fit diagnostics for structural objectives
+
+During the post-campaign audit we used two inexpensive checks that require no
+training. They were not used prospectively to select the reported objectives or
+predict the reported results. We propose them as pre-fit screens for future
+structural objectives:
+
+1. **Sample variability:** does the proposed quantity vary over a supplied
+   candidate sample? No detected variation means that sample offers no evidence
+   of discrimination; it does not prove class-wide constancy unless the sample
+   exhausts the class.
+2. **Truth-relative ordering:** is the known truth's score no higher than every
+   supplied alternative? If not, the objective favors at least one supplied
+   alternative over the truth. This does not locate a local or class-wide
+   optimum.
 
 These are diagnostic heuristics, not necessary or sufficient conditions for
 better held-out prediction. In finite samples, even a target-misaligned
@@ -299,7 +375,7 @@ selectors vary by example, and soft mixtures are non-orthogonal. It consumes
 target batch structure. Accordingly, the empirical chance accuracies in §7.4
 cannot be deduced from a constancy theorem for either soft objective.
 
-### 5.2 The singular-value surrogate is target-misaligned
+### 5.2 The continuous surrogates are target-misaligned
 
 In §4.2 the truth `W = B2ᵀ` has full row rank. Nevertheless,
 `exp(−2·σ_min(W))` decreases monotonically as the smallest singular value
@@ -308,21 +384,30 @@ rewards singular-value inflation. The term therefore imposes a directional bias.
 The frozen experiment establishes that this bias harmed held-out error at the
 tested weight; the analytic observation alone would not have proved harm.
 
+The RTD-inspired normalized pairwise-distance term has a different mismatch. It
+asks the source edge vectors `X` and lifted vectors `X Wᵀ` to preserve normalized
+pairwise geometry. The truth `W = B2ᵀ` is intentionally lossy: because `F < E`,
+it discards cut-space components and cannot preserve the full source geometry.
+The surrogate therefore opposes a defining property of the target lifting. Its
+no-detected-improvement result concerns this target-misaligned surrogate only and
+says nothing negative about published RTD or SRTD.
+
 ### 5.3 Operational screen
 
-`screen_structural_term` evaluates a candidate term on the ground truth and on
-a sample of the hypothesis class, returning the operational labels
-`truth-near-minimum-and-varies`, `truth-not-near-minimum`, or
-`constant-over-the-hypothesis-class`. The labels are prompts for inspection,
-not theorems about generalization. The exact annulus constancy result can be
-established without fitting; all effect-size and held-out-performance claims
-come from the reported campaigns.
+`screen_structural_term` evaluates a candidate term on a known truth and a
+supplied candidate sample, returning the operational labels
+`truth-no-higher-than-supplied-candidates-and-varies`,
+`truth-higher-than-a-supplied-candidate`, or
+`constant-over-supplied-candidates`. The labels are sample-relative prompts for
+inspection, not theorems about the full hypothesis class or generalization. The
+exact annulus class-wide constancy result is instead established analytically;
+all effect-size and held-out-performance claims come from the reported campaigns.
 
 ## 6. Experimental design
 
 ### 6.1 Prospectively locked same-family replication
 
-The conversion campaign was frozen in a protocol document committed **before
+The historically named conversion campaign for the edge-to-cycle lifting was frozen in a protocol document committed **before
 execution**: SHA-256
 `503cc282f40d118ba1739c2afe1bfc77eaf2b1733baaddb91c0c3363e75ae2b8`, committed at
 `d5d18af`, campaign run at `11644c6` from a clean worktree. No endpoint,
@@ -349,7 +434,9 @@ disjoint generator family or seed block.
 | eligible | **29**; seed 20261025 had fewer than three faces and was skipped, **not replaced** |
 | training pairs | 16 |
 | held-out pairs | 3072 |
-| observation noise | 0.02 |
+| training-label noise | Gaussian, sigma 0.02 |
+| held-out target | noiseless `B2ᵀ x` |
+| primary statistical unit | eligible generator seed: joint topology, data, and noise realization (`n = 29`) |
 | optimiser | Adam, lr 0.05, 2500 steps, `W` initialised to zeros, float64 |
 | weights | `exact` 3.0, `cone` 0.01, `rtd` 0.1 |
 
@@ -363,11 +450,19 @@ historical labels defined and qualified in §2.3.
 
 ### 6.2 Endpoints and decisions
 
-Primary endpoint is the paired quantity, one value per topology:
+Primary endpoint is the paired quantity, one value per eligible generator seed:
 
     d = log10( held-out MSE with term / held-out MSE without )
 
-Negative means the term improves the model. Pairing removes topology variance.
+Negative means the term improves the lifting. Each seed jointly determines the
+topology, training and evaluation inputs, and training noise; the penalized and
+unpenalized fits share that realization. Pairing therefore controls the shared
+realization in each contrast but does not remove topology variance. The estimand
+is the mean paired log ratio over eligible generator seeds, and the Student-t
+interval treats the 29 seed-level replicates as exchangeable. Training responses
+contain Gaussian noise with sigma 0.02, whereas held-out targets are noiseless,
+so held-out MSE measures recovery of the planted linear lifting rather than
+prediction of fresh response noise.
 
 **Multiplicity is adjusted.** The three primary contrasts form one family; the
 governing interval is Bonferroni-corrected to two-sided 98.333%, giving a
@@ -376,16 +471,20 @@ and the adjusted interval governs. An exact two-sided sign test is reported as
 distribution-free sensitivity and governs nothing.
 
 H4 and H5 were prespecified but are **secondary analyses outside this
-multiplicity-controlled family**; their Student-t 95% intervals are unadjusted.
-H4 measures the mean within-topology Pearson correlation between the log
-boundary-compatibility defect and log held-out error over nine fixed weights for
-the historically named `exact` objective. All nine fits within a topology reuse
+multiplicity-controlled family**. H4 has an unadjusted Student-t 95% interval;
+H5 has no valid inferential interval or decision. H4 measures the mean
+within-seed Pearson correlation, over nine fixed weights for
+the historically named `exact` objective, between
+`log10(max(||B1 Wᵀ||_F, 1e-30))` and
+`log10(max(held-out MSE, 1e-300))`. The reported defect is a
+Frobenius norm; it is distinct from the elementwise mean-square compatibility
+term used during training. All nine fits within a seed reuse
 the same generated data and initialization and differ in the common driver,
 penalty weight `lambda`. They are points on one deterministic regularization
 path, not nine independent observations.
 
 The frozen H5 endpoint contains a design error discovered during audit. It
-divides the selected route's error by the per-trial minimum of those same two
+divides the selected route's error by the per-row minimum of those same two
 route errors. Consequently every ratio is at least one and every `log10` ratio
 is nonnegative, while the decision rule required an interval strictly below
 zero. Support was impossible by construction. We preserve the result for
@@ -414,7 +513,7 @@ SHA-256 digests; all 296 verify against the on-disk artifacts.
 
 ## 7. Results
 
-### 7.1 Boundary compatibility improves a learned conversion
+### 7.1 Boundary compatibility improves an edge-to-cycle lifting
 
 | objective | weight | 95% interval | Bonferroni 98.33% | sign test | decision |
 |---|---:|---|---|---:|---|
@@ -424,7 +523,7 @@ SHA-256 digests; all 296 verify against the on-disk artifacts.
 
 <figure>
   <img src="figures/fig-campaign.svg" alt="Forest plot of three structural objectives. The boundary-compatibility interval lies below zero, the singular-value surrogate interval lies above zero, and the RTD-inspired distance-surrogate interval crosses zero." width="680">
-  <figcaption><strong>Figure 2. Three structural objectives under one protocol.</strong> Paired <code>log10</code>(held-out error with term / without), one value per topology, 29 topologies. The thick bar is the Bonferroni-adjusted 98.33% interval governing the primary decision; the thin bar is the unadjusted 95% interval. Boundary compatibility improves held-out error; the singular-value surrogate harms it; the RTD-inspired distance surrogate shows no detected improvement. The short labels in the graphic reproduce frozen campaign keys and do not identify <code>exact</code> with sequence exactness, <code>cone</code> with mapping-cone homology, or <code>rtd</code> with published RTD. Generated from <code>results/campaigns/conversion-campaign-v1-corrected.json</code>.</figcaption>
+  <figcaption><strong>Figure 2. Three structural objectives under one protocol.</strong> Paired <code>log10</code>(held-out error with term / without), one value per eligible generator seed, 29 joint topology/data/noise realizations. The thick bar is the Bonferroni-adjusted 98.33% interval governing the primary decision; the thin bar is the unadjusted 95% interval. Boundary compatibility improves held-out map recovery; the singular-value surrogate harms it; the RTD-inspired distance surrogate shows no detected improvement. The short labels in the graphic reproduce frozen campaign keys and do not identify <code>exact</code> with sequence exactness, <code>cone</code> with mapping-cone homology, or <code>rtd</code> with published RTD. Generated from <code>results/campaigns/conversion-campaign-v1-corrected.json</code>.</figcaption>
 </figure>
 
 Median `log10` ratio for boundary compatibility is −2.858, roughly a
@@ -432,10 +531,13 @@ Median `log10` ratio for boundary compatibility is −2.858, roughly a
 interval lies far from zero.
 
 The executed term is `mean((W B1ᵀ)²)`, which is zero at the truth because
-`B2ᵀ B1ᵀ = (B1 B2)ᵀ = 0`. **It is not leaked supervision**: `B1` is the graph,
-which the model observes; `B2` is the answer, which is withheld. Training still
-optimizes all `F×E` entries of `W`; weight 3.0 penalizes but does not prohibit
-off-cycle components.
+`B2ᵀ B1ᵀ = (B1 B2)ᵀ = 0`. It does not directly use `B2` or response labels, but
+it uses `B1`, which determines the target cycle subspace; the unpenalized
+baseline ignores this strong structural side information. With the generator
+algorithm known, `B2` is algorithmically recoverable from the graph, and no
+analytic cycle-basis, nullspace, or Hodge-projection oracle was included.
+Training still optimizes all `F×E` entries of `W`; weight 3.0 penalizes but does
+not prohibit off-cycle components.
 
 ### 7.2 Secondary analysis: covariation along the compatibility-penalty path
 
@@ -445,9 +547,9 @@ a map's boundary-compatibility defect and its held-out error along that path.
 
 | quantity | value |
 |---|---|
-| mean within-topology correlation | **+0.854** |
+| mean within-seed correlation | **+0.854** |
 | 95% interval | **[+0.831, +0.877]** |
-| topologies with positive correlation | **29 / 29** |
+| eligible seeds with positive correlation | **29 / 29** |
 
 This prespecified analysis is outside the three-contrast multiplicity family, so
 its 95% interval is unadjusted. The same data and initialization are reused for
@@ -472,14 +574,16 @@ selection setting: exact cone acyclicity is constant across that finite class.
 
 ### 7.4 The selection setting, and why its nulls are weak
 
-On the annulus, every objective containing task or reconstruction supervision
-recovers the planted map exactly — transformation and cell-face accuracy 1.000 on
-all five seeds, map MSE at 1e-16, engineering recovery gate passed **10 of 10**
+On the annulus, all six objectives containing task or reconstruction supervision
+decode the planted transformation perfectly: transformation and cell-face
+accuracy are 1.000 on all five seeds. Their mean map MSE spans
+`2.618e-17` to `2.504e-8`. The engineering recovery gate applies only to
+`task_reconstruction` and `combined` — five seeds each — and passes **10 of 10**
 applicable runs.
 
 <figure>
-  <img src="figures/fig-recovery.svg" alt="Two-panel bar chart. Left: transformation accuracy by objective, six task- or reconstruction-supervised objectives at 1.000 and cone-only and RTD-only at the 0.0833 chance line. Right: map mean-squared error on a log scale, roughly fifteen orders of magnitude between the supervised objectives and the two single-loss controls." width="680">
-  <figcaption><strong>Figure 3. Recovery by objective in the selection setting.</strong> Mean over five seeds. Any objective carrying task or reconstruction supervision saturates; the two single-loss controls sit at chance with map errors fifteen orders of magnitude larger. The RTD-only loss consumes target batch geometry and is not an unsupervised control. Generated from <code>results/summaries/identifiable-campaign-summary.json</code>.</figcaption>
+  <img src="figures/fig-recovery.svg" alt="Two-panel bar chart. Left: transformation accuracy by objective, six task- or reconstruction-supervised objectives at 1.000 and cone-only and RTD-only at the 0.0833 chance line. Right: map mean-squared error on a log scale; supervised means span 2.618e-17 to 2.504e-8, while cone-only and RTD-only are 0.109 and 0.191." width="680">
+  <figcaption><strong>Figure 3. Recovery by objective in the selection setting.</strong> Mean over five seeds. All six objectives carrying task or reconstruction supervision have perfect decoded accuracy, with mean map MSE from <code>2.618e-17</code> to <code>2.504e-8</code>. The cone-only and RTD-only controls sit at chance with mean map MSE 0.109 and 0.191, about 7–16 orders of magnitude above the supervised range depending on the comparison. The RTD-only loss consumes target batch geometry and is not an unsupervised control. Generated from <code>results/summaries/identifiable-campaign-summary.json</code>.</figcaption>
 </figure>
 
 All 21 declared continuous contrast intervals contain zero, so adding the
@@ -511,18 +615,16 @@ making that specificity claim.
 
 The prespecified H5 accuracy endpoint is **non-informative because its decision
 rule is impossible to satisfy**. It divides the chosen route's error by the
-per-trial minimum of the cell and graph errors, so every ratio is at least one
-and every log ratio is nonnegative. An interval strictly below zero cannot
-occur. The observed interval [−0.111, +0.382] reflects sampling uncertainty
-around nonnegative observations; it is not a valid test that defect-based
-routing fails. A post hoc comparison against always-cell also contains zero, but
-it was neither the frozen endpoint nor multiplicity-adjusted and is descriptive
-only.
+per-row minimum of the cell and graph errors, so every ratio is at least one and
+every log ratio is nonnegative. An interval strictly below zero cannot occur.
 
-Descriptively, the router picks the lower-error view on **25 of 28** trials, and
-a perfect per-trial oracle buys only **1.36×** over always using the cell view
-(median 2.022 against 2.741). These observations motivate a redesigned endpoint;
-they do not rescue H5.
+The original summary had a second flaw: its 28 rows are two tested weights for
+each of only 14 topology clusters. Treating them as 28 independent observations
+and using a Student-t interval with 27 degrees of freedom is pseudoreplication.
+The formerly reported interval and 25-of-28 selection count are withdrawn from
+inferential use. The corrected record will aggregate or cluster by topology and
+report only a descriptive summary; H5 receives no decision. A redesigned,
+cluster-aware endpoint is required.
 
 A separate routing result, from a different experiment, is retained as a
 descriptive compute comparison rather than an accuracy claim.
@@ -532,11 +634,12 @@ descriptive compute comparison rather than an accuracy claim.
   <figcaption><strong>Figure 4. Trained routing inference latency on GB10.</strong> Median over 100 timed iterations averaged across five seeds; whiskers mark mean p95. Batch 64, bfloat16. All paths were timed in the plotted order inside one process, so residual thermal or allocator drift is confounded with path order. Generated from <code>results/summaries/compute-campaign.json</code>.</figcaption>
 </figure>
 
-Routed inference is **1.532 ± 0.035×** faster than dense three-expert evaluation
-and **2.269 ± 0.043×** slower than the fastest single fixed route, with lower peak
-allocated memory than dense in every seed. The defensible statement is that
-routing saves compute against dense evaluation, not that it saves compute overall
-and not that a measured defect selects the view.
+Across five seeds, the mean dense/routed speed ratio is **1.532** (Student-t 95%
+CI **[1.489, 1.575]**), and the mean routed/fastest-fixed latency ratio is
+**2.269** (95% CI **[2.215, 2.322]**). Routed peak allocated memory is below
+dense in every seed. The defensible statement is that routing saves compute
+against dense evaluation, not that it saves compute overall and not that a
+measured defect selects the view.
 
 An earlier five-seed campaign descriptively found a hard-minus-best-fixed
 accuracy margin of +0.1098, 95% interval [+0.0953, +0.1243]. That result used privileged
@@ -561,14 +664,15 @@ claim. All twelve intervals contain zero.
 
 **The precise objective matters.** In one prospectively locked same-family
 replication with a disclosed implementation deviation, boundary compatibility
-improves held-out error, a singular-value cone surrogate harms it, and an
+improves held-out recovery of an edge-to-cycle lifting, a singular-value cone
+surrogate harms it, and an
 RTD-inspired normalized pairwise-distance surrogate shows no detected
 improvement. Reporting only that
 "homological structure helps" or "does not help" would erase the distinction
 between a boundary-of-boundary penalty and two motivated but nonidentical
 surrogates.
 
-**Pre-fit inspection is useful but not dispositive.** §5's checks expose the
+**Retrospective no-fit inspection is useful but not dispositive.** §5's checks expose the
 hard-map cone constancy result and the singular-value surrogate's scale-inflating
 bias. They guide experimental design; they neither predict an effect size nor
 replace held-out evaluation.
@@ -590,19 +694,46 @@ dimension `F` for these connected topologies. The executed finite-weight
 regularizer merely shrinks off-cycle components; it does not hard-constrain the
 optimizer, reduce the parameter count from `F×E`, or prove exactness. The result
 shows that this cycle-subspace bias helped the generated targets and was
-available from the observed graph. Whether the gain is specific to this bias
-rather than generic regularization remains open.
+available from the observed graph. This is strong side information: the
+unpenalized comparator ignores `B1`, while a generator-aware cycle-basis oracle
+or Hodge/nullspace estimator could use it even more directly. Whether the gain
+persists against those graph-aware comparators or a tuned generic regularizer
+remains open.
+
+**The effect occurs in a favorable scarce-probe geometry.** With only 16 probes,
+21 of 29 ambient systems have `E > 16`; the hard cycle-subspace dimension is at
+most 16 in 24 seeds, and 16 seeds cross from `E > 16` to `F <= 16`. The finite
+penalty does not literally reduce the fitted `F x E` parameter count, but its
+shrinkage targets the subspace that a hard graph-aware estimator would use. The
+large observed effect is therefore consistent with classical variance reduction
+in underdetermined system identification.
 
 ## 9. Limitations
 
-- **One synthetic linear family.** 29 topologies and one training-set size.
-  Nothing transfers automatically to real data or nonlinear conversions.
+- **One synthetic linear lifting family.** 29 eligible generator seeds and one
+  training-set size. Nothing transfers automatically to real data or nonlinear
+  transformations.
+- **Seed-level inference.** Each primary replicate jointly instantiates topology,
+  data, and training noise. Intervals assume the 29 eligible seed-level paired
+  effects are exchangeable; pairing controls their shared realizations but does
+  not remove topology variance.
 - **No unseen-topology learning.** A separate `W` is fitted and evaluated
   within each topology. The campaign does not learn a shared converter that
   generalizes to a new graph.
 - **Noncanonical target coordinates.** NetworkX chooses one cycle basis among
   many. The penalty identifies the cycle subspace; paired labels identify that
   run's arbitrary basis coordinates.
+- **Strong structural side information and a missing oracle.** Although the
+  penalty does not directly use `B2` or response labels, `B1` determines the
+  target cycle subspace, and the known deterministic generator makes `B2`
+  algorithmically recoverable from the graph. The unpenalized baseline ignores
+  `B1`; no analytic cycle-basis, Hodge-projection, or nullspace baseline was run.
+- **Favorable scarce-probe geometry.** `N_train = 16`; 21/29 seeds have
+  `E > 16`, 24/29 have `F <= 16`, and 16/29 cross from the former ambient
+  underdetermination to the latter hard-subspace dimension. Medians are
+  `E = 23`, `F = 11`, while five seeds still have `F > 16`. The executed finite
+  penalty is shrinkage, not a hard dimension reduction, and the effect may
+  diminish with more probes.
 - **Protocol implementation deviation.** The runner used an elementwise mean
   where frozen protocol 27 wrote a Frobenius sum. The result is not a pristine
   protocol replication.
@@ -620,23 +751,29 @@ rather than generic regularization remains open.
 - **Five seeds in the annulus campaign**, where the exact two-sided sign test
   floor is p = 0.0625 and can never be decisive.
 - **Defect-based routing accuracy is unresolved.** The frozen H5 decision was
-  impossible to satisfy because its per-trial oracle denominator forces every
-  endpoint observation to be nonnegative. The 1.36× oracle ceiling and 25/28
-  route selections are descriptive only.
+  impossible to satisfy because its per-row oracle denominator forces every
+  endpoint observation to be nonnegative. Its 28 rows also comprise only 14
+  topology clusters at two weights, so the former df=27 interval and 25/28 count
+  cannot be treated as independent-trial inference. H5 receives no decision.
 - **Privileged supervision** in the historical routing campaign, and
   **target-view translators** in the historical conversion modules, which consumed
   target structure and are not conversions.
 - **Timing caveats.** All paths timed in fixed order inside one process; raw
   per-iteration timings not retained; identifiable runner reports p90 and routing
   runner p95, never pooled.
-- **Secondary analyses are unadjusted.** C1, H5, the routing campaign, and the
-  corruption diagnostics lie outside the three primary conversion contrasts.
-- **C1 is a regularization-path association.** Within each topology, its nine
+- **Secondary analyses are unadjusted.** C1, the separate routing campaign, and
+  the corruption diagnostics lie outside the three primary lifting contrasts;
+  H5 has no valid inferential decision.
+- **C1 is a regularization-path association.** Within each eligible seed, its nine
   fits share data and initialization and vary the common driver `lambda`. They
   are not independent observations, so C1 does not establish independent
   predictive information or off-path calibration.
 - **No equivalence test.** The RTD-inspired surrogate interval includes zero,
   but no equivalence margin was specified.
+- **The distance surrogate is target-misaligned.** It asks a rank-`F` lifting to
+  preserve full source geometry even though the truth intentionally discards
+  cut-space components. Its no-detected-improvement result does not test or
+  criticize published RTD/SRTD.
 - **Artifact boundaries.** The 8.8 GB `artifacts/` tree is untracked; tracked
   evidence is the curated `results/` bundle.
 
@@ -644,7 +781,8 @@ rather than generic regularization remains open.
 
 This work provides evidence, on one synthetic family under a prospectively
 locked same-family replication with a disclosed implementation deviation, that
-an input-derived boundary-compatibility penalty improves a learned conversion.
+an input-derived boundary-compatibility penalty improves an edge-to-cycle
+lifting relative to an unpenalized full-matrix baseline that ignores `B1`.
 The hypotheses, directions, endpoint, training size, and weights were
 outcome-informed by same-family exploration, and exploratory seed overlap is
 unverifiable; this is not independent confirmation. A prespecified, unadjusted
@@ -659,7 +797,9 @@ It does **not** establish:
   training objectives;
 - that a measured defect can select a representation; the frozen test of this
   claim had an impossible decision rule;
-- conversion quality on real or out-of-distribution data;
+- lifting quality on real or out-of-distribution data, or any broader conversion
+  claim;
+- superiority to an analytic cycle-basis, Hodge-projection, or nullspace method;
 - independent replication on an untouched generator family or disjoint seed
   block;
 - independent predictive information or off-path calibration from the C1
@@ -687,7 +827,7 @@ The snapshot is built by `scripts/build_review_snapshot.py`, which archives the
 repository at one commit together with the tracked `results/` bundle and its
 manifest and refuses to run against an uncommitted worktree. Reviewers can
 rehash the compact evidence, trace every reported value to it, rerun the CPU
-conversion campaign, run the test suite, and regenerate the figures and paper.
+edge-to-cycle lifting campaign, run the test suite, and regenerate the figures and paper.
 The snapshot intentionally excludes the 8.8 GB raw `artifacts/` tree. A full
 rerun of the GB10 annulus campaign or trained-checkpoint benchmarks therefore
 requires separately supplied raw artifacts/checkpoints and compatible GPU
@@ -703,7 +843,7 @@ path, byte count, SHA-256, generating commit, and generating command for each.
 
 | location | contents |
 |---|---|
-| `results/campaigns/` | the frozen conversion campaign record |
+| `results/campaigns/` | the frozen edge-to-cycle lifting campaign record |
 | `results/summaries/` | strict compact summaries for the annulus, gauge, compute, and routing campaigns |
 | `results/gate3/`, `results/gate3g/` | gate decisions and per-batch corruption-report derivatives |
 | `results/benchmarks/` | ten identifiable and five routing trained benchmark records |
@@ -721,12 +861,19 @@ external dataset is required.
 The reviewer snapshot supports the following checks without a GPU:
 
 ```bash
-python scripts/run_conversion_campaign.py \
+uv sync --frozen --extra dev --python 3.12.3
+env CUDA_VISIBLE_DEVICES=-1 .venv/bin/python \
+  scripts/run_conversion_campaign.py \
   --output /tmp/conversion-campaign.json
-python scripts/export_publication_evidence.py --verify-only
-python scripts/render_figures.py
-python scripts/render_paper.py
+.venv/bin/python scripts/export_publication_evidence.py --verify-only
+.venv/bin/python scripts/render_figures.py
+.venv/bin/python scripts/render_paper.py
 ```
+
+The campaign runner fails before fitting unless the lockfile, Python, NetworkX,
+NumPy, base Torch version, generator, and frozen protocol match the recorded
+environment. Hiding CUDA keeps this float64 CPU run independent of accelerator
+occupancy.
 
 With separately supplied raw campaign artifacts and checkpoints, the full
 private workspace additionally supports:
@@ -774,7 +921,7 @@ accordingly.
 **Ethics.** Every experiment reported here uses synthetic data generated by
 committed deterministic code. No human subjects, personal data, or personally
 identifiable information are involved. Compute is small: the annulus campaign is
-25.8 minutes of GPU time and the conversion campaign runs on CPU.
+25.8 minutes of GPU time and the edge-to-cycle lifting campaign runs on CPU.
 
 A molecular transfer experiment on the public OGBG-MOLHIV benchmark was run
 earlier in this project and is **deliberately not reported here**, because it

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import math
 
 import pytest
@@ -16,6 +17,7 @@ from homymoly.topology import (
     boundary_compatibility_term,
     cone_betti_numbers,
     exactness_term,
+    rtd_inspired_distance_term,
     screen_structural_term,
 )
 
@@ -45,9 +47,9 @@ def test_the_gate_passes_the_boundary_compatibility_term() -> None:
     )
 
     assert result.verdict == SATISFIED
-    assert result.usable
-    assert result.satisfied_by_truth
-    assert result.varies_over_class
+    assert result.passes_heuristic
+    assert result.truth_no_higher_than_supplied_candidates
+    assert result.varies_over_supplied_candidates
     assert "separates supplied candidates" in result.explain()
 
 
@@ -68,9 +70,31 @@ def test_the_gate_rejects_a_term_the_truth_violates() -> None:
     result = screen_structural_term(collapse_penalty, truth, candidates)
 
     assert result.verdict == NOT_SATISFIED
-    assert not result.usable
-    assert "not near a minimum" in result.explain()
+    assert not result.passes_heuristic
+    assert "scores higher than a supplied candidate" in result.explain()
     assert "does not predict held-out harm" in result.explain()
+
+
+def test_rtd_inspired_surrogate_is_misaligned_with_lossy_truth() -> None:
+    """Full-source geometry is not the target of a lossy cycle lifting."""
+
+    sample = ConversionDataset(1, seed=20261001, dtype=DTYPE)[0]
+    generator = torch.Generator().manual_seed(
+        int(hashlib.sha256(sample.sample_id.encode()).hexdigest()[:12], 16)
+    )
+    source = torch.randn((16, sample.num_edges), generator=generator, dtype=DTYPE)
+    truth = sample.boundary_2.mT
+    centered = source - source.mean(dim=0, keepdim=True)
+    rank_matched_pca = torch.linalg.svd(centered, full_matrices=False).Vh[
+        : sample.num_faces
+    ]
+
+    result = screen_structural_term(
+        rtd_inspired_distance_term(source), truth, [rank_matched_pca]
+    )
+
+    assert result.verdict == NOT_SATISFIED
+    assert result.candidate_minimum < result.truth_value
 
 
 def test_the_gate_rejects_a_term_that_is_constant_over_the_class() -> None:
@@ -95,9 +119,9 @@ def test_the_gate_rejects_a_term_that_is_constant_over_the_class() -> None:
     )
 
     assert result.verdict == CONSTANT
-    assert not result.usable
-    assert result.satisfied_by_truth, "every candidate is acyclic, truth included"
-    assert "constant" in result.explain()
+    assert not result.passes_heuristic
+    assert result.truth_no_higher_than_supplied_candidates
+    assert "no variation was detected" in result.explain()
 
 
 def test_truth_is_included_when_testing_whether_a_term_varies() -> None:
@@ -110,7 +134,7 @@ def test_truth_is_included_when_testing_whether_a_term_varies() -> None:
     )
 
     assert result.verdict == SATISFIED
-    assert result.varies_over_class
+    assert result.varies_over_supplied_candidates
     assert result.relative_spread == pytest.approx(1.0)
 
 

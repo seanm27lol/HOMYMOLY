@@ -1,4 +1,4 @@
-"""Directional exactness defects of a chain map.
+"""Directional kernel and cokernel defects of a chain map.
 
 A mapping cone answers one question with one number: is this map a
 quasi-isomorphism? That bundles two different facts together. This module keeps
@@ -124,7 +124,7 @@ def degree_defect(
     )
 
 
-def exactness_defects(
+def directional_map_defects(
     chain_map: ChainMap,
     *,
     rtol: float | None = None,
@@ -136,6 +136,21 @@ def exactness_defects(
         degree_defect(chain_map, degree, rtol=rtol, atol=atol)
         for degree in range(chain_map.max_degree + 1)
     )
+
+
+def exactness_defects(
+    chain_map: ChainMap,
+    *,
+    rtol: float | None = None,
+    atol: float = 0.0,
+) -> tuple[DegreeDefect, ...]:
+    """Historical alias for :func:`directional_map_defects`.
+
+    Kernel and cokernel dimensions of a chain map or its induced homology maps
+    are directional map defects; they are not exactness of a chain sequence.
+    """
+
+    return directional_map_defects(chain_map, rtol=rtol, atol=atol)
 
 
 def cone_betti_from_defects(defects: tuple[DegreeDefect, ...]) -> tuple[int, ...]:
@@ -151,9 +166,7 @@ def cone_betti_from_defects(defects: tuple[DegreeDefect, ...]) -> tuple[int, ...
     predicted: list[int] = []
     for degree in range(highest + 2):
         cokernel = by_degree[degree].homology_cokernel if degree in by_degree else 0
-        kernel = (
-            by_degree[degree - 1].homology_kernel if degree - 1 in by_degree else 0
-        )
+        kernel = by_degree[degree - 1].homology_kernel if degree - 1 in by_degree else 0
         predicted.append(cokernel + kernel)
     return tuple(predicted)
 
@@ -168,5 +181,5 @@ def is_quasi_isomorphism(
 
     return all(
         defect.is_iso_on_homology
-        for defect in exactness_defects(chain_map, rtol=rtol, atol=atol)
+        for defect in directional_map_defects(chain_map, rtol=rtol, atol=atol)
     )

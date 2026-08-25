@@ -1,5 +1,14 @@
 # Identifiable typed-map campaign: methods and results
 
+> **Audit correction — 2026-08-24.** Exact cone acyclicity is constant on the
+> twelve **hard decoded** chain-map templates, and each fixed template is an
+> isometry. Those facts do not make the differentiable soft-mixture cone proxy
+> or the target-conditioned cross-example RTD-style training loss constant.
+> Accordingly, the chance single-loss controls below remain empirical results,
+> not consequences of a theorem about their optimization objectives. This
+> correction supersedes the stronger historical interpretation while preserving
+> every machine-reported number.
+
 Status: **complete and frozen.** This document is the standalone record of the
 40-run identifiable typed-map campaign and the trained benchmarks that followed
 it. It is written to be readable without the source code.
@@ -23,19 +32,23 @@ numbers (1, 1, 0): one piece, one independent cycle, no enclosed volume.
 A **typed map** carries data of each degree to data of the same degree —
 vertices to vertices, edges to edges, faces to faces. It is a **chain map** when
 it commutes with the boundary operators, meaning it does not tear the complex.
-The **exactness defect** is how badly that commuting fails; we call its largest
+The **chain-map defect** is how badly that commuting fails; we call its largest
 observed magnitude the **chain-map residual**.
 
 The experiment plants one of twelve dihedral group elements as the true map,
 shows the model explicit identifying markers, and asks it to recover which
 element was planted. The model is a flattened multilayer perceptron that
 predicts weights over twelve hard-coded group-action templates and materializes
-their mixture. Every produced map lies in the nullspace of the chain-map
-equation by construction, so exactness is architectural rather than learned.
+their softmax convex mixture. Every template satisfies the chain-map equation,
+so every linear mixture does too; the model is a fixed-template mixture, not a
+generic nullspace layer. Chain compatibility is architectural rather than
+learned.
 
 A **mapping cone** packages what a map fails to preserve. An **acyclic** cone
-certifies that the map is invertible. As §4 shows, that certificate is much
-weaker than it sounds.
+certifies that a chain map is a quasi-isomorphism, not necessarily a chain
+isomorphism. In this particular hard template family each candidate is also
+invertible. As §4 shows, the cone certificate cannot identify which invertible
+template was planted.
 
 ## 2. Frozen design
 
@@ -123,28 +136,27 @@ This is a null under a hard ceiling. The benchmark cannot distinguish "these
 terms are useless" from "this task is too easy to reveal their value." Say the
 weaker thing.
 
-### 4.2 Structure alone cannot identify the map, and provably cannot
+### 4.2 Single-loss controls are at chance; hard certificates do not identify
 
 | control | transformation accuracy | chance | cell-face accuracy | chance | hard-cone Betti |
 |---|---:|---:|---:|---:|---|
 | `cone_only` | 0.0815 | 0.0833 | 0.1697 | 0.1667 | `[0,0,0,0]` in 6,000 / 6,000 |
 | `rtd_only` | 0.0833 | 0.0833 | 0.1703 | 0.1667 | `[0,0,0,0]` in 6,000 / 6,000 |
 
-Both controls sit at chance on both accuracy endpoints, with map MSEs fifteen
-orders of magnitude worse than the supervised objectives — **and every decoded
-cone is acyclic in all 6,000 evaluated examples for both controls.**
+Both controls sit at chance on both accuracy endpoints. Their mean map MSEs are
+0.109 and 0.191; the six supervised-objective means span `2.618e-17` to
+`2.504e-8`, so the gap ranges from roughly 7 to 16 orders depending on the
+comparison. **Every hard decoded cone is acyclic in all 6,000 evaluated
+examples for both controls.**
 
-This is the sharpest finding in the campaign. A model trained only to make its
-mapping cone acyclic succeeds completely at making its mapping cone acyclic and
-learns nothing about which map was planted.
+The conjunction is the defensible finding: chance identification coexists with
+a uniformly clean hard-map cone certificate. It does not establish that the
+differentiable cone proxy was constant or fully optimized during training.
 
-**It could not have gone otherwise.** Both structural signals are constant on
-the hypothesis space, so their information content about the planted element is
-exactly zero — this is a property of the construction, not an optimization
-failure. Each of the twelve basis maps is built as a signed permutation in every
-degree: `F0` permutes vertices, `F1` permutes edges with an orientation sign,
-and `F2` is fixed by matching the mapped cellular boundary to a unique oriented
-face (`build_annulus_map_system` in
+**What is proved on the hard vertices.** Each of the twelve basis maps is built
+as a signed permutation in every degree: `F0` permutes vertices, `F1` permutes
+edges with an orientation sign, and `F2` is fixed by matching the mapped
+cellular boundary to a unique oriented face (`build_annulus_map_system` in
 `src/homymoly/experiments/identifiable_maps.py`). Numerically, all twelve
 satisfy `Fᵀ F = I` at degrees 0, 1, and 2, and each has exactly one
 unit-magnitude entry per row and column.
@@ -153,14 +165,17 @@ unit-magnitude entry per row and column.
   quasi-isomorphism. A signed permutation is invertible, so all twelve
   candidates are isomorphisms of chain complexes and all twelve have acyclic
   cones. `[0,0,0,0]` in 6,000 of 6,000 examples is that constant made visible.
-- **RTD signal.** A signed permutation is orthogonal, hence an isometry, so the
-  mapped point cloud carries the same pairwise dissimilarity matrix as the
-  source under every candidate (maximum observed distance change 1.5e-07, at
-  float precision). The paired matrices RTD consumes are identical across the
-  hypothesis space, so the divergence is constant too.
+- **Within-map isometry certificate.** A signed permutation is orthogonal, so
+  one fixed hard template preserves within-batch pairwise distances (maximum
+  observed change 1.5e-07 at float precision). The executed RTD-style loss is
+  different: it compares target-conditioned representations across examples
+  whose selectors can differ, and training uses nonorthogonal soft mixtures.
+  No constancy claim for that loss follows from the hard isometry check.
 
-Both `*_only` objectives are therefore fully satisfiable by any of the twelve
-candidates, and chance identification is the only attainable outcome.
+Training uses `cone_soft_betti` and the target-conditioned RTD-style loss on
+soft mixtures, both of which can vary. The observed `cone_only` and `rtd_only`
+chance rates are therefore descriptive negative results; neither is an
+analytically forced outcome.
 
 **The scope of the warning is the point.** Any hypothesis class whose candidate
 maps are all invertible has a constant cone-acyclicity signal — and that is
@@ -170,13 +185,11 @@ restates the finding rather than rebutting it: wanting the learned map to be
 structure-preserving is the same property that makes acyclicity useless for
 choosing among structure-preserving candidates.
 
-What makes it a trap rather than a triviality is the view from inside the
-training loop. The structural objective is driven to full satisfaction, the
-diagnostic returns a clean certificate on every single example, and
-identification never rises above chance. Nothing in the training signal reveals
-the problem. **Acyclicity certifies invertibility within the template family; it
-does not certify correctness.** A cone term is a legitimate constraint and a
-useless discriminator.
+The hard diagnostic returns a clean certificate on every decoded example while
+identification remains at chance. **Cone acyclicity certifies quasi-isomorphism;
+within this already-invertible hard template family it cannot certify which map
+is correct.** That scoped certificate limitation is independent of what signal
+the soft training proxy supplied along the optimization trajectory.
 
 ## 5. Trained compute benchmarks
 
@@ -232,7 +245,7 @@ Every number above is traceable to a tracked file under `results/`.
 | corruption reports (per-batch derivatives) | `results/gate3/*/`, `results/gate3g/*/` |
 | routing endpoint table | `results/summaries/routing-confirmatory-v2-summary.json` |
 | file-level provenance for all of the above | `results/MANIFEST.json` |
-| the §4.2 structural argument, machine-checked | `tests/test_identifiable_maps.py::test_cone_and_rtd_signals_are_constant_across_the_whole_hypothesis_space` and `::test_dihedral_basis_is_signed_orthogonal_and_closed_in_all_degrees` |
+| the hard-vertex cone and isometry certificates, machine-checked | `tests/test_identifiable_maps.py::test_exact_cone_and_isometry_certificates_hold_on_hard_vertices` and `::test_dihedral_basis_is_signed_orthogonal_and_closed_in_all_degrees` |
 
 ### Exact provenance
 

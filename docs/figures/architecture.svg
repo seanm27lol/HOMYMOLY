@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="680" height="486" viewBox="0 0 680 486" role="img" aria-label="Architecture and data flow of the identifiable typed-map experiment">
   <title>Architecture and data flow of the identifiable typed-map experiment</title>
-  <desc>A group element is planted in the annulus template. The selector observes only identifying markers, chooses one member of a fixed twelve-element basis, and the resulting typed map is scored by transformation accuracy, typed reconstruction error, chain-map residual, and filtered mapping cone.</desc>
+  <desc>A group element is planted in the annulus template. A flattened selector consumes all source node and edge features, produces softmax weights over a fixed twelve-map basis, and the resulting convex-mixture chain map is scored by transformation accuracy, typed reconstruction error, chain-map residual, and filtered mapping cone.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#7a7873"/>
@@ -32,21 +32,21 @@
   <text class="h" x="38" y="122">SOURCE COMPLEX C</text>
   <text class="m" x="38" y="141">signals x0 (vertices), x1 (edges), x2 (faces)</text>
   <text class="m" x="38" y="158">boundaries dC1, dC2</text>
-  <text class="s" x="38" y="180">carries the identifying markers</text>
+  <text class="s" x="38" y="180">full node/edge features; markers identify the target</text>
 
   <rect class="box" x="364" y="102" width="292" height="96" rx="5"/>
   <text class="h" x="378" y="122">TARGET COMPLEX D</text>
-  <text class="m" x="378" y="141">signals y0 (vertices), y1 (edges), y2 (faces)</text>
-  <text class="m" x="378" y="158">boundaries dD1, dD2</text>
-  <text class="s" x="378" y="180">held out during selection</text>
+  <text class="m" x="378" y="141">per-example signals y0, y1, y2 supervise training</text>
+  <text class="m" x="378" y="158">fixed boundaries and action templates are embedded</text>
+  <text class="s" x="378" y="180">signals/labels absent from selector inference</text>
 
   <!-- markers into the selector -->
   <line class="flow" x1="170" y1="198" x2="170" y2="228"/>
-  <text class="lbl" x="178" y="217">identifying markers only</text>
+  <text class="lbl" x="178" y="217">all source node and edge features</text>
 
   <rect class="accent" x="24" y="232" width="292" height="44" rx="5"/>
   <text class="h" x="38" y="251">flattened MLP selector</text>
-  <text class="s" x="38" y="267">observes markers; never sees the target</text>
+  <text class="s" x="38" y="267">markers plus nuisances; no per-example target signal/label</text>
 
   <line class="flow" x1="170" y1="276" x2="170" y2="302"/>
 
@@ -57,9 +57,9 @@
   <line class="flow" x1="170" y1="350" x2="170" y2="376"/>
 
   <rect class="accent" x="24" y="380" width="292" height="56" rx="5"/>
-  <text class="h" x="38" y="399">ExactChainMapLayer</text>
-  <text class="m" x="38" y="416">(F0, F1, F2) in nullspace of dD F − F dC = 0</text>
-  <text class="s" x="38" y="430">exactness holds for every parameter value</text>
+  <text class="h" x="38" y="399">softmax convex mixture of fixed maps</text>
+  <text class="m" x="38" y="416">F_n = sum_g p_g F_n^(g)</text>
+  <text class="s" x="38" y="430">chain law inherited; argmax supplies hard decoded map</text>
 
   <!-- applies to target -->
   <path class="flow" d="M 316 408 L 500 408 L 500 198"/>
