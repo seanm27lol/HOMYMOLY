@@ -451,6 +451,13 @@ def test_h5_validator_recomputes_row_naive_and_topology_clustered_intervals() ->
 
     MODULE._validate_withdrawn_routing(corrected, historical)
 
+    routing["trials"][1]["graph_error"] += 1e-14
+    MODULE._validate_withdrawn_routing(corrected, historical)
+    routing["trials"][1]["graph_error"] += 1e-6
+    with pytest.raises(ValueError, match="routing raw trials changed"):
+        MODULE._validate_withdrawn_routing(corrected, historical)
+    routing["trials"][1]["graph_error"] -= 1e-6 + 1e-14
+
     assert routing["historical_pseudoreplicated_interval_95"] == pytest.approx(
         MODULE._student_t_interval(values, MODULE.T95_DF27, expected_n=28)
     )

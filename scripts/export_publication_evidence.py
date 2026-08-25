@@ -298,6 +298,36 @@ def _same_interval(observed: Any, expected: list[float], *, atol: float = 1e-9) 
     )
 
 
+def _same_routing_trials(observed: Any, expected: Any) -> bool:
+    """Compare rerun routing rows while tolerating only float-roundoff drift."""
+
+    if not isinstance(observed, list) or not isinstance(expected, list):
+        return False
+    if len(observed) != len(expected):
+        return False
+    float_fields = {"defect", "cell_error", "graph_error"}
+    exact_fields = {"seed", "split", "term_weight"}
+    required = float_fields | exact_fields
+    for actual_row, expected_row in zip(observed, expected, strict=True):
+        if not isinstance(actual_row, dict) or not isinstance(expected_row, dict):
+            return False
+        if set(actual_row) != required or set(expected_row) != required:
+            return False
+        if any(actual_row[field] != expected_row[field] for field in exact_fields):
+            return False
+        if any(
+            not math.isclose(
+                float(actual_row[field]),
+                float(expected_row[field]),
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            )
+            for field in float_fields
+        ):
+            return False
+    return True
+
+
 def _pearson(values_a: list[float], values_b: list[float]) -> float:
     if len(values_a) != len(values_b) or not values_a:
         raise ValueError("Pearson inputs must have the same nonzero length")
@@ -639,7 +669,7 @@ def _validate_withdrawn_routing(
         or routing.get("decision_informative") is not False
     ):
         raise ValueError("H5 inferential support was not withdrawn")
-    if routing.get("trials") != previous.get("trials"):
+    if not _same_routing_trials(routing.get("trials"), previous.get("trials")):
         raise ValueError("routing raw trials changed during the H5 audit correction")
     for key in (
         "threshold",
@@ -648,7 +678,12 @@ def _validate_withdrawn_routing(
         "median_always_cell",
         "median_always_graph",
     ):
-        if routing.get(key) != previous.get(key):
+        if not math.isclose(
+            float(routing.get(key)),
+            float(previous.get(key)),
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ):
             raise ValueError(f"routing {key} changed during the H5 audit correction")
 
     trials = routing.get("trials")
