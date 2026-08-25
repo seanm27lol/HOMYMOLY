@@ -159,7 +159,7 @@ No values from different homological degrees are added.
 
 ## Pre-specified engineering gate and descriptive comparisons
 
-The primary outcome is an implementation recovery/exactness gate, evaluated
+The primary outcome is a recovery/constraint-satisfaction engineering gate, evaluated
 for every `task_reconstruction` and `combined` seed:
 
 - transformation accuracy at least 0.95;

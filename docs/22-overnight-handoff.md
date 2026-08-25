@@ -1,8 +1,12 @@
-# HOMYMOLY journal-release handoff
+# Historical HOMYMOLY journal-release handoff
+
+> **SUPERSEDED.** This records an earlier release state. Use
+> [`docs/29`](29-audit-corrections.md), the current manuscript, and the current
+> manifest for present claims, counts, and completion status.
 
 Last updated: 2026-08-23. Repository: `/home/seanjazm27/HOMYMOLY`.
 
-**The journal release is complete.** The training campaign, the strict compact
+**The earlier journal release described here was complete at that revision.** The training campaign, the strict compact
 evidence, the manuscript and PDF, and the technical documentation are all done
 and committed. This document is now a release record plus a short list of what a
 next session would actually work on. Superseded launch instructions are in the
@@ -52,8 +56,9 @@ Read, in order: [`README.md`](../README.md) for the outcome,
 ### Headline results
 
 - **Exact recovery.** Every objective with task or reconstruction supervision
-  reached transformation and cell-face accuracy 1.000 on all five seeds, map MSE
-  at 1e-16. Engineering recovery gate 10/10 applicable runs.
+  reached transformation and cell-face accuracy 1.000 on all five seeds. Across
+  the six supervised objectives, mean map MSE spans `2.618e-17` to `2.504e-8`.
+  Engineering recovery gate 10/10 applicable runs.
 - **Structural nulls.** All 21 declared continuous contrast intervals contain
   zero, under a saturated ceiling that a closed-form analytic decoder also
   reaches.
@@ -65,7 +70,8 @@ Read, in order: [`README.md`](../README.md) for the outcome,
 - **Corruption diagnostics.** Nine Gate-3 base intervals and three eight-seed
   gauge intervals all contain zero.
 - **Trained compute.** Dense-to-routed 1.532 ± 0.035; routed-to-fastest-fixed
-  2.269 ± 0.043; identifiable p90 and routing p95 never pooled.
+  2.269 ± 0.043, with ± denoting sample SD over five seeds; identifiable p90 and
+  routing p95 never pooled.
 
 ## Correction issued in this release
 
@@ -76,7 +82,8 @@ ratio definition we could construct — median, mean, p95, throughput, or
 best/mean/max fixed route — and it appears in no machine-readable result.
 
 The recomputed value from the five sealed trained benchmarks is
-**2.269 ± 0.043**, which is *less* favorable to routing than the figure it
+**2.269 ± 0.043** (mean ± sample SD over five seeds), which is *less* favorable
+to routing than the figure it
 replaces. The correction is recorded in `docs/18-paper.md` §6.5,
 `docs/23-identifiable-results.md` §5, and `docs/20-audit-remediation.md`.
 
@@ -92,7 +99,7 @@ The strongest supported new result is deliberately narrow: the implementation
 recovers a finite dihedral family of exact three-term maps on one synthetic
 six-sector cellular annulus, using explicit identifying markers and a flattened
 MLP to select from a hard-coded finite group-action basis. This is a controlled
-implementation and exactness study, not a general graph neural network or
+exact chain-map implementation and recovery study, not a general graph neural network or
 universal representation translator.
 
 The work does not establish superiority of cone or RTD training losses;
@@ -119,7 +126,7 @@ Ranked by scientific value, not by effort.
    `.venv/bin/python -m homymoly train --config configs/gate2.yaml`. Treat it as
    an integration/null diagnostic, not conversion evidence, because the held-out
    targets are unidentifiable from graph inputs in the current generator.
-3. **Design a real C1/C2 test.** A task where homological exactness is causally
+3. **Design a real C1/C2 test.** A task where chain-map or induced-homology defects are causally
    relevant, with genuine translator reconstruction measured on held-out
    examples. C4 is already answered on the identifiable benchmark.
 4. **Complete the author-supplied submission fields** in `docs/18-paper.md` §12

@@ -43,34 +43,47 @@ Proprietary. Copyright (c) 2026 Sean Mahdavian, all rights reserved. See
 `LICENSE`. **This snapshot is provided for peer review only** and confers no
 licence to redistribute or reuse the material.
 
-## Verifying it
+## What this snapshot can verify and rerun
 
-Every number in the manuscript is recomputable from what is here. No network
-access and no GPU are required.
+Every reported number can be verified against the compact, checksummed evidence
+in `results/`. The snapshot also contains the source, configurations, and frozen
+protocols needed to inspect the analyses and rerun the CPU conversion campaign.
+Integrity verification itself requires neither network access nor a GPU. The
+tests and CPU campaign also require no GPU, but do require a compatible Python
+environment; installing that environment may require network access.
 
 ```bash
-python -m pip install -e '.[dev]'
-python -m pytest -q
-python scripts/export_publication_evidence.py --verify-only
+uv sync --frozen --extra dev --python 3.12.3
+.venv/bin/python -m pytest -q
+.venv/bin/python scripts/export_publication_evidence.py --verify-only
 ```
 
-The last command re-hashes every tracked evidence file and checks it against
-`results/MANIFEST.json`. It prints `{{"verified": true, ...}}` on success.
+The last command re-hashes every tracked evidence file and its retained source
+where available, then checks the bundle against `results/MANIFEST.json`. It
+prints `{{"verified": true, ...}}` on success. This is an integrity check, not a
+claim that all training runs can be reconstructed from the compact bundle.
 
 To regenerate the confirmatory campaign from scratch, on CPU:
 
 ```bash
-python scripts/run_conversion_campaign.py --output /tmp/campaign.json
+env CUDA_VISIBLE_DEVICES=-1 .venv/bin/python \
+  scripts/run_conversion_campaign.py --output /tmp/campaign.json
 ```
 
-Its protocol was committed before the campaign ran; the recorded protocol
-SHA-256 in the output must match `docs/27-conversion-campaign-protocol.md`.
+The runner fails before fitting unless `uv.lock`, Python, NetworkX, NumPy, the
+base Torch version, the generator, and the protocol match the recorded campaign
+environment. `CUDA_VISIBLE_DEVICES=-1` keeps this CPU campaign independent of a
+busy accelerator.
 
-## What is deliberately absent
+## What requires separately supplied raw artifacts
 
 The untracked `artifacts/` tree, roughly 8.8 GB of checkpoints, per-example
 prediction dumps, training histories, and scheduler logs. Those artifacts are
-pinned by SHA-256 from the tracked bundle but are not distributed.
+pinned by SHA-256 from the tracked bundle but are not distributed. Consequently,
+the completed GB10 training campaigns and checkpoint-dependent benchmarks cannot
+be rerun from this snapshot alone; reproducing those runs requires the separately
+supplied raw artifacts and compatible GB10 hardware/software. Their reported
+outputs remain auditable in the compact evidence included here.
 """
 
 
@@ -94,6 +107,23 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _git_file(project_root: Path, revision: str, relative_path: str) -> bytes:
+    """Read a tracked file from the exact revision being archived."""
+
+    result = subprocess.run(
+        ("git", "show", f"{revision}:{relative_path}"),
+        cwd=project_root,
+        check=False,
+        capture_output=True,
+        timeout=120,
+    )
+    if result.returncode != 0:
+        raise FileNotFoundError(
+            f"{relative_path} is missing from archived revision {revision}"
+        )
+    return result.stdout
+
+
 def build_snapshot(
     *,
     project_root: Path,
@@ -114,21 +144,23 @@ def build_snapshot(
         )
     resolved = _git(project_root, "rev-parse", revision)
 
-    manifest = project_root / "results" / "MANIFEST.json"
-    if not manifest.is_file():
-        raise FileNotFoundError(
-            "results/MANIFEST.json is missing; run "
-            "scripts/export_publication_evidence.py first"
-        )
-    manifest_sha256 = _sha256(manifest)
-    evidence_files = len(json.loads(manifest.read_text(encoding="utf-8"))["files"])
+    manifest_bytes = _git_file(project_root, resolved, "results/MANIFEST.json")
+    manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+    evidence_files = len(json.loads(manifest_bytes)["files"])
 
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".review-", dir=output.parent) as staging:
         inner = Path(staging) / "source.tar"
         subprocess.run(
-            ("git", "archive", "--format=tar", f"--prefix=review-{resolved[:8]}/",
-             "-o", str(inner), resolved),
+            (
+                "git",
+                "archive",
+                "--format=tar",
+                f"--prefix=review-{resolved[:8]}/",
+                "-o",
+                str(inner),
+                resolved,
+            ),
             cwd=project_root,
             check=True,
             timeout=300,

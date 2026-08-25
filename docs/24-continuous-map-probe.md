@@ -9,9 +9,11 @@ Date: 2026-08-23.
 
 ## Why this was run
 
-The identifiable campaign selects one map from a fixed basis of twelve. Every
-candidate's cone score is therefore fixed before training starts, so nothing the
-model learns can move it. That is the whole reason §6.3 finds no signal.
+The identifiable campaign selects one map from a fixed basis of twelve. Exact
+cone acyclicity is constant across the twelve **hard decoded vertices** because
+all are chain isomorphisms. The executed `cone_soft_betti` objective is evaluated
+on convex mixtures during training and can vary, so the observed chance
+performance is empirical; hard-vertex constancy does not explain it by itself.
 
 A fair objection: that is a property of *selection*, not of homology. When a map
 is learned as continuous parameters, its cone score changes as the parameters
@@ -84,7 +86,7 @@ This is the same wall as §6.3 reached through a different door:
 
 | setting | mechanism | consequence |
 |---|---|---|
-| fixed basis of 12 (§6.3) | cone acyclicity is **constant** across candidates | zero information |
+| fixed basis of 12 (§6.3) | exact cone acyclicity is **constant on hard decoded vertices**, while the soft proxy varies on mixtures | hard certificates cannot select a vertex; chance training performance remains empirical |
 | learned continuous map (here) | structure preservation is **generic** in the map space | prior never binds |
 
 The unified statement, which neither setting alone establishes but both are
@@ -109,7 +111,7 @@ probe does not claim any of them is impossible.
 
 ## What the probe produced that is worth keeping
 
-- `src/homymoly/topology/defects.py`: directional exactness defects. Per degree
+- `src/homymoly/topology/defects.py`: directional chain-map defects. Per degree
   it reports what a map **destroys** (kernel of the induced homology map) and
   what it **cannot reach** (cokernel), at both chain and homology level. This is
   closer to the project's original framing than a single acyclicity bit.

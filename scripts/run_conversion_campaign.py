@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
-"""Run the frozen conversion campaign declared in docs/27.
+"""Re-run and correct the prospectively frozen campaign declared in docs/27.
 
-The protocol is preregistered. This script implements it and nothing else: the
-topologies, training size, weights, decision rules, multiplicity adjustment, and
-the out-of-sample routing threshold are all fixed by that document. It records
-the protocol's SHA-256 so a reader can confirm the design was not revised after
-the fact.
+The frozen document fixed the topology seeds, training size, weights, endpoints,
+decision rules, multiplicity adjustment, and routing split. The executed runner
+used an elementwise mean-square boundary-compatibility penalty where the document
+wrote an unnormalised squared Frobenius norm. That implementation deviation is
+preserved here so the corrected analysis re-runs the same fits, and it is
+recorded explicitly in schema v2.
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 import math
 import os
+import platform
 import statistics
 import subprocess
 from pathlib import Path
@@ -25,6 +28,34 @@ import torch
 from homymoly.data.conversion import ConversionDataset
 
 PROTOCOL = "docs/27-conversion-campaign-protocol.md"
+GENERATOR_SOURCE = "src/homymoly/data/conversion.py"
+LOCKFILE = "uv.lock"
+FROZEN_PROTOCOL_SHA256 = (
+    "503cc282f40d118ba1739c2afe1bfc77eaf2b1733baaddb91c0c3363e75ae2b8"
+)
+FROZEN_GENERATOR_SHA256 = (
+    "c37ab1c725aa2101e88c1a0ad8fa3b279d72330feba35077e23fec930a4df69d"
+)
+FROZEN_LOCKFILE_SHA256 = (
+    "05c6a5ad02db5b1651d426d157add170a8542634260ce8c265a3ee32693073bf"
+)
+EXPECTED_CAMPAIGN_ENVIRONMENT = {
+    "python": "3.12.3",
+    "torch_base": "2.13.0",
+    "networkx": "3.6.1",
+    "numpy": "2.5.2",
+}
+RESULT_SCHEMA_VERSION = 2
+RESULT_RECORD_ID = "conversion-campaign-v1-correction-1"
+CORRECTED_RESULT_PATH = "results/campaigns/conversion-campaign-v1-corrected.json"
+ORIGINAL_CAMPAIGN_GIT_REVISION = "11644c68ec0b8c28416a14ce4d8799e4c9ca0860"
+SUPERSEDED_RESULT_PATH = "results/campaigns/conversion-campaign-v1.json"
+SUPERSEDED_RESULT_SHA256 = (
+    "836914d251db8d381aef9a2dcb0ac14a14562652f3e323dc840108b5f24d5ee1"
+)
+SUPERSEDED_RUNNER_SHA256 = (
+    "8a478e5a3906d5bb5cfc3645159f8739cc3e840a50bbce851564533b2ce89fb6"
+)
 SEEDS = tuple(range(20261001, 20261031))
 MIN_FACES = 3
 MIN_ELIGIBLE = 24
@@ -37,15 +68,35 @@ WEIGHTS = {"exact": 3.0, "cone": 0.01, "rtd": 0.1}
 C1_WEIGHTS = (0.0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0)
 FAMILY_SIZE = 3
 
-# Two-sided Student-t quantiles: 97.5% for the reported interval, and
-# 99.1667% for the Bonferroni-adjusted confirmatory interval (0.05 / 3).
+# Student-t quantiles for a two-sided 95% interval and a two-sided
+# 98.333...% Bonferroni interval. For the latter, three primary contrasts give
+# alpha_per_contrast = 0.05 / 3 and the upper quantile is
+# 1 - alpha_per_contrast / 2 = 0.991666....
 _T975 = {
-    9: 2.262157, 14: 2.144787, 19: 2.093024, 23: 2.068658, 24: 2.063899,
-    25: 2.059539, 26: 2.055529, 27: 2.051831, 28: 2.048407, 29: 2.045230,
+    4: 2.776445105,
+    9: 2.262157,
+    13: 2.160368656,
+    14: 2.144787,
+    19: 2.093024,
+    23: 2.068658,
+    24: 2.063899,
+    25: 2.059539,
+    26: 2.055529,
+    27: 2.051831,
+    28: 2.048407,
+    29: 2.045230,
 }
 _T_ADJ = {
-    9: 3.249836, 14: 2.976843, 19: 2.860935, 23: 2.807336, 24: 2.797170,
-    25: 2.787436, 26: 2.778715, 27: 2.770683, 28: 2.763262, 29: 2.756386,
+    9: 2.933324088,
+    14: 2.717755159,
+    19: 2.625105913,
+    23: 2.582017198,
+    24: 2.573641017,
+    25: 2.565978552,
+    26: 2.558942386,
+    27: 2.552458806,
+    28: 2.546465223,
+    29: 2.540908149,
 }
 
 
@@ -53,9 +104,203 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _git(*args: str) -> str:
+def _verified_sha256(
+    project_root: Path, relative_path: str, expected: str, *, label: str
+) -> str:
+    """Hash a frozen input and stop before fitting if it has changed."""
+
+    path = project_root / relative_path
+    try:
+        actual = _sha256(path)
+    except FileNotFoundError as error:
+        raise RuntimeError(
+            f"stop condition: {label} is missing at {relative_path}"
+        ) from error
+    if actual != expected:
+        raise RuntimeError(
+            f"stop condition: {label} SHA-256 is {actual}, expected {expected} "
+            f"for {relative_path}"
+        )
+    return actual
+
+
+def _generator_provenance(project_root: Path) -> dict[str, Any]:
+    actual = _verified_sha256(
+        project_root,
+        GENERATOR_SOURCE,
+        FROZEN_GENERATOR_SHA256,
+        label="conversion generator",
+    )
+    return {
+        "class": "homymoly.data.conversion.ConversionDataset",
+        "path": GENERATOR_SOURCE,
+        "sha256": actual,
+        "frozen_campaign_sha256": FROZEN_GENERATOR_SHA256,
+        "frozen_campaign_git_revision": ORIGINAL_CAMPAIGN_GIT_REVISION,
+        "matches_frozen_campaign": True,
+    }
+
+
+def _environment_provenance(project_root: Path) -> dict[str, Any]:
+    """Require the locked CPU-campaign environment before any fit runs."""
+
+    lockfile_sha256 = _verified_sha256(
+        project_root,
+        LOCKFILE,
+        FROZEN_LOCKFILE_SHA256,
+        label="campaign lockfile",
+    )
+    actual = {
+        "python": platform.python_version(),
+        "torch": torch.__version__,
+        "torch_base": torch.__version__.split("+", maxsplit=1)[0],
+        "networkx": importlib.metadata.version("networkx"),
+        "numpy": importlib.metadata.version("numpy"),
+    }
+    mismatches = {
+        name: {"expected": expected, "actual": actual[name]}
+        for name, expected in EXPECTED_CAMPAIGN_ENVIRONMENT.items()
+        if actual[name] != expected
+    }
+    if mismatches:
+        raise RuntimeError(
+            "stop condition: campaign environment does not match the frozen "
+            f"lock-derived versions: {json.dumps(mismatches, sort_keys=True)}"
+        )
+    return {
+        "actual": actual,
+        "expected": EXPECTED_CAMPAIGN_ENVIRONMENT,
+        "matches_expected": True,
+        "lockfile": {
+            "path": LOCKFILE,
+            "sha256": lockfile_sha256,
+            "frozen_campaign_sha256": FROZEN_LOCKFILE_SHA256,
+        },
+    }
+
+
+def _correction_record() -> dict[str, Any]:
+    """Describe the analysis correction without renaming the frozen campaign."""
+
+    return {
+        "id": "conversion-campaign-analysis-correction-1",
+        "date": "2026-08-24",
+        "scope": (
+            "C1 Pearson correlations, primary Bonferroni-adjusted intervals, "
+            "and withdrawal of the pseudoreplicated H5 interval; fits and raw "
+            "endpoint observations are unchanged"
+        ),
+        "reasons": [
+            {
+                "id": "c1-pearson-normalisation",
+                "issue": (
+                    "schema v1 averaged products after standardising each nine-point "
+                    "vector with Bessel-corrected sample standard deviations; apart "
+                    "from its epsilon, that estimator equals (n-1)/n times "
+                    "conventional Pearson r"
+                ),
+                "corrected_estimator": (
+                    "sum((x-x_bar)*(y-y_bar)) / sqrt(sum((x-x_bar)^2)*sum((y-y_bar)^2))"
+                ),
+            },
+            {
+                "id": "bonferroni-critical-value",
+                "issue": (
+                    "schema v1 used two-sided 99% Student-t critical values while "
+                    "labelling the intervals as the protocol-required Bonferroni "
+                    "98.333...% intervals"
+                ),
+                "corrected_quantile": (
+                    "t.ppf(1 - (0.05 / 3) / 2, df) = t.ppf(0.991666..., df)"
+                ),
+            },
+            {
+                "id": "h5-pseudoreplication-and-impossible-decision",
+                "issue": (
+                    "schema v1 treated two fits from each of 14 evaluation "
+                    "topologies as 28 independent observations, and the endpoint "
+                    "could never satisfy its support rule because every routed / "
+                    "per-trial-minimum ratio is at least one"
+                ),
+                "corrected_handling": (
+                    "withdraw inferential support; retain the historical naive "
+                    "interval by name and add a topology-clustered descriptive "
+                    "interval over 14 within-topology means"
+                ),
+            },
+        ],
+        "affected_fields": [
+            "c1.per_topology_correlation",
+            "c1.mean_within_topology_correlation",
+            "c1.interval_95",
+            "c1.supported",
+            "primary.*.interval_bonferroni_98_33",
+            "primary.*.improves_confirmatory",
+            "primary.*.harms_confirmatory",
+            "routing.historical_pseudoreplicated_interval_95",
+            "routing.topology_clustered_descriptive_interval_95",
+            "routing.supported",
+        ],
+        "unaffected_numeric_fields": [
+            "primary.*.per_topology fit endpoints",
+            "primary.*.mean_log10_ratio",
+            "primary.*.median_log10_ratio",
+            "primary.*.sample_standard_deviation",
+            "primary.*.interval_95",
+            "primary.*.sensitivity_sign_test.pvalue_two_sided",
+            "routing.trials raw defect and error values",
+            "routing.threshold",
+            "routing.mean_log10_ratio",
+            "routing median error summaries",
+        ],
+        "decision_changes": {
+            "exact": False,
+            "cone": False,
+            "rtd": False,
+            "c1": False,
+        },
+        "decision_withdrawals": {
+            "routing": (
+                "the endpoint's support rule was impossible and its schema-v1 "
+                "interval treated correlated rows as independent"
+            )
+        },
+        "protocol_modified": False,
+        "data_or_fit_settings_modified": False,
+        "supersedes": {
+            "path": SUPERSEDED_RESULT_PATH,
+            "schema_version": 1,
+            "sha256": SUPERSEDED_RESULT_SHA256,
+            "runner_sha256": SUPERSEDED_RUNNER_SHA256,
+            "git_revision": ORIGINAL_CAMPAIGN_GIT_REVISION,
+        },
+    }
+
+
+def _protocol_implementation_deviations() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": "compatibility-mean-normalisation",
+            "frozen_text": "squared Frobenius norm ||B1 @ W.T||_F^2",
+            "executed_objective": "elementwise mean((B1 @ W.T)^2)",
+            "consequence": (
+                "the executed penalty is divided by num_vertices * num_faces; "
+                "because topology dimensions vary, weight 3.0 has a "
+                "topology-dependent scale relative to the frozen notation"
+            ),
+            "fit_implementation_changed_in_correction": False,
+        }
+    ]
+
+
+def _git(project_root: Path, *args: str) -> str:
     result = subprocess.run(
-        ("git", *args), check=False, capture_output=True, text=True, timeout=15
+        ("git", *args),
+        cwd=project_root,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=15,
     )
     return result.stdout.strip() if result.returncode == 0 else ""
 
@@ -87,19 +332,26 @@ def _sign_test(values: list[float]) -> dict[str, Any]:
     positive = sum(1 for value in values if value > 0)
     negative = sum(1 for value in values if value < 0)
     trials = positive + negative
+    ties = len(values) - trials
     if trials == 0:
-        return {"pvalue_two_sided": None, "favourable": 0, "unfavourable": 0}
+        return {
+            "pvalue_two_sided": None,
+            "negative": 0,
+            "positive": 0,
+            "ties_discarded": ties,
+        }
     smaller = min(positive, negative)
     tail = sum(math.comb(trials, index) for index in range(smaller + 1))
     return {
         "pvalue_two_sided": min(1.0, 2.0 * tail / (2.0**trials)),
-        "favourable": negative,
-        "unfavourable": positive,
+        "negative": negative,
+        "positive": positive,
+        "ties_discarded": ties,
     }
 
 
 def _fit(sample: Any, term: str | None, weight: float) -> tuple[float, float]:
-    """Fit W under one term and return (held-out MSE, exactness violation)."""
+    """Fit W and return (held-out MSE, Frobenius compatibility defect)."""
 
     edges, faces = sample.num_edges, sample.num_faces
     truth = sample.boundary_2.mT
@@ -122,15 +374,17 @@ def _fit(sample: Any, term: str | None, weight: float) -> tuple[float, float]:
         if term == "exact":
             loss = loss + weight * (boundary_1 @ learned.mT).pow(2).mean()
         elif term == "cone":
-            loss = loss + weight * torch.exp(
-                -torch.linalg.svdvals(learned).min() * 2.0
-            )
+            loss = loss + weight * torch.exp(-torch.linalg.svdvals(learned).min() * 2.0)
         elif term == "rtd":
             source = torch.cdist(train_x, train_x)
             mapped = torch.cdist(predicted, predicted)
-            loss = loss + weight * (
-                mapped / (mapped.mean() + 1e-12) - source / (source.mean() + 1e-12)
-            ).pow(2).mean()
+            loss = (
+                loss
+                + weight
+                * (mapped / (mapped.mean() + 1e-12) - source / (source.mean() + 1e-12))
+                .pow(2)
+                .mean()
+            )
         optimiser.zero_grad()
         loss.backward()
         optimiser.step()
@@ -182,14 +436,50 @@ def _routing_trial(sample: Any, weight: float) -> tuple[float, float, float]:
 
 
 def _correlation(left: list[float], right: list[float]) -> float:
-    a = torch.tensor(left, dtype=torch.float64)
-    b = torch.tensor(right, dtype=torch.float64)
-    a = (a - a.mean()) / (a.std() + 1e-12)
-    b = (b - b.mean()) / (b.std() + 1e-12)
-    return float((a * b).mean())
+    """Return the conventional Pearson product-moment correlation.
+
+    Pearson's ratio uses the same unnormalised centred sums in its numerator and
+    denominator.  The schema-v1 implementation instead averaged products after
+    dividing by sample standard deviations, which scales the answer by
+    ``(n - 1) / n`` (apart from its epsilon).  Computing the ratio directly
+    avoids any dependence on a population-versus-sample standard-deviation
+    convention.
+    """
+
+    if len(left) != len(right):
+        raise ValueError("correlation inputs must have equal length")
+    if len(left) < 2:
+        raise ValueError("correlation requires at least two paired observations")
+    if not all(math.isfinite(value) for value in (*left, *right)):
+        raise ValueError("correlation inputs must be finite")
+
+    left_mean = statistics.fmean(left)
+    right_mean = statistics.fmean(right)
+    left_centred = [value - left_mean for value in left]
+    right_centred = [value - right_mean for value in right]
+    cross_product = math.fsum(
+        a * b for a, b in zip(left_centred, right_centred, strict=True)
+    )
+    left_sum_squares = math.fsum(value * value for value in left_centred)
+    right_sum_squares = math.fsum(value * value for value in right_centred)
+    denominator = math.sqrt(left_sum_squares * right_sum_squares)
+    if denominator == 0.0:
+        raise ValueError("correlation is undefined for a constant input")
+
+    # Round-off can produce a value a few ulps outside the mathematical range.
+    return min(1.0, max(-1.0, cross_product / denominator))
 
 
 def run(project_root: Path) -> dict[str, Any]:
+    protocol_sha256 = _verified_sha256(
+        project_root,
+        PROTOCOL,
+        FROZEN_PROTOCOL_SHA256,
+        label="frozen conversion protocol",
+    )
+    generator_provenance = _generator_provenance(project_root)
+    environment_provenance = _environment_provenance(project_root)
+
     eligible, skipped = [], []
     for seed in SEEDS:
         sample = ConversionDataset(1, seed=seed, dtype=torch.float64)[0]
@@ -213,7 +503,7 @@ def run(project_root: Path) -> dict[str, Any]:
                     "seed": seed,
                     "held_out_mse": held_out,
                     "baseline_held_out_mse": reference,
-                    "exactness_violation": violation,
+                    "boundary_compatibility_defect_frobenius": violation,
                 }
             )
         adjusted = _interval(differences, _T_ADJ)
@@ -231,16 +521,30 @@ def run(project_root: Path) -> dict[str, Any]:
             "per_topology": rows,
         }
 
-    c1 = []
-    for _seed, sample in eligible:
+    c1_correlations = []
+    c1_rows = []
+    for seed, sample in eligible:
         fits = [_fit(sample, "exact", weight) for weight in C1_WEIGHTS]
-        c1.append(
-            _correlation(
-                [math.log10(max(v, 1e-30)) for _, v in fits],
-                [math.log10(max(h, 1e-300)) for h, _ in fits],
-            )
+        correlation = _correlation(
+            [math.log10(max(v, 1e-30)) for _, v in fits],
+            [math.log10(max(h, 1e-300)) for h, _ in fits],
         )
-    c1_interval = _interval(c1, _T975)
+        c1_correlations.append(correlation)
+        c1_rows.append(
+            {
+                "seed": seed,
+                "correlation": correlation,
+                "fits": [
+                    {
+                        "weight": weight,
+                        "held_out_mse": held_out,
+                        "boundary_compatibility_defect_frobenius": defect,
+                    }
+                    for weight, (held_out, defect) in zip(C1_WEIGHTS, fits, strict=True)
+                ],
+            }
+        )
+    c1_interval = _interval(c1_correlations, _T975)
 
     routing_rows = []
     for index, (seed, sample) in enumerate(eligible):
@@ -266,51 +570,263 @@ def run(project_root: Path) -> dict[str, Any]:
         )
         for row in evaluation
     ]
+    evaluation_seeds = sorted({int(row["seed"]) for row in evaluation})
+    cluster_summaries = []
+    for seed in evaluation_seeds:
+        indices = [
+            index for index, row in enumerate(evaluation) if int(row["seed"]) == seed
+        ]
+        values = [routed_differences[index] for index in indices]
+        cluster_summaries.append(
+            {
+                "seed": seed,
+                "n_correlated_fits": len(values),
+                "mean_log10_ratio": statistics.mean(values),
+                "endpoint_values": values,
+            }
+        )
+    if not cluster_summaries or any(
+        row["n_correlated_fits"] != 2 for row in cluster_summaries
+    ):
+        raise RuntimeError("H5 audit expected exactly two correlated fits per topology")
+    clustered_differences = [
+        float(row["mean_log10_ratio"]) for row in cluster_summaries
+    ]
+    historical_naive_interval = _interval(routed_differences, _T975)
+    clustered_descriptive_interval = _interval(clustered_differences, _T975)
+
+    dimension_rows = [
+        {
+            "seed": seed,
+            "vertices": sample.num_vertices,
+            "edges": sample.num_edges,
+            "faces": sample.num_faces,
+            "free_parameters": sample.num_edges * sample.num_faces,
+        }
+        for seed, sample in eligible
+    ]
+    underdetermined_full = [row for row in dimension_rows if row["edges"] > N_TRAIN]
+    identifiable_zero_set = [row for row in dimension_rows if row["faces"] <= N_TRAIN]
+    identifiability_transitions = [
+        row
+        for row in dimension_rows
+        if row["edges"] > N_TRAIN and row["faces"] <= N_TRAIN
+    ]
 
     return {
-        "schema_version": 1,
+        "schema_version": RESULT_SCHEMA_VERSION,
+        "schema": {
+            "name": "homymoly.conversion-campaign-result",
+            "version": RESULT_SCHEMA_VERSION,
+            "record_id": RESULT_RECORD_ID,
+        },
         "campaign": "conversion-campaign-v1",
+        "correction": _correction_record(),
         "protocol": {
             "path": PROTOCOL,
-            "sha256": _sha256(project_root / PROTOCOL),
+            "sha256": protocol_sha256,
+            "frozen_sha256": FROZEN_PROTOCOL_SHA256,
+            "document_hash_matches_frozen": True,
+            "execution_matches_frozen_text": False,
+            "implementation_deviations": _protocol_implementation_deviations(),
         },
         "provenance": {
-            "git_revision": _git("rev-parse", "HEAD"),
-            "git_status": _git("status", "--short"),
-            "torch": torch.__version__,
+            "git_revision": _git(project_root, "rev-parse", "HEAD"),
+            "git_status": _git(project_root, "status", "--short"),
+            "python": platform.python_version(),
+            "dependencies": {
+                "torch": torch.__version__,
+                "networkx": importlib.metadata.version("networkx"),
+                "numpy": importlib.metadata.version("numpy"),
+            },
+            "environment": environment_provenance,
             "runner_sha256": _sha256(Path(__file__).resolve()),
+            "generator": generator_provenance,
+            "execution": {
+                "tensor_device": "cpu",
+                "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+            },
         },
         "design": {
             "declared_seeds": list(SEEDS),
             "eligible_topologies": len(eligible),
             "skipped_topologies": [seed for seed, _ in skipped],
             "training_pairs": N_TRAIN,
+            "held_out_pairs": N_HELD_OUT,
+            "training_label_noise": {
+                "distribution": "independent zero-mean Gaussian",
+                "standard_deviation": NOISE,
+            },
+            "held_out_targets": "noiseless ground-truth linear responses",
             "steps": STEPS,
+            "optimiser": {
+                "name": "Adam",
+                "learning_rate": LEARNING_RATE,
+                "initialisation": "W = 0",
+                "dtype": "float64",
+            },
+            "fit_scope": "one independently trained free matrix W per topology",
+            "primary_inference_unit": (
+                "one eligible generator seed, jointly determining topology, "
+                "training predictors and noise, and noiseless held-out predictors"
+            ),
+            "primary_estimand": (
+                "mean paired log10 held-out-MSE ratio over eligible generator seeds"
+            ),
+            "exchangeability_assumption": (
+                "eligible seed-level joint replicates are exchangeable for the "
+                "Student-t interval; the design does not separate topology "
+                "heterogeneity from data/noise-realisation heterogeneity"
+            ),
+            "paired_fit_sharing": (
+                "within a seed, all terms share topology, generated train/test "
+                "predictors, noisy training labels, noiseless held-out targets, "
+                "and zero initialisation"
+            ),
             "weights": WEIGHTS,
+            "weight_provenance": (
+                "selected and frozen after exploratory work; no machine-readable "
+                "selection criterion was retained"
+            ),
+            "eligible_topology_dimensions": dimension_rows,
+            "free_parameters": {
+                "definition": "num_edges * num_faces for each independently fitted W",
+                "minimum": min(
+                    sample.num_edges * sample.num_faces for _, sample in eligible
+                ),
+                "median": statistics.median(
+                    sample.num_edges * sample.num_faces for _, sample in eligible
+                ),
+                "maximum": max(
+                    sample.num_edges * sample.num_faces for _, sample in eligible
+                ),
+            },
+            "scarce_probe_geometry": {
+                "training_pairs": N_TRAIN,
+                "median_edges_per_output_row": statistics.median(
+                    row["edges"] for row in dimension_rows
+                ),
+                "median_cycle_subspace_dimension": statistics.median(
+                    row["faces"] for row in dimension_rows
+                ),
+                "full_row_regressions_with_edges_gt_training_pairs": len(
+                    underdetermined_full
+                ),
+                "cycle_subspaces_with_faces_le_training_pairs": len(
+                    identifiable_zero_set
+                ),
+                "seeds_moving_from_edges_gt_n_to_faces_le_n": len(
+                    identifiability_transitions
+                ),
+                "interpretation": (
+                    "reference geometry of the penalty's zero set only; the "
+                    "executed finite penalty leaves all F*E parameters trainable"
+                ),
+            },
+            "objective_definitions": {
+                "exact": {
+                    "display_name": "boundary-compatibility penalty",
+                    "formula": "mean((B1 @ W.T)^2)",
+                    "frozen_key_is_historical_shorthand": True,
+                    "is_exactness_of_a_sequence": False,
+                    "structural_side_information": (
+                        "B1 determines the target cycle subspace ker(B1); the "
+                        "penalty does not directly use B2 or response labels, but "
+                        "the committed deterministic generator algorithm can "
+                        "recover its noncanonical B2 basis from the graph"
+                    ),
+                },
+                "cone": {
+                    "display_name": "singular-value cone surrogate",
+                    "formula": "exp(-2 * sigma_min(W))",
+                    "is_mapping_cone_homology": False,
+                },
+                "rtd": {
+                    "display_name": "RTD-inspired normalized-distance surrogate",
+                    "formula": (
+                        "MSE(normalized pairwise distances of X @ W.T, "
+                        "normalized pairwise distances of X)"
+                    ),
+                    "is_representation_topology_divergence": False,
+                    "target_alignment": (
+                        "the generated truth discards cut-space directions while "
+                        "this surrogate asks the lower-dimensional output to "
+                        "preserve the full source distance geometry"
+                    ),
+                },
+            },
             "multiplicity": "Bonferroni across the three primary contrasts",
             "family_size": FAMILY_SIZE,
         },
         "primary": primary,
         "c1": {
             "weights_swept": list(C1_WEIGHTS),
-            "n": len(c1),
-            "mean_within_topology_correlation": statistics.mean(c1),
+            "n": len(c1_correlations),
+            "mean_within_topology_correlation": statistics.mean(c1_correlations),
             "interval_95": c1_interval,
-            "positive_topologies": sum(1 for value in c1 if value > 0),
+            "positive_topologies": sum(1 for value in c1_correlations if value > 0),
             "supported": c1_interval[0] > 0.0,
-            "per_topology_correlation": c1,
+            "supported_claim": (
+                "positive within-seed regularization-path association only"
+            ),
+            "does_not_establish": [
+                "independent predictive information",
+                "off-path calibration",
+                "causal effect",
+            ],
+            "inference_role": (
+                "prespecified secondary analysis; unadjusted two-sided 95% "
+                "Student-t interval"
+            ),
+            "per_topology_correlation": c1_correlations,
+            "per_topology": c1_rows,
         },
         "routing": {
             "threshold_split_size": len(threshold_pool),
+            "threshold_split_topology_clusters": len(
+                {
+                    int(row["seed"])
+                    for row in routing_rows
+                    if row["split"] == "threshold"
+                }
+            ),
             "evaluation_trials": len(evaluation),
+            "evaluation_topology_clusters": len(cluster_summaries),
             "threshold": threshold,
-            "endpoint": "log10(routed / best fixed strategy) on the evaluation split",
+            "endpoint": (
+                "log10(routed / per-trial minimum of cell and graph errors) "
+                "on the evaluation split"
+            ),
+            "decision_informative": False,
+            "protocol_design_note": (
+                "The routed numerator is one of the two errors in the per-trial "
+                "denominator, so every endpoint value is nonnegative and the "
+                "frozen upper-bound-below-zero support rule is impossible. Schema "
+                "v1 also treated two correlated fits per topology as independent."
+            ),
             "mean_log10_ratio": statistics.mean(routed_differences),
-            "interval_95": _interval(routed_differences, _T975),
-            "supported": _interval(routed_differences, _T975)[1] < 0.0,
+            "historical_pseudoreplicated_interval_95": historical_naive_interval,
+            "topology_clustered_descriptive_interval_95": (
+                clustered_descriptive_interval
+            ),
+            "topology_cluster_summaries": cluster_summaries,
+            "supported": None,
+            "decision": "withdrawn-non-informative",
+            "selected_lower_error_rows": sum(
+                1
+                for row in evaluation
+                if (
+                    row["cell_error"]
+                    if row["defect"] <= threshold
+                    else row["graph_error"]
+                )
+                == min(row["cell_error"], row["graph_error"])
+            ),
             "median_routed": statistics.median(
                 [
-                    row["cell_error"] if row["defect"] <= threshold else row["graph_error"]
+                    row["cell_error"]
+                    if row["defect"] <= threshold
+                    else row["graph_error"]
                     for row in evaluation
                 ]
             ),
@@ -329,7 +845,12 @@ def main(argv: list[str] | None = None) -> int:
     project_root = Path(__file__).resolve().parent.parent
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", type=Path, default=project_root)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help=f"write the corrected record here (publication path: {CORRECTED_RESULT_PATH})",
+    )
     args = parser.parse_args(argv)
     report = run(args.project_root.expanduser().resolve())
     _atomic_json(args.output.expanduser(), report)
@@ -341,7 +862,7 @@ def main(argv: list[str] | None = None) -> int:
         }
         for term, payload in report["primary"].items()
     }
-    summary["c1_supported"] = report["c1"]["supported"]
+    summary["c1_positive_path_association"] = report["c1"]["supported"]
     summary["routing_supported"] = report["routing"]["supported"]
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0

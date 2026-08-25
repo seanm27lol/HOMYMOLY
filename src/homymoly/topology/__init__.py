@@ -12,6 +12,7 @@ from .defects import (
     DegreeDefect,
     cone_betti_from_defects,
     degree_defect,
+    directional_map_defects,
     exactness_defects,
     harmonic_basis,
     induced_homology_map,
@@ -33,7 +34,9 @@ from .screening import (
     NOT_SATISFIED,
     SATISFIED,
     ScreeningResult,
+    boundary_compatibility_term,
     exactness_term,
+    rtd_inspired_distance_term,
     screen_structural_term,
 )
 from .sheaf import connection_coboundary, connection_residual, cycle_holonomy
@@ -49,6 +52,7 @@ __all__ = [
     "Face",
     "OrientedIncidence",
     "ScreeningResult",
+    "boundary_compatibility_term",
     "build_boundary_1",
     "build_boundary_2",
     "build_oriented_incidence",
@@ -60,6 +64,7 @@ __all__ = [
     "connection_residual",
     "cycle_holonomy",
     "degree_defect",
+    "directional_map_defects",
     "exactness_defects",
     "exactness_term",
     "graph_to_cell_inclusion",
@@ -70,6 +75,7 @@ __all__ = [
     "mapping_cone",
     "nullity",
     "numerical_rank",
+    "rtd_inspired_distance_term",
     "screen_structural_term",
     "validate_boundary_squared_zero",
 ]

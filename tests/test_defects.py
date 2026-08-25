@@ -8,6 +8,7 @@ from homymoly.topology import (
     ChainMap,
     cone_betti_from_defects,
     cone_betti_numbers,
+    directional_map_defects,
     exactness_defects,
     harmonic_basis,
     induced_homology_map,
@@ -33,10 +34,7 @@ def _annulus() -> tuple[ChainComplex, object, torch.Tensor]:
 
 def _identity(complex_: ChainComplex) -> DegreeMaps:
     return DegreeMaps(
-        *(
-            torch.eye(complex_.space_dim(degree), dtype=DTYPE)
-            for degree in range(3)
-        )
+        *(torch.eye(complex_.space_dim(degree), dtype=DTYPE) for degree in range(3))
     )
 
 
@@ -44,7 +42,7 @@ def test_identity_destroys_and_misses_nothing() -> None:
     complex_, _, _ = _annulus()
     chain_map = ChainMap(complex_, complex_, _identity(complex_))
 
-    defects = exactness_defects(chain_map)
+    defects = directional_map_defects(chain_map)
 
     assert all(defect.chain_kernel == 0 for defect in defects)
     assert all(defect.chain_cokernel == 0 for defect in defects)
@@ -74,7 +72,7 @@ def test_a_cycle_killing_map_reports_one_destroyed_and_one_unreachable_class() -
         rotation.degree_zero, rotation.degree_one @ projector, rotation.degree_two
     )
 
-    defects = exactness_defects(ChainMap(complex_, complex_, killed, atol=1e-8))
+    defects = directional_map_defects(ChainMap(complex_, complex_, killed, atol=1e-8))
     degree_one = defects[1]
 
     assert degree_one.homology_kernel == 1, "the cycle class is destroyed"
@@ -106,7 +104,7 @@ def test_induced_map_ranks_zero_when_homology_is_killed() -> None:
 
     assert induced.shape == (1, 1)
     assert float(induced.abs().max()) < 1e-10
-    assert exactness_defects(chain_map)[1].homology_kernel == 1
+    assert directional_map_defects(chain_map)[1].homology_kernel == 1
 
 
 def test_the_cone_bundles_kernel_and_cokernel_for_every_candidate() -> None:
@@ -123,10 +121,17 @@ def test_the_cone_bundles_kernel_and_cokernel_for_every_candidate() -> None:
         )
         for candidate in (rotation, killed):
             chain_map = ChainMap(complex_, complex_, candidate, atol=1e-8)
-            predicted = cone_betti_from_defects(exactness_defects(chain_map))
+            predicted = cone_betti_from_defects(directional_map_defects(chain_map))
             assert predicted == cone_betti_numbers(chain_map, map_atol=1e-8)
             checked += 1
     assert checked == 2 * system.num_transformations
+
+
+def test_historical_exactness_defects_is_a_directional_map_alias() -> None:
+    complex_, _, _ = _annulus()
+    chain_map = ChainMap(complex_, complex_, _identity(complex_))
+
+    assert exactness_defects(chain_map) == directional_map_defects(chain_map)
 
 
 def test_quasi_isomorphism_separates_the_two_candidate_classes() -> None:
@@ -139,6 +144,4 @@ def test_quasi_isomorphism_separates_the_two_candidate_classes() -> None:
             rotation.degree_zero, rotation.degree_one @ projector, rotation.degree_two
         )
         assert is_quasi_isomorphism(ChainMap(complex_, complex_, rotation, atol=1e-8))
-        assert not is_quasi_isomorphism(
-            ChainMap(complex_, complex_, killed, atol=1e-8)
-        )
+        assert not is_quasi_isomorphism(ChainMap(complex_, complex_, killed, atol=1e-8))

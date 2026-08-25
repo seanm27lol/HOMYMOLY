@@ -11,7 +11,7 @@ from homymoly.data.conversion import (
 )
 from homymoly.topology import (
     ChainComplex,
-    exactness_defects,
+    directional_map_defects,
     graph_to_cell_inclusion,
 )
 
@@ -117,7 +117,7 @@ def test_homological_defects_vary_across_examples() -> None:
         if not sample.num_faces:
             continue
         graph, cell = _complexes(sample)
-        defects = exactness_defects(graph_to_cell_inclusion(graph, cell))
+        defects = directional_map_defects(graph_to_cell_inclusion(graph, cell))
         profiles.add(tuple((d.homology_kernel, d.homology_cokernel) for d in defects))
         ranks.add(sample.cycle_rank)
 
@@ -132,7 +132,7 @@ def test_the_destroyed_class_count_equals_the_cycle_rank() -> None:
         if not sample.num_faces:
             continue
         graph, cell = _complexes(sample)
-        defects = exactness_defects(graph_to_cell_inclusion(graph, cell))
+        defects = directional_map_defects(graph_to_cell_inclusion(graph, cell))
         assert defects[1].homology_kernel == sample.cycle_rank
         assert defects[1].homology_cokernel == 0
 

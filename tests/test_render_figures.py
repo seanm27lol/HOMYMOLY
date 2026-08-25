@@ -46,7 +46,9 @@ def test_recovery_figure_is_well_formed_and_reads_its_values_from_the_summary() 
     assert root.tag.endswith("svg")
     # Every declared ablation appears, and none is silently dropped.
     for name in ("task_only", "cone_only", "combined", "rtd_only"):
-        assert name in markup
+        assert MODULE.ABLATION_LABELS[name] in markup
+    assert "cone proxy only" in markup
+    assert "RTD-style surrogate only" in markup
     # The chance annotation is read from the summary, not hardcoded.
     assert "chance 0.0833" in markup
     # Structure-only controls are drawn in the second categorical slot.
@@ -57,7 +59,7 @@ def test_recovery_figure_groups_controls_after_supervised_objectives() -> None:
     markup = MODULE.figure_recovery(_summary())
 
     positions = {
-        name: markup.index(f">{name}<")
+        name: markup.index(f">{MODULE.ABLATION_LABELS[name]}<")
         for name in ("task_only", "combined", "cone_only", "rtd_only")
     }
     assert positions["task_only"] < positions["combined"]
@@ -124,16 +126,78 @@ def test_contrast_figure_plots_every_gate3_and_gauge_contrast() -> None:
     assert markup.count("<circle") == expected
 
 
+def test_conversion_campaign_names_proxy_objectives_as_surrogates() -> None:
+    campaign = {
+        "design": {"eligible_topologies": 2, "training_pairs": 16},
+        "primary": {
+            name: {
+                "interval_bonferroni_98_33": interval,
+                "interval_95": interval,
+                "mean_log10_ratio": sum(interval) / 2,
+                "improves_confirmatory": False,
+                "harms_confirmatory": False,
+            }
+            for name, interval in (
+                ("exact", [-0.3, 0.1]),
+                ("cone", [-0.1, 0.2]),
+                ("rtd", [-0.2, 0.3]),
+            )
+        },
+        "routing": {
+            "decision": "H5-WITHDRAWN-SENTINEL",
+            "historical_pseudoreplicated_interval_95": [-999.0, 999.0],
+            "topology_clustered_descriptive_interval_95": [-998.0, 998.0],
+        },
+    }
+
+    markup = MODULE.figure_campaign(campaign)
+
+    assert "singular-value cone surrogate" in markup
+    assert "RTD-inspired distance surrogate" in markup
+    assert "exp(-2·σ_min(W)); not mapping-cone homology" in markup
+    assert "normalized pairwise-distance MSE" in markup
+    assert "Boundary compatibility improves edge-to-cycle lifting" in markup
+    assert "B₁Wᵀ = 0 (frozen key: exact)" in markup
+    assert ">exact<" not in markup
+    assert "no detected improvement" in markup
+    assert ">inert<" not in markup
+    assert (
+        "eligible seed jointly fixes topology, predictors, and training noise" in markup
+    )
+    assert "same-family replication" in markup
+    assert "Locked prospectively after outcome-informed weight selection" in markup
+    assert "one execution deviation disclosed" in markup
+    assert "preregistered" not in markup
+    assert "one value per topology" not in markup
+    assert "learned conversion" not in markup
+    assert "H5-WITHDRAWN-SENTINEL" not in markup
+    assert "-999" not in markup
+
+
 def test_committed_figures_match_a_fresh_render(tmp_path: Path) -> None:
     """The tracked SVGs must be regenerable, so a stale figure cannot ship."""
 
     figures = Path(__file__).parents[1] / "docs" / "figures"
-    if not (RESULTS / "MANIFEST.json").is_file() or not figures.is_dir():
-        pytest.skip("tracked evidence bundle or figure directory is not present")
+    corrected = RESULTS / "campaigns" / "conversion-campaign-v1-corrected.json"
+    if (
+        not (RESULTS / "MANIFEST.json").is_file()
+        or not figures.is_dir()
+        or not corrected.is_file()
+    ):
+        pytest.skip(
+            "tracked evidence, corrected campaign, or figure directory is not present"
+        )
 
     MODULE.main(["--results-root", str(RESULTS), "--output-dir", str(tmp_path)])
 
-    for name in ("fig-recovery.svg", "fig-contrasts.svg", "fig-compute.svg", "fig-campaign.svg"):
+    for name in (
+        "fig-recovery.svg",
+        "fig-contrasts.svg",
+        "fig-compute.svg",
+        "fig-campaign.svg",
+    ):
         assert (tmp_path / name).read_text(encoding="utf-8") == (
             figures / name
-        ).read_text(encoding="utf-8"), f"{name} is stale; re-run scripts/render_figures.py"
+        ).read_text(encoding="utf-8"), (
+            f"{name} is stale; re-run scripts/render_figures.py"
+        )
