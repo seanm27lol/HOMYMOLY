@@ -174,15 +174,43 @@ def test_conversion_campaign_names_proxy_objectives_as_surrogates() -> None:
     assert "-999" not in markup
 
 
+def test_replication_figure_renders_every_claim_and_the_futility_margin() -> None:
+    result = RESULTS / "campaigns" / "lifting-replication-v2.json"
+    if not result.is_file():
+        pytest.skip("tracked replication result is not present")
+    campaign = json.loads(result.read_text(encoding="utf-8"))
+
+    markup = MODULE.figure_replication(campaign)
+
+    root = ElementTree.fromstring(markup)
+    assert root.tag.endswith("svg")
+    assert root.attrib.get("role") == "img"
+    assert root.attrib.get("aria-label")
+    # Every frozen claim id and its exact arm pair appears.
+    for claim in campaign["primary"]["claims"]:
+        assert claim["id"] in markup
+        assert f"{claim['numerator_arm']} / {claim['reference_arm']}" in markup
+    # The RTD futility margin is printed verbatim on H7's row.
+    assert str(campaign["design"]["rtd_margin_log10"]) in markup
+    # H5 is the one unsupported claim and must read as such.
+    assert "not supported" in markup
+    assert "preregistered" not in markup
+    assert "learned conversion" not in markup
+    assert "noninferiority" not in markup
+    assert "equivalence" not in markup
+
+
 def test_committed_figures_match_a_fresh_render(tmp_path: Path) -> None:
     """The tracked SVGs must be regenerable, so a stale figure cannot ship."""
 
     figures = Path(__file__).parents[1] / "docs" / "figures"
     corrected = RESULTS / "campaigns" / "conversion-campaign-v1-corrected.json"
+    replication = RESULTS / "campaigns" / "lifting-replication-v2.json"
     if (
         not (RESULTS / "MANIFEST.json").is_file()
         or not figures.is_dir()
         or not corrected.is_file()
+        or not replication.is_file()
     ):
         pytest.skip(
             "tracked evidence, corrected campaign, or figure directory is not present"
@@ -195,6 +223,7 @@ def test_committed_figures_match_a_fresh_render(tmp_path: Path) -> None:
         "fig-contrasts.svg",
         "fig-compute.svg",
         "fig-campaign.svg",
+        "fig-replication.svg",
     ):
         assert (tmp_path / name).read_text(encoding="utf-8") == (
             figures / name

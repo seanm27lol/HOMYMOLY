@@ -223,6 +223,17 @@
       "source_sha256": "836914d251db8d381aef9a2dcb0ac14a14562652f3e323dc840108b5f24d5ee1"
     },
     {
+      "bytes": 1045528,
+      "derivation": null,
+      "description": "Completed independent edge-to-cycle lifting replication v2 on the sealed untouched seed block 20270101..20270136; an untouched-seed, outcome-informed, same-generator-family replication, not an independent-lab or independent-generator replication and not a pristine preregistration.",
+      "evidence_revision": "9baae6b8322120724e7f5aff3c47fd7ef343086c",
+      "kind": "compact-summary",
+      "path": "campaigns/lifting-replication-v2.json",
+      "sha256": "1aaf08c7db8d66a7102c96480ec2f8c6021d6a5098c2236ae717d6ff9f56419e",
+      "source": "results/campaigns/lifting-replication-v2.json",
+      "source_sha256": "1aaf08c7db8d66a7102c96480ec2f8c6021d6a5098c2236ae717d6ff9f56419e"
+    },
+    {
       "bytes": 120916,
       "derivation": "per-batch-lossless-v1",
       "description": "Gate-3 base final corruption report for full, per-batch rows only.",
@@ -638,17 +649,18 @@
     "0c6fa574cb1f7d93e3382ad20e27d69520f9a14c": 1,
     "11644c68ec0b8c28416a14ce4d8799e4c9ca0860": 1,
     "8021292e97abfec91768f1b5437c883a42c29c60": 47,
+    "9baae6b8322120724e7f5aff3c47fd7ef343086c": 1,
     "e69b07707950b6abe332366c51fe8c94254899f3": 1
   },
   "summary": {
     "by_kind": {
       "benchmark-summary": 15,
-      "compact-summary": 5,
+      "compact-summary": 6,
       "corruption-report-derivative": 20,
       "endpoint-table": 1,
       "gate-decision": 9
     },
-    "bytes": 2989387,
-    "files": 50
+    "bytes": 4034915,
+    "files": 51
   }
 }

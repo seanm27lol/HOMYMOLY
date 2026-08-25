@@ -61,6 +61,26 @@ EXPECTED_CAMPAIGN_ENVIRONMENT = {
 HISTORICAL_CONVERSION_SHA256 = (
     "836914d251db8d381aef9a2dcb0ac14a14562652f3e323dc840108b5f24d5ee1"
 )
+LIFTING_REPLICATION_V2_RESULT = "results/campaigns/lifting-replication-v2.json"
+LIFTING_REPLICATION_V2_RECORD_ID = "independent-lifting-replication-v2"
+LIFTING_REPLICATION_V2_PROTOCOL_PATH = (
+    "docs/31-independent-lifting-replication-protocol.md"
+)
+LIFTING_REPLICATION_V2_RUNNER_PATH = "scripts/run_lifting_replication_v2.py"
+LIFTING_REPLICATION_V2_SEAL_PATH = "docs/32-independent-lifting-replication-seal.json"
+LIFTING_REPLICATION_V2_SEAL_SCHEMA = "homymoly-lifting-replication-seal/1"
+LIFTING_REPLICATION_V2_DESIGN_COMMIT = "044322c7dc6a6255eec941dbcb76c45288a9666c"
+# The sealed, independently validated support decisions of the frozen
+# seven-claim family; H5 is the sole unsupported claim.
+LIFTING_REPLICATION_V2_SUPPORTED = {
+    "h1-soft-vs-ambient-adam": True,
+    "h2-hard-cycle-vs-ambient-ls": True,
+    "h3-hard-cycle-vs-soft-closed-form": True,
+    "h4-hard-cycle-vs-hard-random": True,
+    "h5-ridge-vs-ambient-ls": False,
+    "h6-singular-surrogate-harm": True,
+    "h7-rtd-bounded-benefit-futility": True,
+}
 BONFERRONI_T_DF28 = 2.546465223
 T95_DF28 = 2.048407
 T95_DF27 = 2.051831
@@ -168,6 +188,19 @@ def specifications() -> list[Spec]:
             (
                 "Canonical corrected analysis of frozen conversion campaign v1; "
                 "schema v2 records the Pearson and Bonferroni-interval corrections."
+            ),
+        ),
+        Spec(
+            LIFTING_REPLICATION_V2_RESULT,
+            "campaigns/lifting-replication-v2.json",
+            "compact-summary",
+            "in-place",
+            (
+                "Completed independent edge-to-cycle lifting replication v2 on the "
+                "sealed untouched seed block 20270101..20270136; an untouched-seed, "
+                "outcome-informed, same-generator-family replication, not an "
+                "independent-lab or independent-generator replication and not a "
+                "pristine preregistration."
             ),
         ),
         Spec(
@@ -933,6 +966,194 @@ def validate_corrected_conversion_record(
     _validate_withdrawn_routing(document, historical_document)
 
 
+def _is_full_git_revision(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 40
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def _support_decision_keys(node: Any, path: str = "c1") -> list[str]:
+    """Locate inferential-decision keys that must never appear under C1."""
+
+    found: list[str] = []
+    if isinstance(node, dict):
+        for key, value in node.items():
+            location = f"{path}.{key}"
+            lowered = str(key).lower()
+            if "support" in lowered or "multiplicity" in lowered:
+                found.append(location)
+            found.extend(_support_decision_keys(value, location))
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            found.extend(_support_decision_keys(value, f"{path}[{index}]"))
+    return found
+
+
+def validate_lifting_replication_v2_record(
+    project_root: Path, document: dict[str, Any]
+) -> None:
+    """Reject a v2 replication result that cannot prove its sealed lineage."""
+
+    if document.get("schema") != {
+        "name": "homymoly.independent-lifting-replication-result",
+        "version": 1,
+        "record_id": LIFTING_REPLICATION_V2_RECORD_ID,
+    }:
+        raise ValueError("v2 lifting replication has an unexpected schema identity")
+    if document.get("campaign") != LIFTING_REPLICATION_V2_RECORD_ID:
+        raise ValueError("v2 lifting replication has an unexpected campaign identity")
+    if document.get("status") != "complete":
+        raise ValueError("only a complete v2 lifting replication permits inference")
+
+    eligibility = document.get("eligibility")
+    if not isinstance(eligibility, dict):
+        raise TypeError("v2 lifting replication has no eligibility accounting")
+    eligible_seeds = eligibility.get("eligible_seeds")
+    ineligible = eligibility.get("ineligible")
+    generation_failures = eligibility.get("generation_failures")
+    if (
+        eligibility.get("declared") != 36
+        or eligibility.get("eligible") != 33
+        or not isinstance(eligible_seeds, list)
+        or len(eligible_seeds) != 33
+        or len(set(eligible_seeds)) != 33
+    ):
+        raise ValueError(
+            "v2 lifting replication must retain 33 unique eligible seeds of 36 declared"
+        )
+    if not isinstance(ineligible, list) or not isinstance(generation_failures, list):
+        raise TypeError("v2 ineligible and generation-failure rows must be lists")
+    if generation_failures:
+        raise ValueError("v2 lifting replication must record zero generation failures")
+    if len(ineligible) != 3 or any(
+        not isinstance(row, dict)
+        or not isinstance(row.get("seed"), int)
+        or not row.get("reason")
+        for row in ineligible
+    ):
+        raise ValueError("v2 ineligible rows must carry a seed and an explicit reason")
+    if set(eligible_seeds) | {row["seed"] for row in ineligible} != set(
+        range(20270101, 20270137)
+    ):
+        raise ValueError("v2 seed accounting does not reconstruct the sealed block")
+    audit = document.get("audit")
+    if not isinstance(audit, dict):
+        raise TypeError("v2 lifting replication has no audit block")
+    if (
+        audit.get("declared_seeds") != 36
+        or audit.get("eligible_seeds") != 33
+        or audit.get("eligible_seed_ids") != eligible_seeds
+        or audit.get("ineligible_seed_rows") != 3
+        or audit.get("generation_failure_rows") != 0
+    ):
+        raise ValueError("v2 audit block disagrees with the eligibility accounting")
+
+    provenance = document.get("provenance")
+    if not isinstance(provenance, dict):
+        raise TypeError("v2 lifting replication has no provenance record")
+    seal_path = project_root / LIFTING_REPLICATION_V2_SEAL_PATH
+    if not seal_path.is_file():
+        raise ValueError("v2 design-seal record is missing")
+    seal = json.loads(seal_path.read_text(encoding="utf-8"))
+    if seal.get("schema") != LIFTING_REPLICATION_V2_SEAL_SCHEMA:
+        raise ValueError("v2 design-seal record has an unexpected schema")
+    recorded_seal = provenance.get("seal")
+    if not isinstance(recorded_seal, dict):
+        raise TypeError("v2 lifting replication does not record the design seal")
+    if (
+        recorded_seal.get("path") != LIFTING_REPLICATION_V2_SEAL_PATH
+        or recorded_seal.get("schema") != LIFTING_REPLICATION_V2_SEAL_SCHEMA
+        or recorded_seal.get("committed_at_head") is not True
+        or recorded_seal.get("sha256") != _sha256(seal_path)
+    ):
+        raise ValueError("v2 provenance does not pin the committed design-seal record")
+
+    pinned = {
+        "protocol": LIFTING_REPLICATION_V2_PROTOCOL_PATH,
+        "runner": LIFTING_REPLICATION_V2_RUNNER_PATH,
+        "generator": FROZEN_GENERATOR_PATH,
+    }
+    for name, relative in pinned.items():
+        record = provenance.get(name)
+        if not isinstance(record, dict):
+            raise TypeError(f"v2 lifting replication has no {name} provenance")
+        local = project_root / relative
+        if not local.is_file():
+            raise ValueError(f"v2 {name} file is missing: {relative}")
+        digest = _sha256(local)
+        if record.get("path") != relative or record.get("sha256") != digest:
+            raise ValueError(f"v2 {name} provenance does not match the actual file")
+        if seal.get(f"{name}_sha256") != digest:
+            raise ValueError(f"v2 {name} hash disagrees with the design-seal record")
+    environment = provenance.get("environment")
+    lockfile = environment.get("lockfile") if isinstance(environment, dict) else None
+    local_lock = project_root / FROZEN_LOCKFILE_PATH
+    if not local_lock.is_file() or _sha256(local_lock) != FROZEN_LOCKFILE_SHA256:
+        raise ValueError("frozen campaign lockfile is missing or has changed")
+    if (
+        not isinstance(lockfile, dict)
+        or lockfile.get("path") != FROZEN_LOCKFILE_PATH
+        or lockfile.get("sha256") != FROZEN_LOCKFILE_SHA256
+    ):
+        raise ValueError("v2 lifting replication does not pin the frozen lockfile")
+    if seal.get("lock_sha256") != FROZEN_LOCKFILE_SHA256:
+        raise ValueError("v2 lock hash disagrees with the design-seal record")
+
+    design_commit = provenance.get("design_commit")
+    if design_commit != LIFTING_REPLICATION_V2_DESIGN_COMMIT:
+        raise ValueError("v2 design commit is not the sealed design commit")
+    if (
+        seal.get("design_commit") != design_commit
+        or recorded_seal.get("design_commit") != design_commit
+    ):
+        raise ValueError("v2 design commit disagrees with the design-seal record")
+    execution_revision = provenance.get("execution_revision")
+    if not _is_full_git_revision(design_commit) or not _is_full_git_revision(
+        execution_revision
+    ):
+        raise ValueError("v2 commits must be recorded as full 40-hex revisions")
+    # HEAD has legitimately advanced since the sealed execution, so the revision
+    # is checked only against the record itself, never against live git state.
+    if execution_revision != provenance.get("git_revision"):
+        raise ValueError(
+            "v2 execution revision disagrees with the recorded git revision"
+        )
+    if execution_revision == design_commit:
+        raise ValueError("v2 execution revision must postdate the design commit")
+
+    primary = document.get("primary")
+    if not isinstance(primary, dict):
+        raise TypeError("v2 lifting replication has no primary claim family")
+    if primary.get("family_size") != 7:
+        raise ValueError("v2 primary family must contain exactly seven claims")
+    claims = primary.get("claims")
+    seal_family = seal.get("primary_family")
+    if (
+        not isinstance(claims, list)
+        or not all(isinstance(claim, dict) for claim in claims)
+        or not isinstance(seal_family, list)
+    ):
+        raise TypeError("v2 primary family and seal family must be claim records")
+    if [claim.get("id") for claim in claims] != [
+        claim.get("id") for claim in seal_family
+    ]:
+        raise ValueError("v2 claim ids do not match the sealed primary family")
+    observed = {claim.get("id"): claim.get("supported") for claim in claims}
+    if observed != LIFTING_REPLICATION_V2_SUPPORTED:
+        raise ValueError("v2 support decisions disagree with the validated outcome")
+
+    c1 = document.get("c1")
+    if not isinstance(c1, dict):
+        raise TypeError("v2 lifting replication has no C1 record")
+    forbidden = sorted(_support_decision_keys(c1))
+    if forbidden:
+        raise ValueError(
+            f"v2 C1 must not carry support or multiplicity decisions: {forbidden}"
+        )
+
+
 # Where each evidence shape records the revision that generated it. The first
 # path that resolves wins; every exported file must agree on the result.
 REVISION_PATHS = (
@@ -1047,6 +1268,8 @@ def export(
         document = json.loads(payload)
         if spec.destination == "campaigns/conversion-campaign-v1-corrected.json":
             validate_corrected_conversion_record(project_root, document)
+        if spec.destination == "campaigns/lifting-replication-v2.json":
+            validate_lifting_replication_v2_record(project_root, document)
         entry["evidence_revision"] = evidence_revision(document)
 
         if len(payload) > max_file_bytes:

@@ -685,3 +685,64 @@ not claim “journal ready” merely because engineering checks pass. Journal-re
 means the corrected evidence is integrated, the missing graph-aware comparison
 has been run on untouched seeds, the claims match the result, and every artifact
 is committed and pushed.
+
+## 12. Completion record (2026-08-25)
+
+The v2 milestone described in §§6–11 was executed to completion:
+
+1. Pre-seal review found and fixed the design defects before the seal: the two
+   red focused tests were test-fixture bugs (a non-rank-deficient
+   "disconnected" fixture and a missing `MIN_FACES` patch); the runner gained
+   seal-file parsing in place of a naked CLI hash, strict C1 positivity in
+   place of an epsilon floor, fail-closed generation exceptions, asserted
+   basis orthonormality, recorded numerical ranks, a structural
+   information-flow firewall, per-claim SE/geometric-ratio/direction fields,
+   failure artifacts with null decisions, the audit block, the oracle relative
+   error, descriptive solution/stationarity gaps, thread/CUDA/float64
+   preflight enforcement, and the frozen arm identifiers
+   `soft_boundary_closed_form_lambda3` / `inner_cv_ridge`; the protocol gained
+   the no-pooling rule, the machine-readable seal schema, the §9.2 result
+   schema, per-claim nulls/alternatives, and the verbatim estimand.
+2. `origin/main` (four Dependabot merges) was incorporated non-destructively;
+   `uv.lock` and docs 27 remain hash-identical.
+3. Sealed-seed absence was verified by repository-wide search: only inert
+   textual occurrences plus coincidental float substrings in two old unrelated
+   artifacts.
+4. Two-commit seal executed: design commit A
+   `044322c7dc6a6255eec941dbcb76c45288a9666c` (protocol with embedded
+   protocol hash `6288eade…`, runner, tests); seal commit B
+   `9baae6b8322120724e7f5aff3c47fd7ef343086c`
+   (`docs/32-independent-lifting-replication-seal.json`), pushed to the
+   private remote before any sealed seed was instantiated.
+5. The canonical command ran on CPU with CUDA hidden: status `complete`,
+   33 of 36 seeds eligible (20270103, 20270116, 20270120 ineligible with
+   `num_faces=2 < 3`; zero disconnections, zero generation failures).
+   Supported: h1, h2, h3, h4, h6, h7. Not supported: h5 (inner-CV ridge
+   versus ambient minimum-norm LS). Per §10, the headline is that
+   graph-derived cycle-subspace information is valuable and the exact
+   classical constraint outperforms soft shrinkage (h3 geometric ratio
+   0.746); the soft penalty is a differentiable approximation, not a superior
+   method.
+6. Independent validation from retained raw rows recomputed every summary,
+   interval, support flag, C1 statistic, sub-seed, diagnostic, ridge fold
+   loss, and the audit block — all PASS (max discrepancy ≤ 1e-13). One
+   disclosed retention gap: the per-seed closed-form stationarity residual
+   listed in protocol §7.3 was not asserted/retained by the runner; the
+   normal-equation residual was test-verified below 1e-10 pre-seal, no
+   inferential value is affected, and the sealed block was not rerun over a
+   retention gap. Recorded in docs/33 and docs/29 §9.
+7. Immutable result committed at
+   `64a1c3bf6b5f824fb5990392f5efb08bf36559b9` before interpretive edits.
+8. Integration: evidence exporter validates and carries the v2 record
+   (bundle 51 files, 4,034,915 bytes; export and `--verify-only` pass);
+   `fig-replication.svg` added (four prior figures byte-identical);
+   docs/33 (full record) and docs/29 §9 (audit ledger) written; manuscript
+   retitled and rewritten around the v2 result with §6.4/§7.2 and resolved
+   specificity section; README updated; PDF regenerated and all 27 pages
+   visually inspected (one clipped table column found and fixed by rounding
+   the §7.2 table, with full precision retained in docs/33).
+
+Final state: full suite 357 passed + 1 expected CUDA skip; Ruff clean;
+`git diff --check` clean; the paper carries no stale v1 numbers, no
+inferential routing-H5, no “preregistered” wording for v1, and no
+noninferiority/equivalence framing for h7.

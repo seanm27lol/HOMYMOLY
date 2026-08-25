@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="500" viewBox="0 0 680 500" role="img" aria-label="Untouched-seed replication (33 eligible generator seeds)">
+  <title>Untouched-seed replication (33 eligible generator seeds)</title>
+  <rect width="680" height="500" fill="#ffffff"/>
+  <text x="0.0" y="20.0" font-family="Arial, Helvetica, sans-serif" font-size="13.0" fill="#0b0b0b" text-anchor="start" font-weight="bold">Untouched-seed replication (33 eligible generator seeds)</text>
+  <text x="0.0" y="36.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">Mean paired log10 held-out-MSE ratio per frozen claim; negative favors the numerator arm.</text>
+  <text x="0.0" y="51.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">Point: seed mean. Whisker ends at the governing one-sided Bonferroni bound in the claim's direction.</text>
+  <text x="0.0" y="66.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#7a7873" text-anchor="start" font-weight="normal">Seven-claim confirmatory family at familywise alpha 0.05; same-generator-family replication, not real-data validation.</text>
+  <text x="0.0" y="81.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#7a7873" text-anchor="start" font-weight="normal">H7 is a bounded-benefit/futility statement only; it cannot establish equality or absence of every benefit.</text>
+  <line x1="317.4" y1="92.0" x2="317.4" y2="440.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="317.4" y="456.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">-3</text>
+  <line x1="420.6" y1="92.0" x2="420.6" y2="440.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="420.6" y="456.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">-2</text>
+  <line x1="523.8" y1="92.0" x2="523.8" y2="440.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="523.8" y="456.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">-1</text>
+  <line x1="627.0" y1="92.0" x2="627.0" y2="440.0" stroke="#e3e2df" stroke-width="1.0"/>
+  <text x="627.0" y="456.0" font-family="Arial, Helvetica, sans-serif" font-size="9.5" fill="#7a7873" text-anchor="middle" font-weight="normal">0</text>
+  <line x1="627.0" y1="92.0" x2="627.0" y2="440.0" stroke="#52514e" stroke-width="1.4"/>
+  <text x="472.0" y="474.0" font-family="Arial, Helvetica, sans-serif" font-size="10.0" fill="#52514e" text-anchor="middle" font-weight="normal">log10 ratio of held-out MSE (numerator / reference)</text>
+  <text x="260.0" y="113.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.5" fill="#0b0b0b" text-anchor="end" font-weight="normal">h1-soft-vs-ambient-adam</text>
+  <text x="260.0" y="125.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="8.5" fill="#7a7873" text-anchor="end" font-weight="normal">soft_boundary_lambda3 / ambient_adam</text>
+  <text x="260.0" y="137.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#2a78d6" text-anchor="end" font-weight="normal">supported · upper bound -1.2509</text>
+  <line x1="433.7" y1="121.0" x2="497.9" y2="121.0" stroke="#2a78d6" stroke-width="2"/>
+  <line x1="497.9" y1="116.5" x2="497.9" y2="125.5" stroke="#2a78d6" stroke-width="2"/>
+  <circle cx="433.7" cy="121.0" r="4.5" fill="#2a78d6" stroke="#ffffff" stroke-width="2.5"/>
+  <text x="260.0" y="155.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.5" fill="#0b0b0b" text-anchor="end" font-weight="normal">h2-hard-cycle-vs-ambient-ls</text>
+  <text x="260.0" y="167.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="8.5" fill="#7a7873" text-anchor="end" font-weight="normal">hard_cycle_ls / ambient_min_norm_ls</text>
+  <text x="260.0" y="179.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#2a78d6" text-anchor="end" font-weight="normal">supported · upper bound -1.3275</text>
+  <line x1="433.3" y1="163.0" x2="490.0" y2="163.0" stroke="#2a78d6" stroke-width="2"/>
+  <line x1="490.0" y1="158.5" x2="490.0" y2="167.5" stroke="#2a78d6" stroke-width="2"/>
+  <circle cx="433.3" cy="163.0" r="4.5" fill="#2a78d6" stroke="#ffffff" stroke-width="2.5"/>
+  <text x="260.0" y="197.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.5" fill="#0b0b0b" text-anchor="end" font-weight="normal">h3-hard-cycle-vs-soft-closed-form</text>
+  <text x="260.0" y="209.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="8.5" fill="#7a7873" text-anchor="end" font-weight="normal">hard_cycle_ls / soft_boundary_closed_form_lambda3</text>
+  <text x="260.0" y="221.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#2a78d6" text-anchor="end" font-weight="normal">supported · upper bound -0.0484</text>
+  <line x1="613.8" y1="205.0" x2="622.0" y2="205.0" stroke="#2a78d6" stroke-width="2"/>
+  <line x1="622.0" y1="200.5" x2="622.0" y2="209.5" stroke="#2a78d6" stroke-width="2"/>
+  <circle cx="613.8" cy="205.0" r="4.5" fill="#2a78d6" stroke="#ffffff" stroke-width="2.5"/>
+  <text x="260.0" y="239.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.5" fill="#0b0b0b" text-anchor="end" font-weight="normal">h4-hard-cycle-vs-hard-random</text>
+  <text x="260.0" y="251.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="8.5" fill="#7a7873" text-anchor="end" font-weight="normal">hard_cycle_ls / hard_random_subspace_ls</text>
+  <text x="260.0" y="263.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#2a78d6" text-anchor="end" font-weight="normal">supported · upper bound -2.5720</text>
+  <line x1="293.4" y1="247.0" x2="361.5" y2="247.0" stroke="#2a78d6" stroke-width="2"/>
+  <line x1="361.5" y1="242.5" x2="361.5" y2="251.5" stroke="#2a78d6" stroke-width="2"/>
+  <circle cx="293.4" cy="247.0" r="4.5" fill="#2a78d6" stroke="#ffffff" stroke-width="2.5"/>
+  <text x="260.0" y="281.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.5" fill="#0b0b0b" text-anchor="end" font-weight="normal">h5-ridge-vs-ambient-ls</text>
+  <text x="260.0" y="293.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="8.5" fill="#7a7873" text-anchor="end" font-weight="normal">inner_cv_ridge / ambient_min_norm_ls</text>
+  <text x="260.0" y="305.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#eb6834" text-anchor="end" font-weight="normal">not supported · upper bound +0.0922</text>
+  <line x1="628.5" y1="289.0" x2="636.5" y2="289.0" stroke="#eb6834" stroke-width="2"/>
+  <line x1="636.5" y1="284.5" x2="636.5" y2="293.5" stroke="#eb6834" stroke-width="2"/>
+  <circle cx="628.5" cy="289.0" r="4.5" fill="#ffffff" stroke="#eb6834" stroke-width="2.5"/>
+  <text x="260.0" y="323.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.5" fill="#0b0b0b" text-anchor="end" font-weight="normal">h6-singular-surrogate-harm</text>
+  <text x="260.0" y="335.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="8.5" fill="#7a7873" text-anchor="end" font-weight="normal">singular_value_surrogate / ambient_adam</text>
+  <text x="260.0" y="347.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#2a78d6" text-anchor="end" font-weight="normal">supported · lower bound +0.0858</text>
+  <line x1="635.8" y1="331.0" x2="646.6" y2="331.0" stroke="#2a78d6" stroke-width="2"/>
+  <line x1="635.8" y1="326.5" x2="635.8" y2="335.5" stroke="#2a78d6" stroke-width="2"/>
+  <circle cx="646.6" cy="331.0" r="4.5" fill="#2a78d6" stroke="#ffffff" stroke-width="2.5"/>
+  <text x="260.0" y="365.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.5" fill="#0b0b0b" text-anchor="end" font-weight="normal">h7-rtd-bounded-benefit-futility</text>
+  <text x="260.0" y="377.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="8.5" fill="#7a7873" text-anchor="end" font-weight="normal">rtd_inspired_distance_surrogate / ambient_adam</text>
+  <text x="260.0" y="389.0" font-family="Arial, Helvetica, sans-serif" font-size="9.0" fill="#2a78d6" text-anchor="end" font-weight="normal">supported · lower bound -0.0038</text>
+  <line x1="626.6" y1="373.0" x2="628.9" y2="373.0" stroke="#2a78d6" stroke-width="2"/>
+  <line x1="626.6" y1="368.5" x2="626.6" y2="377.5" stroke="#2a78d6" stroke-width="2"/>
+  <circle cx="628.9" cy="373.0" r="4.5" fill="#2a78d6" stroke="#ffffff" stroke-width="2.5"/>
+  <line x1="622.2" y1="366.0" x2="622.2" y2="380.0" stroke="#7a7873" stroke-width="1.2" stroke-dasharray="2 2"/>
+  <text x="616.2" y="376.0" font-family="Arial, Helvetica, sans-serif" font-size="8.5" fill="#7a7873" text-anchor="end" font-weight="normal">futility margin -0.045757490560675115</text>
+  <line x1="272.0" y1="400.0" x2="672.0" y2="400.0" stroke="#b8b6b1" stroke-width="1.0" stroke-dasharray="3 3"/>
+  <text x="260.0" y="415.0" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="9.0" fill="#52514e" text-anchor="end" font-weight="normal">ambient_adam / ambient_min_norm_ls</text>
+  <text x="260.0" y="426.0" font-family="Arial, Helvetica, sans-serif" font-size="8.5" fill="#7a7873" text-anchor="end" font-weight="normal">descriptive optimizer diagnostic</text>
+  <text x="260.0" y="437.0" font-family="Arial, Helvetica, sans-serif" font-size="8.5" fill="#7a7873" text-anchor="end" font-weight="normal">mean +0.2289 · no confirmatory decision</text>
+  <rect x="647.1" y="419.5" width="7.0" height="7.0" rx="0.0" ry="0.0" fill="#7a7873"/>
+  <rect x="0.0" y="481.0" width="9.0" height="9.0" rx="2" ry="2" fill="#2a78d6"/>
+  <text x="14.0" y="488.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">supported (filled point)</text>
+  <rect x="178.4" y="481.0" width="9.0" height="9.0" rx="2" ry="2" fill="#eb6834"/>
+  <text x="192.4" y="488.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">not supported (open point)</text>
+  <rect x="370.0" y="481.0" width="9.0" height="9.0" rx="2" ry="2" fill="#7a7873"/>
+  <text x="384.0" y="488.0" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#52514e" text-anchor="start" font-weight="normal">descriptive (muted square)</text>
+</svg>
