@@ -1,0 +1,96 @@
+{
+  "schema": "homymoly-lifting-replication-seal/1",
+  "design_commit": "044322c7dc6a6255eec941dbcb76c45288a9666c",
+  "protocol_sha256": "6288eade4755aa188299760303b389ce13acd42659b8b9bc340cb9d4024afec0",
+  "runner_sha256": "48d4df774cb1e65385e5ebbd11bce9f8a0e36ee2a5d8e9dec1b18fd29a75e8d7",
+  "generator_sha256": "c37ab1c725aa2101e88c1a0ad8fa3b279d72330feba35077e23fec930a4df69d",
+  "lock_sha256": "05c6a5ad02db5b1651d426d157add170a8542634260ce8c265a3ee32693073bf",
+  "seed_interval": {
+    "first": 20270101,
+    "last": 20270136
+  },
+  "no_preview_declaration": "No seed in 20270101..20270136 has ever been instantiated, previewed, counted for eligibility, printed for dimensions, smoke-tested, or debugged with. A repository-wide search and shell-history inspection before this seal found only inert textual occurrences (the protocol's seed list, the runner's frozen SEALED_SEEDS constant, sanctioned test constants, and coincidental float substrings in old unrelated artifacts). If even one sealed seed is accidentally instantiated before execution, the entire block is void and a new consecutive block must be chosen and verified absent before use.",
+  "primary_family": [
+    {
+      "id": "h1-soft-vs-ambient-adam",
+      "theta": "mean over eligible seeds of log10(MSE_soft_boundary_lambda3 / MSE_ambient_adam)",
+      "null": "theta >= 0",
+      "alternative": "theta < 0",
+      "reference_arm": "ambient_adam",
+      "bound_direction": "less",
+      "threshold": 0.0,
+      "support_rule": "supported iff the one-sided Bonferroni upper bound (alpha = 0.05/7, Student-t critical value for the eligible n) is below 0"
+    },
+    {
+      "id": "h2-hard-cycle-vs-ambient-ls",
+      "theta": "mean over eligible seeds of log10(MSE_hard_cycle_ls / MSE_ambient_min_norm_ls)",
+      "null": "theta >= 0",
+      "alternative": "theta < 0",
+      "reference_arm": "ambient_min_norm_ls",
+      "bound_direction": "less",
+      "threshold": 0.0,
+      "support_rule": "supported iff the one-sided Bonferroni upper bound is below 0"
+    },
+    {
+      "id": "h3-hard-cycle-vs-soft-closed-form",
+      "theta": "mean over eligible seeds of log10(MSE_hard_cycle_ls / MSE_soft_boundary_closed_form_lambda3)",
+      "null": "theta >= 0",
+      "alternative": "theta < 0",
+      "reference_arm": "soft_boundary_closed_form_lambda3",
+      "bound_direction": "less",
+      "threshold": 0.0,
+      "support_rule": "supported iff the one-sided Bonferroni upper bound is below 0"
+    },
+    {
+      "id": "h4-hard-cycle-vs-hard-random",
+      "theta": "mean over eligible seeds of log10(MSE_hard_cycle_ls / MSE_hard_random_subspace_ls)",
+      "null": "theta >= 0",
+      "alternative": "theta < 0",
+      "reference_arm": "hard_random_subspace_ls",
+      "bound_direction": "less",
+      "threshold": 0.0,
+      "support_rule": "supported iff the one-sided Bonferroni upper bound is below 0"
+    },
+    {
+      "id": "h5-ridge-vs-ambient-ls",
+      "theta": "mean over eligible seeds of log10(MSE_inner_cv_ridge / MSE_ambient_min_norm_ls)",
+      "null": "theta >= 0",
+      "alternative": "theta < 0",
+      "reference_arm": "ambient_min_norm_ls",
+      "bound_direction": "less",
+      "threshold": 0.0,
+      "support_rule": "supported iff the one-sided Bonferroni upper bound is below 0"
+    },
+    {
+      "id": "h6-singular-surrogate-harm",
+      "theta": "mean over eligible seeds of log10(MSE_singular_value_surrogate / MSE_ambient_adam)",
+      "null": "theta <= 0",
+      "alternative": "theta > 0",
+      "reference_arm": "ambient_adam",
+      "bound_direction": "greater",
+      "threshold": 0.0,
+      "support_rule": "supported iff the one-sided Bonferroni lower bound is above 0"
+    },
+    {
+      "id": "h7-rtd-bounded-benefit-futility",
+      "theta": "mean over eligible seeds of log10(MSE_rtd_inspired_distance_surrogate / MSE_ambient_adam)",
+      "null": "theta <= log10(0.90)",
+      "alternative": "theta > log10(0.90) is rejected as futile for a 10% benefit",
+      "reference_arm": "ambient_adam",
+      "bound_direction": "greater",
+      "threshold": -0.045757490560675115,
+      "support_rule": "bounded-benefit/futility supported iff the one-sided Bonferroni lower bound exceeds log10(0.90) = -0.045757490560675115, ruling out a benefit of 10% or more; this is not an equivalence test and not noninferiority"
+    }
+  ],
+  "stop_rules": [
+    "Fewer than 30 eligible seeds (connected, F >= 3) among 20270101..20270136: frozen design failure, status design_failure_insufficient_eligible, no fits, no confirmatory claims.",
+    "Any generator exception: campaign failure, status design_failure, before any fit; the failing seed is recorded, never excluded.",
+    "Any rank, dimension, orthogonality, nullspace-membership, or stationarity validation failure: whole-campaign failure, status design_failure; never delete only the offending seed.",
+    "Any nonfinite or nonpositive C1 defect or held-out MSE: whole-campaign failure, status design_failure; never add an epsilon after outcomes.",
+    "No outcome-dependent stopping: all 36 candidate seeds are attempted and all failures preserved regardless of intermediate results.",
+    "Never rerun with another seed block because the result is surprising or weak.",
+    "Unexpected exception: status execution_failure with completed rows preserved; KeyboardInterrupt: status interrupted.",
+    "Runner refuses to start on a dirty worktree, an existing output path, a mismatched environment/lock/generator/protocol/runner fingerprint, a seal record not committed at HEAD, available CUDA, more than one PyTorch thread, or non-CPU non-float64 execution."
+  ],
+  "output_path": "results/campaigns/lifting-replication-v2.json"
+}
