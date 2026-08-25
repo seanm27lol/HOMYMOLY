@@ -28,23 +28,23 @@ endpoint, training size, and weights were informed by earlier work on the same
 family, whose seed identities were not retained; this is not an independent
 confirmation or pristine preregistration. A
 **boundary-compatibility** penalty improves held-out recovery of the learned
-lifting: Bonferroni-adjusted interval [−2.802, −1.458] on the
+lifting: Bonferroni-adjusted interval [−2.749, −1.511] on the
 paired `log10` ratio. Paired responses encode `B2`; the structural penalty itself
 does not directly use `B2` or the responses, but uses `B1`, which determines the
 target cycle subspace and is strong side information that the unpenalized
 baseline ignores. In a
 prespecified secondary analysis, **defect covaries with held-out error along the
 compatibility-penalty path**: the mean within-seed Pearson correlation is
-+0.854, with an unadjusted 95% interval [+0.831, +0.877], and is positive in 29
++0.961, with an unadjusted 95% interval [+0.935, +0.987], and is positive in 29
 of 29 eligible seeds. The common penalty weight drives both quantities, and the nine
 fits within a topology are not independent observations; this path result does
 not establish independent predictive information or off-path calibration.
 
 The same campaign rejects one surrogate objective and finds no improvement from
 another. A **singular-value cone surrogate**, `exp(−2·σ_min(W))`, does not
-merely fail to help; it harms the lifting, adjusted interval [+0.102, +0.277]. For an
+merely fail to help; it harms the lifting, adjusted interval [+0.109, +0.270]. For an
 **RTD-inspired normalized pairwise-distance surrogate**, the adjusted interval
-[−0.003, +0.039] includes zero. The latter asks an intentionally lossy lifting to
+[−0.002, +0.038] includes zero. The latter asks an intentionally lossy lifting to
 preserve full source geometry. These are not mapping-cone homology and the
 published RTD/SRTD statistic, respectively.
 
@@ -517,9 +517,9 @@ SHA-256 digests; all 296 verify against the on-disk artifacts.
 
 | objective | weight | 95% interval | Bonferroni 98.33% | sign test | decision |
 |---|---:|---|---|---:|---|
-| boundary compatibility (`exact`) | 3.0 | [−2.628, −1.632] | **[−2.802, −1.458]** | <1e-6 | **improves** |
-| singular-value cone surrogate (`cone`) | 0.01 | [+0.125, +0.254] | **[+0.102, +0.277]** | <1e-6 | **harms** |
-| RTD-inspired distance surrogate (`rtd`) | 0.1 | [+0.002, +0.034] | [−0.003, +0.039] | 0.458 | **no detected improvement** |
+| boundary compatibility (`exact`) | 3.0 | [−2.628, −1.632] | **[−2.749, −1.511]** | <1e-6 | **improves** |
+| singular-value cone surrogate (`cone`) | 0.01 | [+0.125, +0.254] | **[+0.109, +0.270]** | <1e-6 | **harms** |
+| RTD-inspired distance surrogate (`rtd`) | 0.1 | [+0.002, +0.034] | [−0.002, +0.038] | 0.458 | **no detected improvement** |
 
 <figure>
   <img src="figures/fig-campaign.svg" alt="Forest plot of three structural objectives. The boundary-compatibility interval lies below zero, the singular-value surrogate interval lies above zero, and the RTD-inspired distance-surrogate interval crosses zero." width="680">
@@ -547,8 +547,8 @@ a map's boundary-compatibility defect and its held-out error along that path.
 
 | quantity | value |
 |---|---|
-| mean within-seed correlation | **+0.854** |
-| 95% interval | **[+0.831, +0.877]** |
+| mean within-seed correlation | **+0.961** |
+| 95% interval | **[+0.935, +0.987]** |
 | eligible seeds with positive correlation | **29 / 29** |
 
 This prespecified analysis is outside the three-contrast multiplicity family, so
@@ -622,9 +622,10 @@ The original summary had a second flaw: its 28 rows are two tested weights for
 each of only 14 topology clusters. Treating them as 28 independent observations
 and using a Student-t interval with 27 degrees of freedom is pseudoreplication.
 The formerly reported interval and 25-of-28 selection count are withdrawn from
-inferential use. The corrected record will aggregate or cluster by topology and
-report only a descriptive summary; H5 receives no decision. A redesigned,
-cluster-aware endpoint is required.
+inferential use. The corrected record reports the historical row-naive interval
+`[−0.111, +0.382]` and a topology-clustered descriptive interval
+`[−0.123, +0.393]`; neither is inferential, and H5 receives no decision. A
+redesigned, cluster-aware endpoint is required.
 
 A separate routing result, from a different experiment, is retained as a
 descriptive compute comparison rather than an accuracy claim.
@@ -838,7 +839,7 @@ Readers outside the review process should treat this section as a description of
 what exists and how it is organised, not as a download.
 
 All code, configurations, and compact evidence are in that repository. The
-tracked bundle under `results/` contains 49 files with a `MANIFEST.json` recording
+tracked bundle under `results/` contains 50 files with a `MANIFEST.json` recording
 path, byte count, SHA-256, generating commit, and generating command for each.
 
 | location | contents |
