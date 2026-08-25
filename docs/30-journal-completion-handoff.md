@@ -4,6 +4,8 @@ Status time: 2026-08-24, America/New_York
 Repository: `seanm27lol/HOMYMOLY` (private)  
 Working tree: `/home/seanjazm27/HOMYMOLY`  
 Branch: `paper/journal-corrections-v2`
+Last merged pull request: `https://github.com/seanm27lol/HOMYMOLY/pull/23`
+Latest pushed revision at this update: `df15368`
 
 This is the authoritative continuation record for taking the manuscript from an
 honest audited case study to the strongest journal-ready result attainable on
@@ -26,8 +28,43 @@ The corrected-v1 integration described in §§4–5 is now complete:
 - full Ruff lint passes, and all Python files touched by this correction pass
   Ruff's format check.
 
-The next scientific milestone is §6 onward: commit the complete untouched-v2
-protocol and implementation before opening any sealed seed.
+The CI-only frozen-environment test failure was repaired at `df15368` without
+weakening the production runner's strict environment guard. The tests now mock
+the exact frozen environment and include a mismatch-stop regression. The next
+scientific milestone is §6 onward: commit the complete untouched-v2 protocol
+and implementation before opening any sealed seed.
+
+PR #23 is already merged at `ea4dc99`. Revision `df15368` was pushed afterward,
+so it and the v2 work require a **new** pull request. After a fetch, `origin/main`
+was `0a180e3` and contained four subsequent Dependabot merges. Before the v2
+design seal, incorporate current `origin/main` non-destructively and retain the
+CI-portable test patch. Do not mistake the stale failed check attached to merged
+PR #23 for a check of `df15368`.
+
+## 0.1 If this process is interrupted now
+
+Run these commands before doing scientific work:
+
+```bash
+cd /home/seanjazm27/HOMYMOLY
+git fetch origin
+git status --short --branch
+git log --oneline --decorate -12
+sed -n '1,520p' docs/30-journal-completion-handoff.md
+```
+
+Then inspect, review, and finish the three uncommitted v2 deliverables if they
+exist:
+
+- `docs/31-independent-lifting-replication-protocol.md`;
+- `scripts/run_lifting_replication_v2.py`;
+- `tests/test_run_lifting_replication_v2.py`.
+
+No seed in `20270101..20270136` may be instantiated merely to smoke-test those
+files. Use hand fixtures and old seed `20261001`. The work must pass the focused
+tests, full tests, Ruff, and `git diff --check`; then follow the two-commit seal
+procedure in §9.1. If those files are only partially written, their intended
+contract is fully specified in §§6–9 below.
 
 ## 1. Scientific judgment
 
@@ -74,20 +111,21 @@ Other pinned v1 provenance:
 - original campaign revision:
   `11644c68ec0b8c28416a14ce4d8799e4c9ca0860`
 
-Audit commits already made on the working branch:
+Audit and integration commits already made on the working branch:
 
 - `a4c193856c604f93b36f3b90820b81653eff701d` — Pearson/t-critical and
   first claim corrections;
 - `0c6fa574cb1f7d93e3382ad20e27d69520f9a14c` — second journal audit,
   evidence guards, terminology, information-flow, and H5 withdrawal.
+- `7b0dc32` — guarded tolerance for irrelevant rerun roundoff in the withdrawn
+  routing audit.
+- `ea4dc99` — corrected v1 artifact, evidence, figures, manuscript, and PDF.
+- `df15368` — CI-portable tests for the unchanged strict environment guard.
 
-At handoff time, the corrected v1 artifact has been generated from clean commit
-`0c6fa57` but has not yet been committed:
-
-- `results/campaigns/conversion-campaign-v1-corrected.json`
-
-Do not overwrite it. Its internal provenance records an empty Git status,
-CPU-only execution, the exact environment, and revision `0c6fa57`.
+The corrected artifact is tracked at
+`results/campaigns/conversion-campaign-v1-corrected.json`. Do not overwrite it.
+Its internal provenance records an empty Git status, CPU-only execution, the
+exact environment, and revision `0c6fa57`.
 
 ## 3. Corrected v1 result
 
@@ -130,7 +168,7 @@ Corrected H5 status:
   denominator, making every endpoint nonnegative while the frozen support rule
   required an upper bound below zero. No inferential H5 conclusion is possible.
 
-## 4. Resolved v1 integration blocker
+## 4. Resolved v1 integration blocker (historical audit context)
 
 The first publication export after the canonical run failed with:
 
@@ -139,16 +177,16 @@ publication evidence export failed: routing raw trials changed during the H5 aud
 ```
 
 This was resolved at commit `7b0dc32` with the guarded `1e-12` comparison and a
-regression test. The following explanation is retained as audit context. The
-rerun differs from the historical routing
+regression test. No action remains in this section. The following explanation is
+retained as audit context. The rerun differs from the historical routing
 rows only at roughly `1e-14` in a few repeated `graph_error` floats. Examples:
 
 - historical `1.3286839475087884`, rerun `1.3286839475087906`;
 - historical `36.96853289528931`, rerun `36.9685328952893`.
 
 Aggregate values are unchanged except one `3.6e-15` median drift. The exporter at
-`scripts/export_publication_evidence.py::_validate_withdrawn_routing` currently
-compares dictionaries and aggregates with exact equality. Correct it as follows:
+`scripts/export_publication_evidence.py::_validate_withdrawn_routing` now does
+the following:
 
 1. Require identical list length, row order, key sets, seeds, split labels, and
    term weights.
@@ -156,11 +194,8 @@ compares dictionaries and aggregates with exact equality. Correct it as follows:
 3. Compare the five retained routing aggregates with the same tolerance.
 4. Add a regression test showing a `1e-14` drift is accepted and a `1e-6` drift
    is rejected.
-5. Run Ruff and the focused exporter tests.
-6. Commit that code change without adding the generated artifact yet.
-
-Do not copy historical values into the corrected artifact and do not loosen the
-tolerance beyond what is needed for deterministic floating-point reruns.
+The historical values were not copied into the corrected artifact, and the
+tolerance was not loosened beyond deterministic floating-point rerun noise.
 
 ## 5. Finish v1 evidence and manuscript
 
@@ -253,9 +288,11 @@ verified before use. Use old seed `20261001` or synthetic hand fixtures for test
 
 ## 7. v2 scientific design
 
-Purpose: independently replicate the soft boundary-compatibility effect and
-compare it fairly with graph-aware classical estimators, using one eligible
-generator seed as the unit of inference.
+Purpose: replicate the soft boundary-compatibility effect on an untouched seed
+block and compare it fairly with graph-aware classical estimators, using one
+eligible generator seed as the unit of inference. Call this an untouched-seed,
+outcome-informed, same-generator-family replication—not an independent-lab or
+independent-generator replication and not a pristine preregistration.
 
 Frozen data/training constants should retain comparability with v1:
 
@@ -275,54 +312,99 @@ Frozen data/training constants should retain comparability with v1:
 - output path must not exist; runner must refuse a dirty worktree and mismatched
   environment/lock/generator/runner fingerprints.
 
+Enforce an information-flow firewall in code. Fitting APIs for ambient, ridge,
+soft, hard-cycle, hard-random, singular-value, and RTD-inspired arms may receive
+only their declared training tensors and, where applicable, `B1` or the seeded
+random basis. They may not receive `B2`, face-cycle metadata, held-out targets,
+or held-out losses. `B2` is used outside those APIs only to form response tensors,
+evaluate the already fitted matrices, and compute the explicitly segregated
+truth-access oracle.
+
 Primary and essential comparator arms:
 
 1. `ambient_adam`: graph-blind unpenalized full `F x E` matrix, v1 baseline.
-2. `soft_boundary_lambda3`: v1 boundary-compatibility penalty at frozen weight
+2. `ambient_min_norm_ls`: the graph-blind full-space minimum-norm least-squares
+   solution from `torch.linalg.lstsq(X_train, Y_train).solution`. This is the
+   essential solver-matched reference for hard constrained least squares.
+3. `soft_boundary_lambda3`: v1 boundary-compatibility penalty at frozen weight
    `3.0`.
-3. `hard_cycle_ls`: graph-aware least squares restricted exactly to
+4. `soft_boundary_closed_form_lambda3`: the exact minimum-norm solution of the
+   same mean-normalized convex objective as arm 3. In `A = W.T` orientation its
+   normal equation is
+   `(X.T X + 3*N_train/V * B1.T B1) A = X.T Y`; solve by a frozen SVD
+   pseudoinverse convention. This removes finite-step optimizer confounding.
+5. `hard_cycle_ls`: graph-aware least squares restricted exactly to
    `ker(B1)`, the missing classical comparator.
-4. `hard_random_subspace_ls`: deterministic Haar-like random `E x F`
+6. `hard_random_subspace_ls`: deterministic Haar-like random `E x F`
    orthonormal subspace, dimension matched to the cycle subspace, fitted by least
    squares; specificity control that does not use `B2`.
-5. `ridge`: a tuning rule frozen without v2 outcome access. Prefer a small
-   nested training-only validation split or a prespecified grid and deterministic
-   inner selection; never select using the held-out v2 endpoint.
-6. `singular_value_surrogate`: historical `cone` arm at `0.01`, named precisely.
-7. `rtd_inspired_distance_surrogate`: historical `rtd` arm at `0.1`, named
+7. `inner_cv_ridge`: choose from
+   `{1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,1,10,100}` using deterministic four-fold
+   training-only CV. Fold `k` contains row indices satisfying `i mod 4 = k`;
+   fit on 12, validate on four, average the four multi-output validation MSEs,
+   and retain every fold loss. There is no intercept. Each fit solves
+   `(X.T X + alpha I) A = X.T Y`. Exact ties choose the smaller alpha; refit on
+   all 16. Never use the 3,072 held-out rows for tuning.
+8. `singular_value_surrogate`: historical `cone` arm at `0.01`, named precisely.
+9. `rtd_inspired_distance_surrogate`: historical `rtd` arm at `0.1`, named
    precisely.
-8. `generator_cycle_basis_oracle`: reconstruct the generator's noncanonical
+10. `generator_cycle_basis_oracle`: use truth-access `B2` as the analytic output-
+   coordinate/generator ceiling. It is not an estimator and must be isolated
+   from every fitted arm and inferential table. Store raw MSE only; do not form a
+   log ratio when numerical zero is possible.
+
+The oracle can also reconstruct the generator's noncanonical
    NetworkX cycle basis and use its analytic mapping. This is a deterministic
    attainability ceiling, not a learned method and not part of efficacy
    inference.
 
 Implement the hard estimators without `B2`:
 
-- Compute an orthonormal `Q_cycle` spanning `ker(B1)` using a deterministic SVD;
-  shape `E x F` for a connected graph.
+- Require connectivity, `rank(B1) = V-1`, and `F = E-V+1`. Compute a full float64
+  SVD and take `Q_cycle = Vh[V-1:].T`, shape `E x F`. Validate `B1 Q_cycle = 0`
+  and `Q_cycle.T Q_cycle = I` at frozen tolerances. The basis is not itself
+  cross-platform canonical under repeated singular values; only its projector
+  and the fitted predictions are basis-invariant.
 - Let `Z = X_train @ Q_cycle`.
-- Solve `C = lstsq(Z, Y_train)`.
+- Solve `C = lstsq(Z, Y_train, driver="gelsd", rcond=1e-12)` on CPU.
 - Set `W.T = Q_cycle @ C` and evaluate `X_test @ W.T`.
 - For the matched random control, form a deterministic Gaussian `E x F` matrix
   from a SHA-256 sub-seed, take reduced QR with a documented sign convention,
   and use the identical least-squares procedure.
 
+Use the same `driver="gelsd", rcond=1e-12` convention for ambient minimum-norm
+LS. Freeze the pseudoinverse cutoff for the closed-form soft solution. Record
+all returned numerical ranks and stop the entire design on a rank, dimension,
+orthogonality, nullspace, or stationarity validation failure; never delete only
+the offending seed.
+
 Primary estimand for every pair is the mean across eligible seeds of
 `log10(MSE_arm / MSE_reference)`. The seed jointly determines topology, data,
 and noise and is the only inference unit. State the exchangeability assumption.
 
-Recommended confirmatory family (freeze the exact family before opening seeds):
+Intended confirmatory family (copy exactly into the protocol and freeze before
+opening seeds):
 
-1. soft boundary versus ambient: mean log ratio `< 0`;
-2. hard cycle versus ambient: `< 0`;
-3. hard cycle versus soft boundary: `< 0`;
+1. soft boundary versus ambient Adam: mean log ratio `< 0`;
+2. hard cycle versus ambient minimum-norm least squares: `< 0`;
+3. hard cycle versus the closed-form soft-boundary solution: `< 0`;
 4. hard cycle versus hard random subspace: `< 0` (specificity);
-5. frozen ridge versus ambient: `< 0`;
-6. singular-value surrogate versus ambient: `> 0` (replicated harm);
-7. RTD-inspired surrogate noninferiority test: one-sided lower bound on
-   `log10(MSE_rtd/MSE_ambient)` greater than `log10(0.90)` rules out a benefit of
-   10% or more. This is **not** an equivalence test and must use that prespecified
-   margin.
+5. frozen ridge versus ambient minimum-norm least squares: `< 0`;
+6. singular-value surrogate versus ambient Adam: `> 0` (replicated harm);
+7. RTD-inspired surrogate bounded-benefit/futility test: one-sided lower bound on
+   `log10(MSE_rtd/MSE_ambient_adam)` greater than `log10(0.90)` rules out a
+   benefit of 10% or more. This is **not** an equivalence test and must use that
+   prespecified margin, whose exact log threshold is
+   `-0.045757490560675115`. Do not call this noninferiority: the usual direction
+   and estimand semantics are reversed.
+
+`ambient_adam` versus `ambient_min_norm_ls` is a descriptive optimizer
+diagnostic, not an eighth confirmatory claim. This split is essential: the soft
+penalty is compared with its historical Adam baseline, while hard constrained
+LS and ridge are compared with the same-solver full-space LS reference. It
+prevents a solver difference from masquerading as a structural-prior effect.
+The Adam-versus-closed-form soft endpoint and solution/stationarity gaps are
+also descriptive optimization audits, not primary claims.
 
 Use Bonferroni `alpha = 0.05/7` with one-sided Student-t bounds and hard-code
 verified critical values for every possible eligible `n = 30..36`. Compute them
@@ -330,26 +412,57 @@ once with SciPy for design, record the values in the protocol and runner, and
 test them; SciPy need not become a runtime dependency. Report exact paired sign
 tests only as direction-neutral sensitivity analyses.
 
-If seven primary claims make the design too diffuse, remove claims before the
-protocol commit rather than silently changing multiplicity later. Never add or
-drop claims after inspecting v2 outcomes.
+The independently computed quantiles `t.ppf(1 - 0.05/7, n - 1)` are:
 
-## 8. Independent C1 replacement
+| eligible n | df | critical value |
+|---:|---:|---:|
+| 30 | 29 | 2.606750672048818 |
+| 31 | 30 | 2.601227904110613 |
+| 32 | 31 | 2.5960807947257787 |
+| 33 | 32 | 2.5912722991315227 |
+| 34 | 33 | 2.586770085672467 |
+| 35 | 34 | 2.5825458097369376 |
+| 36 | 35 | 2.5785745178415116 |
+
+Do not add, drop, or reinterpret claims after inspecting v2 outcomes. For every
+claim, the protocol must spell out `theta`, null, alternative, reference arm,
+bound direction, threshold, and support rule. The target is the conditional
+synthetic-generator quantity
+`E_seed[log10(MSE_arm/MSE_reference) | connected, F>=3]`. Intervals quantify
+Monte Carlo variation over that seed mechanism, not uncertainty for real data.
+Do not pool v1 and v2.
+
+## 8. Off-path C1 replacement (prespecified secondary/descriptive)
 
 The v1 C1 path association is confounded by `lambda`. V2 should test a genuinely
 off-path version:
 
-- use the unregularized ambient model only;
+- use the unregularized `ambient_min_norm_ls` estimator only, rather than a
+  finite-step optimizer, so optimizer error cannot drive the association;
 - for each topology, run `12` independent training-input/label-noise replicates;
 - share one independently generated `3072`-example noiseless test set across
   those replicates;
 - use deterministic SHA-256 sub-seeds;
-- compute conventional Pearson correlation between log10 Frobenius boundary
-  defect and log10 held-out MSE across the 12 replicates;
+- compute conventional Pearson correlation between log10 cycle-projector defect
+  `||(I-Q_cycle Q_cycle.T)A||_F` and log10 held-out MSE across the 12 replicates;
 - clip each `r` just inside `(-1, 1)`, apply Fisher `atanh`, average Fisher-z over
-  topology seeds, and form the prespecified seed-level interval/test;
-- report the boundary-defect result as primary C1 and a matched random-subspace
-  defect as a specificity sensitivity analysis.
+  topology seeds, and form the prespecified seed-level interval;
+- report raw `||B1 A||_F` only as a legacy descriptive diagnostic;
+- use `||(I-Q_random Q_random.T)A||_F`, with the same deterministic
+  topology-specific `Q_random` as the hard-random arm, as the dimension-matched
+  negative control; reuse that basis across all 12 replicates;
+- report the separate Fisher-z summaries and the paired seed-level difference
+  `z_cycle - z_random`, each with an unadjusted two-sided 95% interval.
+
+For each defect, clip each correlation using an exact rule such as
+`nextafter(1, 0)`, transform by Fisher `atanh`, and use the eligible topology
+seeds as the inference units. Use ordinary unadjusted two-sided 95% Student-t
+intervals on Fisher-z and back-transform the individual summaries for
+interpretation. **Make no support decision:** C1 is outside the seven-test
+Bonferroni family. Two positive correlations alone do not establish specificity;
+the paired delta-z is the relevant descriptive contrast. This remains
+association, not causality. A constant/undefined vector is a whole-design
+failure, never grounds for deleting one topology.
 
 This design varies training/noise independently rather than moving a common
 regularization weight. It still supports association, not causation.
@@ -381,6 +494,136 @@ after the fact.
    replication—not a new generator-family or real-data validation.
 10. Run the final reviewer snapshot, full tests, Ruff, manifest verification,
     PDF visual inspection, secret/large-file scan, and stale-claim search.
+
+### 9.1 Fail-closed two-commit seal
+
+A runner cannot safely contain its own byte hash: adding that hash changes the
+file. Do not invent a circular self-hash check. Use this auditable two-commit
+sequence instead:
+
+1. Incorporate `origin/main` and resolve changes before the seal. Review the
+   resulting diff; retain `df15368`'s strict-environment test coverage.
+2. Finish protocol, runner, and old-seed/fixture tests. The runner may embed the
+   finalized protocol SHA-256 plus immutable generator and lock hashes. At
+   runtime it computes and records its own hash rather than comparing against a
+   constant inside itself.
+3. Prove that no sealed seed has been instantiated. A text occurrence in the
+   protocol or an inert constant is allowed; a dataset construction, result,
+   cache, debug print, or generated artifact is not. Search all tracked and
+   untracked files and inspect shell history if available.
+4. Run all pre-seal gates without a sealed seed:
+
+   ```bash
+   .venv/bin/ruff format scripts/run_lifting_replication_v2.py \
+     tests/test_run_lifting_replication_v2.py
+   .venv/bin/ruff check scripts src tests
+   .venv/bin/python -m pytest -q
+   git diff --check
+   ```
+
+5. Commit the design files as commit A. Record the full commit-A hash and the
+   SHA-256 values of protocol, runner, generator, and lock.
+6. Create `docs/32-independent-lifting-replication-seal.json` containing those
+   exact hashes, the seed interval, the no-preview declaration, the complete
+   primary family, all stop rules, and the exact repository-relative output
+   path. The runner must parse and validate this machine-readable file rather
+   than trusting a naked command-line hash. Commit it as commit B and push commit
+   B to the private GitHub remote before the first seed is opened, creating a
+   remote timestamp. Do not modify the design files between A and execution.
+7. Require a clean worktree at commit B. The runner must verify the protocol,
+   generator, and lock hashes, ensure its runtime hash equals the runner hash
+   recorded in the external seal note, confirm that its current code content is
+   still commit-A content, refuse an existing output, and record commit A,
+   commit B/current execution revision, environment, CLI, and all hashes.
+8. Only after commit B is clean may the first sealed seed be instantiated. Run
+   all 36 without outcome-dependent stopping:
+
+   ```bash
+   env CUDA_VISIBLE_DEVICES=-1 .venv/bin/python \
+     scripts/run_lifting_replication_v2.py \
+     --output results/campaigns/lifting-replication-v2.json
+   ```
+
+   CPU is preferred because this workload is small float64 linear algebra and
+   reproducibility matters more than accelerator utilization. If the runner's
+   frozen environment requires the GB10 image, use that exact environment and
+   record the deviation from this suggested command; never relax a guard merely
+   to make the campaign start.
+9. Independently recompute every summary, interval, support flag, and C1 result
+   from retained raw rows. Verify dimensions, paired row identity, finite
+   positive MSEs, exact eligible/ineligible accounting, deterministic sub-seeds,
+   cycle-nullspace residuals, random-basis orthogonality, selected ridge alpha,
+   and oracle numerical tolerance. Preserve all failures.
+10. Commit the immutable result before interpretive manuscript edits. Never
+    rerun with another seed block because the result is surprising or weak.
+
+If fewer than 30 seeds are eligible, the campaign is a frozen design failure:
+write and commit the failure artifact, make no confirmatory claims, and design a
+new prospective protocol. If a numerical or implementation fault occurs, retain
+the failed artifact/log, diagnose without looking selectively at successful
+outcomes, amend the protocol transparently, and use a wholly new untouched seed
+block.
+
+### 9.2 Expected result schema and audit invariants
+
+The v2 JSON should contain, at minimum:
+
+- schema/version and frozen configuration;
+- protocol, runner, generator, lock, design-commit, and execution-commit hashes;
+- environment and clean-worktree provenance;
+- all 36 candidate seed records, including explicit ineligibility/failure rows;
+- per eligible seed: topology dimensions, all derived sub-seeds, per-arm MSE,
+  log-ratios, nullspace/orthogonality diagnostics, ridge choice, C1 replicate
+  defects and MSEs, and analytic-oracle error;
+- the seven fixed primary summaries with estimate, standard error, one-sided
+  adjusted bound, critical value, direction, threshold, and support decision;
+- descriptive optimizer comparison and exact paired-sign sensitivities;
+- C1 Fisher-z summaries and back-transformed correlations;
+- an audit block whose values are recomputable from raw rows.
+
+All ratios must be computed within the same seed and shared data realization.
+Use base-10 logarithms throughout. Never treat 36 training examples or 12 C1
+replicates as independent inferential units; topology/generator seed is the
+unit. Never substitute a 95% two-sided interval for a one-sided Bonferroni bound.
+
+### 9.3 Mathematical interpretation to preserve
+
+Let `A_* = W_*^T = B2`, let `S = ker(B1)`, and let `P_S` be the Euclidean
+orthogonal projector onto `S`. Every column of `A_*` lies in `S`. Therefore, for
+any estimated `A`, Pythagoras gives the exact identity
+
+```text
+||P_S A - A_*||_F^2
+  = ||A - A_*||_F^2 - ||(I - P_S) A||_F^2.
+```
+
+For isotropic noiseless test predictors this is also the reduction in expected
+prediction squared error, up to the output-averaging convention. This identity
+explains the useful information supplied by `B1`; it does not make the classical
+projection or constrained least squares a novel algorithm.
+
+The observed boundary defect is a spectrally weighted version of the removable
+off-cycle component. If `sigma_min+` is the smallest nonzero singular value of
+`B1`, then
+
+```text
+sigma_min+^2 ||(I-P_S)A||_F^2
+  <= ||B1 A||_F^2
+  <= sigma_max(B1)^2 ||(I-P_S)A||_F^2.
+```
+
+Consequently the soft objective is graph-Laplacian/Tikhonov shrinkage of
+cut-space directions; hard-cycle LS removes those directions; the random
+subspace control tests whether dimension reduction alone is enough; and ridge
+tests generic shrinkage. This is the clean mechanistic spine for the final
+paper. It also explains why raw defect magnitudes are comparable within a fixed
+topology but need spectral normalization before strong cross-topology claims.
+
+If this argument is added as a proposition, prove it in an appendix and verify
+the matrix orientations carefully. State that it is a standard orthogonal
+projection consequence, not a priority claim. Do not imply that hard-cycle LS
+is literally the Euclidean projection of ambient LS for an arbitrary finite
+design matrix; those estimators coincide only under additional geometry.
 
 ## 10. Manuscript interpretation after v2
 
