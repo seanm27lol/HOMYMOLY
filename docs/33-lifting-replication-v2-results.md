@@ -129,11 +129,25 @@ negative, 3 positive, 2 ties discarded, p = `4.649162292480469e-06`). This is
 the central comparison: under the frozen design the exact classical constraint
 is preferable to soft shrinkage of the same information.
 
+The H3 mechanism is dimensional. On the 10 eligible seeds whose cycle-feature
+dimension meets or exceeds the training budget (`F >= N_train = 16`), the hard
+and soft closed-form solutions are effectively tied (|log10 ratio| at most
+`7.93e-13`, mean `6.62e-14`): with enough features the frozen soft objective's
+solution already lies essentially in the cycle subspace. The observed advantage
+comes from the 23 lower-dimensional seeds (`F < 16`), whose mean log10 ratio is
+`−0.18278486886714318`. A tolerance-aware sign analysis that treats
+|log10 ratio| `<= 1e-10` as a tie remains strongly positive: 22 negative, 1
+positive, 10 ties, exact two-sided p = `5.7220458984375e-06`. The H3
+conclusion therefore survives with its mechanism stated precisely: the exact
+constraint pays off precisely when the cycle subspace is smaller than the
+training budget, which is the scarce-probe regime this design targets.
+
 **H4 supported.** The true cycle subspace improves over the dimension-matched
 seeded random subspace (geometric mean ratio `0.0005862327707089732`;
 descriptive 95% interval `[−3.7506683788961146, −2.7131914369786294]`; sign
-test 33 of 33). The advantage is specific to the cycle subspace, not to
-dimension reduction alone.
+test 33 of 33). The exact constraint outperformed the prespecified
+dimension-matched random-subspace control; one such control cannot exclude
+every alternative subspace family, so no more general specificity is claimed.
 
 **H5 not supported.** Training-only four-fold-selected ridge did not improve
 over ambient minimum-norm LS: the governing one-sided upper bound
@@ -244,33 +258,88 @@ recomputation and selected alpha on every seed, finite strictly positive MSEs
 entering every ratio, paired row identity, the oracle's zero error, and the
 audit block's declared recompute scope. No failure rows exist to preserve.
 
+That recomputation is now automated, not a one-off:
+`scripts/export_publication_evidence.py` revalidates the v2 record on every
+evidence export and fails closed otherwise. From the retained raw rows alone it
+recomputes every value listed above (agreeing to within `1e-12`, in practice
+far less), re-derives every sub-seed from the frozen SHA-256 schedule,
+re-evaluates the ridge per-alpha fold means and the frozen selection rule, and
+enforces the protocol's raw-row validity conditions, including the ones the
+executed runner omitted (below): the gelsd rank and strictly positive smallest
+singular value on all 495 least-squares fits, and strict positivity of every
+C1 replicate's raw boundary defect. It also binds the seal's full claim content
+(directions, thresholds, nulls, support rules) and stop rules verbatim, pins
+the sealed runner and execution revisions as constants, and — wherever the git
+object store is present — re-hashes the sealed runner bytes at the design
+commit and requires the design commit to be an ancestor of the recorded
+execution revision. The one check it cannot perform is the soft closed-form
+stationarity residual, whose inputs were not retained (first deviation below).
+A separate audit's independent reimplementation reproduced every estimate,
+standard error, bound, interval, support flag, and C1 value from the raw rows
+with discrepancies below `6e-17`, and all seven decisions matched.
+
 An independent re-derivation performed while writing this record reproduced
 every estimate, standard error, bound, interval, support flag, and C1 value
 from the raw rows with a maximum absolute discrepancy of `4.45e-16`.
 
 ## Known protocol deviations
 
-One retention gap, discovered by post-campaign validation: protocol
-[`docs/31`](31-independent-lifting-replication-protocol.md) §7.3 lists a
-per-seed closed-form stationarity residual
-`||M A_soft_closed − X_train.T Y_train||_F <= 1e-10 * ||X_train.T Y_train||_F`
-among the quantities the runner asserts and retains, but the executed runner
-did not retain or assert that per-seed residual for
-`soft_boundary_closed_form_lambda3` (the retained metadata carry the
-pseudoinverse effective rank, minimum singular value, and rank cutoff instead).
-The closed-form normal-equation residual was test-verified below `1e-10`
-pre-seal on hand fixtures and historical seed `20261001`, and the H3 endpoint
-depends only on the retained per-arm held-out MSEs, so no inferential value is
-affected. The gap is recorded transparently rather than repaired by rerunning:
-the seed block is sealed and consumed, and rerunning a sealed block over a
-retention gap is forbidden. No other deviation from the frozen protocol or
-seal is known; eligibility, stop rules, and the no-preview declaration were
-honored as written.
+Four gaps are known, all discovered by post-campaign validation and none
+affecting any inferential value.
+
+1. **Stationarity retention gap (previously disclosed).** Protocol
+   [`docs/31`](31-independent-lifting-replication-protocol.md) §7.3 lists a
+   per-seed closed-form stationarity residual
+   `||M A_soft_closed − X_train.T Y_train||_F <= 1e-10 * ||X_train.T Y_train||_F`
+   among the quantities the runner asserts and retains, but the executed runner
+   did not retain or assert that per-seed residual for
+   `soft_boundary_closed_form_lambda3` (the retained metadata carry the
+   pseudoinverse effective rank, minimum singular value, and rank cutoff
+   instead). The closed-form normal-equation residual was test-verified below
+   `1e-10` pre-seal on hand fixtures and historical seed `20261001`, and the H3
+   endpoint depends only on the retained per-arm held-out MSEs, so no
+   inferential value is affected. The gap is recorded transparently rather than
+   repaired by rerunning: the seed block is sealed and consumed, and rerunning
+   a sealed block over a retention gap is forbidden. The hardened runner now
+   asserts this residual against the frozen relative tolerance and retains it.
+2. **Least-squares rank and singular-value rejection was not enforced.**
+   Protocol §6 requires every gelsd call to fail the campaign unless the
+   returned rank is at least one and all returned singular values are finite
+   and strictly positive; the executed runner recorded both quantities but
+   asserted only finiteness of the smallest singular value. Post-hoc
+   verification of the retained metadata across all 495 gelsd fits (3
+   least-squares arms × 33 seeds plus 12 C1 replicates × 33 seeds) found the
+   minimum returned rank is 3 and the minimum smallest singular value is
+   `0.03859306138226727`, so the omitted rejection would never have fired. The
+   hardened runner asserts both conditions, and the automated validator
+   re-enforces them on the retained rows.
+3. **The C1 positivity guard omitted the raw boundary-defect vector.**
+   Protocol §9 makes any nonpositive or nonfinite C1 defect a whole-design
+   failure, and §10 requires retaining the legacy raw
+   `boundary_compatibility_defect_frobenius`; the executed runner guarded the
+   held-out MSE and the two projector defects but not the raw boundary defect.
+   Post-hoc verification found all 396 retained values finite and strictly
+   positive (minimum `0.03715218399403853`), so the omitted guard would never
+   have fired. The hardened runner includes the boundary-defect vector in the
+   guard, and the automated validator re-enforces it.
+4. **Seal verification bound only claim ids, not claim content.** The executed
+   runner's seal parsing verified the embedded hashes and the seven claim
+   identifiers but not the claims' directions, thresholds, nulls, or support
+   rules, the stop-rule text, or the design commit's ancestry. The committed
+   seal matches the frozen design exactly, so this weakened no v2 decision; the
+   hardened runner now requires verbatim equality of the full claim objects and
+   stop rules and requires the design commit to be a strict ancestor of HEAD,
+   and the automated validator binds the same content.
+
+Eligibility, stop rules, and the no-preview declaration were honored as
+written.
 
 ## Boundary
 
 - One synthetic generator family, 33 eligible seed-level replicates, one
-  training-set size (`N_train = 16`), one noise level (`sigma = 0.02`).
+  training-set size (`N_train = 16`), one noise level (`sigma = 0.02`), and
+  one soft-penalty weight (`lambda = 3.0`; the H3 contrast is at that frozen
+  weight only).
   Inference assumes seed-level exchangeability and quantifies Monte Carlo
   variation over the frozen seed mechanism, not uncertainty for real data.
 - Outcome-informed design: arms, directions, and weights were chosen with v1

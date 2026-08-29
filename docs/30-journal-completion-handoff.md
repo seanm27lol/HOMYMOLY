@@ -731,6 +731,11 @@ The v2 milestone described in §§6–11 was executed to completion:
    normal-equation residual was test-verified below 1e-10 pre-seal, no
    inferential value is affected, and the sealed block was not rerun over a
    retention gap. Recorded in docs/33 and docs/29 §9.
+   (Addendum: a later external audit found three further enforcement gaps —
+   gelsd rank/positivity rejection, the C1 raw-boundary-defect guard, and
+   seal-content verification — none of which would have fired on the retained
+   rows; see the corrected deviation list in docs/33 and the docs/29 §9.4
+   addendum.)
 7. Immutable result committed at
    `64a1c3bf6b5f824fb5990392f5efb08bf36559b9` before interpretive edits.
 8. Integration: evidence exporter validates and carries the v2 record

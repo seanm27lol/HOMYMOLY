@@ -301,3 +301,14 @@ test-verified below `1e-10` pre-seal on hand fixtures and historical seed
 sealed and consumed, rerunning over a retention gap is forbidden; the gap is
 recorded transparently here and in
 [`docs/33`](33-lifting-replication-v2-results.md) rather than repaired.
+
+**Addendum (2026-08-25 audit).** A later external audit found three further
+enforcement gaps in the executed runner beyond this retention gap: the gelsd
+rank/positivity rejection (protocol §6) and the raw boundary defect in the C1
+positivity guard (§9) were recorded but not asserted, and the seal parser bound
+only claim identifiers. Post-hoc verification confirmed none of the omitted
+conditions would have fired (minimum gelsd rank 3, minimum smallest singular
+value `0.03859306138226727`, minimum C1 boundary defect
+`0.03715218399403853`). The full corrected deviation list is in docs/33; the
+hardened runner and the automated recomputing validator now enforce every
+testable condition.

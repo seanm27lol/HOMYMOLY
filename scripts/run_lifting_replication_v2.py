@@ -69,6 +69,7 @@ RIDGE_GRID = (1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 10.0, 100.0)
 LSTSQ_RCOND = 1e-12
 PINV_RCOND = 1e-12
 BASIS_TOLERANCE = 1e-10
+STATIONARITY_RTOL = 1e-10
 C1_REPLICATES = 12
 PRIMARY_FAMILY_SIZE = 7
 PRIMARY_ALPHA = 0.05
@@ -187,6 +188,107 @@ _PRIMARY_CLAIM_DEFINITIONS = (
 PRIMARY_CLAIM_IDS = tuple(definition["id"] for definition in _PRIMARY_CLAIM_DEFINITIONS)
 
 
+def _seal_theta(definition: dict[str, Any]) -> str:
+    return (
+        "mean over eligible seeds of log10(MSE_"
+        f"{definition['numerator']} / MSE_{definition['denominator']})"
+    )
+
+
+# The exact seven claim objects the design seal must carry. The runner refuses
+# any seal whose claims drift in direction, threshold, null, reference arm, or
+# support rule from this frozen family -- a seal that binds only claim IDs
+# would let the estimand or decision rule be edited after sealing.
+_SEAL_PRIMARY_FAMILY: tuple[dict[str, Any], ...] = tuple(
+    {
+        "id": definition["id"],
+        "theta": _seal_theta(definition),
+        "null": null,
+        "alternative": alternative,
+        "reference_arm": definition["denominator"],
+        "bound_direction": definition["direction"],
+        "threshold": definition["threshold"],
+        "support_rule": support_rule,
+    }
+    for definition, null, alternative, support_rule in zip(
+        _PRIMARY_CLAIM_DEFINITIONS,
+        (
+            "theta >= 0",
+            "theta >= 0",
+            "theta >= 0",
+            "theta >= 0",
+            "theta >= 0",
+            "theta <= 0",
+            "theta <= log10(0.90)",
+        ),
+        (
+            "theta < 0",
+            "theta < 0",
+            "theta < 0",
+            "theta < 0",
+            "theta < 0",
+            "theta > 0",
+            "theta > log10(0.90) is rejected as futile for a 10% benefit",
+        ),
+        (
+            (
+                "supported iff the one-sided Bonferroni upper bound (alpha = 0.05/7, "
+                "Student-t critical value for the eligible n) is below 0"
+            ),
+            "supported iff the one-sided Bonferroni upper bound is below 0",
+            "supported iff the one-sided Bonferroni upper bound is below 0",
+            "supported iff the one-sided Bonferroni upper bound is below 0",
+            "supported iff the one-sided Bonferroni upper bound is below 0",
+            "supported iff the one-sided Bonferroni lower bound is above 0",
+            (
+                "bounded-benefit/futility supported iff the one-sided Bonferroni "
+                "lower bound exceeds log10(0.90) = -0.045757490560675115, ruling "
+                "out a benefit of 10% or more; this is not an equivalence test and "
+                "not noninferiority"
+            ),
+        ),
+        strict=True,
+    )
+)
+
+# The exact stop conditions the design seal must carry, in order.
+_SEAL_STOP_RULES: tuple[str, ...] = (
+    (
+        "Fewer than 30 eligible seeds (connected, F >= 3) among "
+        "20270101..20270136: frozen design failure, status "
+        "design_failure_insufficient_eligible, no fits, no confirmatory claims."
+    ),
+    (
+        "Any generator exception: campaign failure, status design_failure, before "
+        "any fit; the failing seed is recorded, never excluded."
+    ),
+    (
+        "Any rank, dimension, orthogonality, nullspace-membership, or stationarity "
+        "validation failure: whole-campaign failure, status design_failure; never "
+        "delete only the offending seed."
+    ),
+    (
+        "Any nonfinite or nonpositive C1 defect or held-out MSE: whole-campaign "
+        "failure, status design_failure; never add an epsilon after outcomes."
+    ),
+    (
+        "No outcome-dependent stopping: all 36 candidate seeds are attempted and "
+        "all failures preserved regardless of intermediate results."
+    ),
+    "Never rerun with another seed block because the result is surprising or weak.",
+    (
+        "Unexpected exception: status execution_failure with completed rows "
+        "preserved; KeyboardInterrupt: status interrupted."
+    ),
+    (
+        "Runner refuses to start on a dirty worktree, an existing output path, a "
+        "mismatched environment/lock/generator/protocol/runner fingerprint, a seal "
+        "record not committed at HEAD, available CUDA, more than one PyTorch "
+        "thread, or non-CPU non-float64 execution."
+    ),
+)
+
+
 class DesignFailureError(RuntimeError):
     """A frozen-design validation failure: the whole campaign is a design failure."""
 
@@ -278,6 +380,37 @@ def _git_checked(project_root: Path, *args: str) -> str:
         detail = result.stderr.strip() or "unknown git error"
         raise RuntimeError(f"stop condition: git {' '.join(args)} failed: {detail}")
     return result.stdout.strip()
+
+
+def _git_require_design_ancestry(project_root: Path, design_commit: str) -> None:
+    """Require the sealed design commit to be a strict ancestor of HEAD.
+
+    The seal is committed immediately after the design commit, so a design
+    commit that is missing from HEAD's ancestry -- or equals HEAD -- means the
+    recorded lineage does not match the repository being executed.
+    """
+
+    head = _git_checked(project_root, "rev-parse", "HEAD")
+    if design_commit == head:
+        raise RuntimeError(
+            "stop condition: design seal design_commit must be a strict ancestor "
+            "of HEAD; the seal record is committed after the design commit"
+        )
+    result = subprocess.run(
+        ("git", "merge-base", "--is-ancestor", design_commit, "HEAD"),
+        cwd=project_root,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    if result.returncode == 1:
+        raise RuntimeError(
+            "stop condition: design seal design_commit is not an ancestor of HEAD"
+        )
+    if result.returncode != 0:
+        detail = result.stderr.strip() or "unknown git error"
+        raise RuntimeError(f"stop condition: git merge-base failed: {detail}")
 
 
 def _environment_provenance(project_root: Path) -> dict[str, Any]:
@@ -433,24 +566,30 @@ def _load_seal(project_root: Path, seal_relative: str) -> dict[str, Any]:
         raise RuntimeError(
             "stop condition: design seal stop_rules must be a nonempty list"
         )
+    if seal["stop_rules"] != list(_SEAL_STOP_RULES):
+        raise RuntimeError(
+            "stop condition: design seal stop_rules differ from the runner's "
+            "frozen stop conditions"
+        )
     family = seal["primary_family"]
     if not isinstance(family, list) or len(family) != PRIMARY_FAMILY_SIZE:
         raise RuntimeError(
             "stop condition: design seal primary_family must list exactly the "
             "seven frozen claims"
         )
-    claim_ids = []
     for claim in family:
         if not isinstance(claim, dict) or not isinstance(claim.get("id"), str):
             raise RuntimeError(  # noqa: TRY004 - stop conditions use RuntimeError
                 "stop condition: every design seal primary_family entry needs a "
                 "string id"
             )
-        claim_ids.append(claim["id"])
-    if set(claim_ids) != set(PRIMARY_CLAIM_IDS):
+    # The seal binds the complete frozen claim objects -- theta, null,
+    # alternative, reference arm, bound direction, threshold, and support rule --
+    # not merely the claim identifiers.
+    if family != list(_SEAL_PRIMARY_FAMILY):
         raise RuntimeError(
-            "stop condition: design seal primary_family ids differ from the "
-            "runner's seven frozen claim ids"
+            "stop condition: design seal primary_family differs from the "
+            "runner's seven frozen claim objects"
         )
     if not isinstance(seal["output_path"], str) or not seal["output_path"]:
         raise RuntimeError("stop condition: design seal output_path must be a string")
@@ -539,6 +678,9 @@ def _preflight(
     environment = _environment_provenance(project_root)
     execution = _execution_environment()
     revision = _git_checked(project_root, "rev-parse", "HEAD")
+    # Lineage, not just content: the sealed design commit must sit in HEAD's
+    # ancestry so the seal cannot name an unrelated or fabricated commit.
+    _git_require_design_ancestry(project_root, seal_record["design_commit"])
     return {
         "git_revision": revision,
         "git_status": status,
@@ -806,8 +948,15 @@ def _lstsq_gelsd(design: Tensor, target: Tensor) -> tuple[Tensor, dict[str, Any]
 
     result = torch.linalg.lstsq(design, target, rcond=LSTSQ_RCOND, driver="gelsd")
     min_singular_value = float(result.singular_values.min())
-    if not math.isfinite(min_singular_value):
-        raise DesignFailureError("gelsd returned a non-finite singular value")
+    if not math.isfinite(min_singular_value) or min_singular_value <= 0:
+        raise DesignFailureError(
+            "gelsd returned a non-finite or nonpositive smallest singular value: "
+            f"{min_singular_value}"
+        )
+    if int(result.rank) < 1:
+        raise DesignFailureError(
+            f"gelsd returned a numerical rank below one: {int(result.rank)}"
+        )
     metadata = {
         "driver": "gelsd",
         "rcond": LSTSQ_RCOND,
@@ -981,10 +1130,27 @@ def _soft_boundary_closed_form_lambda3(
     train_rows = int(train_x.shape[0])
     scale = SOFT_BOUNDARY_WEIGHT * train_rows / int(boundary_1.shape[0])
     system = train_x.mT @ train_x + scale * (boundary_1.mT @ boundary_1)
-    coefficients = torch.linalg.pinv(system, rcond=PINV_RCOND) @ (train_x.mT @ train_y)
+    right_hand_side = train_x.mT @ train_y
+    coefficients = torch.linalg.pinv(system, rcond=PINV_RCOND) @ right_hand_side
     singular_values = torch.linalg.svdvals(system)
     cutoff = PINV_RCOND * float(singular_values.max())
     effective_rank = int((singular_values > cutoff).sum().item())
+    # Frozen stationarity assertion of protocol section 7.3: the normal equation
+    # is consistent by construction, so a residual above the frozen relative
+    # tolerance indicates an implementation fault and fails the whole design.
+    stationarity_residual = float(
+        torch.linalg.matrix_norm(system @ coefficients - right_hand_side)
+    )
+    stationarity_bound = STATIONARITY_RTOL * float(
+        torch.linalg.matrix_norm(right_hand_side)
+    )
+    if not math.isfinite(stationarity_residual) or (
+        stationarity_residual > stationarity_bound
+    ):
+        raise DesignFailureError(
+            "soft closed-form stationarity residual "
+            f"{stationarity_residual} exceeds the frozen bound {stationarity_bound}"
+        )
     return FittedMatrix(
         matrix=coefficients.mT.detach().clone(),
         metadata={
@@ -995,6 +1161,9 @@ def _soft_boundary_closed_form_lambda3(
             "pinv_effective_rank": effective_rank,
             "pinv_rank_cutoff": cutoff,
             "pinv_min_singular_value": float(singular_values.min()),
+            "stationarity_residual_frobenius": stationarity_residual,
+            "stationarity_bound_frobenius": stationarity_bound,
+            "stationarity_relative_tolerance": STATIONARITY_RTOL,
         },
     )
 
@@ -1256,9 +1425,10 @@ def _evaluate_c1(sample: Any, topology_seed: int) -> dict[str, Any]:
                 "metadata": evaluated.metadata,
             }
         )
-    # Every held-out MSE and both defect vectors must be finite and strictly
-    # positive; otherwise C1 is undefined and the whole campaign fails. No
-    # epsilon floor is ever substituted after observing outcomes.
+    # Every held-out MSE and every defect vector -- including the legacy raw
+    # boundary defect -- must be finite and strictly positive; otherwise C1 is
+    # undefined and the whole campaign fails. No epsilon floor is ever
+    # substituted after observing outcomes.
     vectors = {
         "held-out MSE": [row["held_out_mse"] for row in rows],
         "cycle-projector defect": [
@@ -1266,6 +1436,9 @@ def _evaluate_c1(sample: Any, topology_seed: int) -> dict[str, Any]:
         ],
         "matched-random-subspace defect": [
             row["matched_random_subspace_defect_frobenius"] for row in rows
+        ],
+        "boundary defect": [
+            row["boundary_compatibility_defect_frobenius"] for row in rows
         ],
     }
     for label, values in vectors.items():

@@ -10,80 +10,37 @@ Phillips Exeter Academy · ORCID
 ## Abstract
 
 Moving data between structured representations — graphs, cell complexes, sheaves
-— can lose information, and homological algebra supplies exact tools for measuring
-what a map destroys. It is natural to hope that related constraints can also
-*improve* a learned transformation when used as training objectives. We study
-two different tasks: selection of a genuine degree-preserving chain map on an
-annulus, and a primary continuous edge-to-cycle-coordinate lifting. The latter
-fits `W: R^E -> R^F`; its transpose is a candidate degree-2 differential, not a
-chain map between complexes. We compare an exact cycle-subspace constraint, a
-differentiable boundary-of-boundary penalty, and two motivated surrogates.
-Their behavior differs, and cheap analytic diagnostics
-illuminate the observed differences.
-
-The primary evidence is a **sealed untouched-seed, outcome-informed,
-same-generator-family replication**. Its protocol and a machine-readable design
-seal were committed and pushed to the private remote before any of the 36
-declared seeds was instantiated; 33 seeds were eligible, each a joint
-topology/data/noise realization, and we fit one separate map per topology. The
-hypotheses, arms, directions, and weights were chosen after earlier outcomes on
-the same family were known, so this is not an independent-lab or
-independent-generator replication and not a pristine preregistration; the seed
-block itself was never previewed. Six of the seven prespecified claims are
-supported at one-sided Bonferroni `alpha = 0.05/7`. Exact least squares
-restricted to the graph's cycle kernel improves held-out recovery over the
-graph-blind ambient minimum-norm solution (one-sided upper bound −1.328 on the
-paired `log10` ratio) and over the closed-form solution of the soft
-boundary-penalty objective at its frozen weight (upper bound −0.048; a modest
-geometric-mean MSE ratio of 0.746). The soft penalty's earlier improvement over
-the graph-blind Adam reference replicates on this disjoint block (upper bound
-−1.251). The gain is specific to the cycle subspace — a dimension-matched
-random subspace is far worse (upper bound −2.572) — while training-only
-cross-validated ridge shows no detected improvement over ambient minimum-norm
-least squares, and its frozen claim is not supported. Graph-derived
-cycle-subspace information is therefore valuable for this scarce-probe
-system-identification task, and the exact classical constraint is preferable to
-soft shrinkage of the same information at the frozen weight; the soft penalty
-is a differentiable approximation, not a superior method.
-
-The same campaign replicates harm from a **singular-value cone surrogate**,
-`exp(−2·σ_min(W))` (one-sided lower bound +0.086), and bounds any benefit of an
-**RTD-inspired normalized pairwise-distance surrogate** below 10% of
-geometric-mean held-out MSE — a bounded-benefit/futility result at the
-prespecified margin `log10(0.90)`, not a noninferiority or equivalence
-conclusion. These are not mapping-cone homology and the
-published RTD/SRTD statistic, respectively. In a prespecified off-path
-secondary analysis — descriptive, outside the decision family — the
-cycle-projector defect covaries positively with held-out error across
-independent training/noise realizations while a dimension-matched
-random-subspace defect does not (paired Fisher-z contrast +1.088, unadjusted
-95% interval [+0.887, +1.289]); this is association, not causation.
-
-An earlier same-family campaign, prospectively locked but carrying a disclosed
-sum-versus-mean implementation deviation, found the same soft-penalty direction
-on 29 eligible seeds; the two campaigns are never pooled.
-We identify two distinct mechanisms. In a second setting — selection among a
-fixed family of twelve maps on a cellular annulus — every **hard decoded map** is
-a chain isomorphism and therefore a quasi-isomorphism. Exact cone acyclicity cannot
-distinguish those twelve vertices: the cone-only model identifies at chance while
-all 6,000 hard decoded predictions have acyclic cones. Its differentiable
-soft-mixture objective can vary during training, so this is a limitation of the
-hard certificate, not a proof that the optimization signal is constant. In the
-continuous-lifting setting the singular-value surrogate monotonically rewards
-inflating the smallest singular value beyond its ground-truth value and imposed a
-harmful bias here. These mechanisms were identified retrospectively during the
-post-campaign audit. They require no fitting and are proposed as screens for
-future objectives, but they were not prospective checks for the reported
-campaigns and are neither necessary nor sufficient conditions for improved
-finite-sample prediction.
-
-We do not claim that homological structure teaches a model. We claim that
-graph-derived cycle-subspace information, recoverable from the observed input,
-measurably improves scarce-probe identification of an edge-to-cycle lifting on
-this synthetic family, and that an exact classical constraint on that subspace
-outperforms soft shrinkage of the same information here. The tested cone- and
-RTD-inspired surrogates do not improve this task; the singular-value surrogate
-harms it.
+— can lose information, and homological algebra supplies exact tools for
+measuring what a map destroys. We ask whether related constraints can also
+*improve* a learned transformation, studying a continuous edge-to-cycle lifting
+`W: R^E -> R^F`; a secondary chain-map selection task on an annulus serves as a
+contrast case, where the exact cone-acyclicity certificate is constant across
+the candidate family and cannot distinguish its twelve maps. The primary
+evidence is a **sealed untouched-seed, outcome-informed, same-generator-family
+replication**: the protocol and a machine-readable design seal were committed
+before any of the 36 declared seeds was instantiated; 33 seeds were eligible,
+each a joint topology/data/noise realization with one map fitted per topology.
+Six of seven prespecified claims are supported at one-sided Bonferroni
+`alpha = 0.05/7`. Exact least squares restricted to the graph's cycle kernel
+improves held-out recovery over graph-blind ambient minimum-norm least squares
+(one-sided upper bound −1.328 on the paired `log10` ratio) and over the
+closed-form solution of the soft boundary-penalty objective at its frozen weight
+(upper bound −0.048; geometric-mean MSE ratio 0.746); it also outperformed the
+prespecified dimension-matched random-subspace control (upper bound −2.572).
+The soft penalty's earlier improvement over graph-blind Adam replicates on this
+disjoint block (upper bound −1.251). Training-only cross-validated ridge shows
+no detected improvement and its frozen claim is not supported; a singular-value
+surrogate replicates harm (lower bound +0.086); and any benefit of an
+RTD-inspired surrogate is bounded below 10% of geometric-mean held-out MSE — a
+bounded-benefit/futility result at the prespecified margin `log10(0.90)`, not
+noninferiority or equivalence. In a prespecified descriptive off-path analysis,
+the cycle-projector defect covaries positively with held-out error across
+independent training/noise realizations while the random-subspace control defect
+does not (paired Fisher-z contrast +1.088, unadjusted 95% interval
+[+0.887, +1.289]); this is association, not causation. The design is
+outcome-informed and single-family — not an independent-lab or
+independent-generator replication — and the evidence comes from one synthetic
+generator, one training-set size, one noise level, and one soft-penalty weight.
 
 ## 1. Introduction
 
@@ -614,8 +571,8 @@ jointly interval-estimated. After execution, every primary summary was
 independently recomputed from the retained raw rows (maximum absolute
 discrepancy at most `1e-13`, summation-order roundoff), and an independent
 re-derivation reproduced every estimate, bound, and support flag to
-`4.45e-16`. One retention gap found by that validation is disclosed in §9 and
-in the full result record,
+`4.45e-16`. The retention and enforcement gaps found by that validation are
+disclosed in §9 and in the full result record,
 [`docs/33`](33-lifting-replication-v2-results.md).
 
 ## 7. Results
@@ -692,17 +649,27 @@ over the closed-form solution of the same frozen soft objective, with optimizer
 confounding removed by construction: geometric mean ratio
 `0.745769272372031` — real but modest — descriptive interval
 `[−0.18951209171471245, −0.06527893761520454]`, sign test 28 negative, 3
-positive, 2 ties discarded (p = `4.649162292480469e-06`). Under the frozen
+positive, 2 ties discarded (p = `4.649162292480469e-06`). The mechanism is
+dimensional: on the 10 eligible seeds with cycle-feature dimension at least the
+training budget (`F >= N_train = 16`) the two solutions are effectively tied
+(|log10 ratio| at most `7.93e-13`), and the advantage is carried by the 23
+lower-dimensional seeds (mean log10 ratio `−0.18278486886714318`); a
+tolerance-aware sign analysis treating |log10 ratio| `<= 1e-10` as a tie remains
+strongly positive (22 negative, 1 positive, 10 ties; p =
+`5.7220458984375e-06`). Under the frozen
 design the exact classical constraint is preferable to soft shrinkage of the
-same `B1`-derived information. The soft penalty is a differentiable
+same `B1`-derived information, and the payoff concentrates exactly where the
+cycle subspace is smaller than the training budget. The soft penalty is a differentiable
 approximation to that constraint, not a new superior method, and constrained
 least squares is classical (§3), not a novel algorithm.
 
-**H4 establishes specificity.** The true cycle subspace improves over the
-dimension-matched seeded random subspace: geometric mean ratio
-`0.0005862327707089732`, descriptive interval
-`[−3.7506683788961146, −2.7131914369786294]`, sign test 33 of 33. The advantage
-is specific to the cycle subspace, not to dimension reduction alone.
+**H4 establishes specificity against the prespecified control.** The true cycle
+subspace improves over the dimension-matched seeded random subspace: geometric
+mean ratio `0.0005862327707089732`, descriptive interval
+`[−3.7506683788961146, −2.7131914369786294]`, sign test 33 of 33. The exact
+constraint thus outperformed the prespecified dimension-matched random-subspace
+control; a single such control cannot exclude every alternative subspace family,
+so we do not claim a more general specificity.
 
 **H5 is not supported, exactly as frozen.** Training-only four-fold-selected
 ridge did not improve over ambient minimum-norm least squares: the governing
@@ -829,7 +796,7 @@ decoded predictions while identification remains at chance. It does not show
 that the differentiable cone proxy was constant during training, and it supplies
 no analogous constancy proof for the RTD-style loss.
 
-### 7.6 Specificity: the cycle subspace, not dimension reduction or generic shrinkage
+### 7.6 Specificity: the cycle subspace against the prespecified controls
 
 Earlier exploratory notes report ridge, random-subspace, and nonlinear-link
 checks, but no generating script or machine-readable result for those analyses
@@ -837,15 +804,17 @@ is preserved in the publication evidence. Their quantitative values are
 therefore excluded from this paper. The frozen, machine-recorded
 matched-control campaign this question required is the sealed v2 replication of
 §7.2, and it resolves the question in both directions. H4 establishes that the
-true cycle subspace improves over a dimension-matched seeded random subspace:
-the gain is specific to the cycle subspace, not to dimension reduction alone.
-H5 — frozen, and not supported — finds no detected benefit from training-only
+true cycle subspace outperformed the prespecified dimension-matched
+random-subspace control; one such control cannot exclude every alternative
+subspace family, so we do not claim a more general specificity. H5 — frozen,
+and not supported — finds no detected benefit from training-only
 four-fold-selected ridge over ambient minimum-norm least squares under this
 design. H3 locates the remaining margin: the exact cycle constraint improves on
 even the closed-form soft penalty, by a modest geometric-mean ratio of
-`0.745769272372031`. The historical campaign's improvement over the unpenalized
-fit was therefore not merely generic shrinkage, and its soft penalty is not the
-best use of the same `B1`-derived information.
+`0.745769272372031`, concentrated in the 23 seeds whose cycle-feature dimension
+is below the training budget. The historical campaign's improvement over the
+unpenalized fit was therefore not merely generic shrinkage, and its soft penalty
+is not the best use of the same `B1`-derived information.
 
 ### 7.7 Routing: a flawed accuracy endpoint and a separate compute result
 
@@ -969,7 +938,8 @@ in underdetermined system identification.
 
 - **One synthetic linear lifting family.** 29 eligible generator seeds in the
   historical campaign and 33 in the sealed v2 replication, one training-set
-  size (`N_train = 16`), and one noise level (`sigma = 0.02`). Nothing
+  size (`N_train = 16`), one noise level (`sigma = 0.02`), and one soft-penalty
+  weight (`lambda = 3.0`). Nothing
   transfers automatically to real data, unseen generator families, unseen
   topologies, or nonlinear transformations.
 - **Seed-level inference.** Each primary replicate jointly instantiates topology,
@@ -1003,12 +973,18 @@ in underdetermined system identification.
 - **Protocol implementation deviation.** The runner used an elementwise mean
   where frozen protocol 27 wrote a Frobenius sum. The result is not a pristine
   protocol replication.
-- **V2 retention gap.** The executed v2 runner did not retain or assert the
-  per-seed closed-form stationarity residual that protocol 31 §7.3 lists; the
-  residual was test-verified below `1e-10` before the seal, the affected
-  endpoint depends only on retained per-arm held-out MSEs, and rerunning a
-  sealed, consumed seed block is forbidden, so the gap is disclosed in docs/33
-  rather than repaired.
+- **V2 protocol-implementation gaps.** The executed v2 runner did not retain or
+  assert the per-seed closed-form stationarity residual that protocol 31 §7.3
+  lists; the residual was test-verified below `1e-10` before the seal, the
+  affected endpoint depends only on retained per-arm held-out MSEs, and
+  rerunning a sealed, consumed seed block is forbidden, so the gap is disclosed
+  in docs/33 rather than repaired. Post-campaign audit found three further
+  enforcement gaps that likewise did not fire: the gelsd rank/positivity
+  rejection, the raw boundary defect in the C1 positivity guard, and full
+  seal-content verification. Post-hoc checks confirmed all omitted conditions
+  hold on the retained rows (minimum gelsd rank 3, minimum singular value
+  `0.0386`, minimum C1 boundary defect `0.0372`); the runner is hardened and
+  the automated validator now re-enforces each testable condition.
 - **Optimizer confounding in the soft penalty's finite-step form.** Finite-step
   Adam does not reach the closed-form penalized optimum (per-seed solution gap
   mean `0.8556475807071382`, maximum `4.005285286298402`), so part of the soft
@@ -1082,8 +1058,8 @@ ambient minimum-norm solution (H2) and over the closed-form soft boundary
 penalty at its frozen weight (H3, by a modest geometric-mean ratio of
 `0.745769272372031`); the soft penalty improves over the graph-blind ambient
 Adam reference (H1), replicating the historical campaign's direction on an
-untouched block; the gain is specific to the true cycle subspace against a
-dimension-matched random subspace (H4); the singular-value cone surrogate's
+untouched block; the exact constraint outperformed the prespecified
+dimension-matched random-subspace control (H4); the singular-value cone surrogate's
 harm replicates (H6); and any benefit of the RTD-inspired surrogate is bounded
 below 10% of geometric-mean held-out MSE (H7, a bounded-benefit/futility result
 at the prespecified margin `log10(0.90)`). The frozen ridge claim (H5) is not
@@ -1176,11 +1152,15 @@ machine-readable design seal
 (`docs/32-independent-lifting-replication-seal.json`), the dedicated runner
 (`scripts/run_lifting_replication_v2.py`), and the result
 (`results/campaigns/lifting-replication-v2.json`). Whenever the bundle is
-rebuilt, the exporter revalidates that record's sealed lineage — the seal
-schema, every embedded hash against the actual file bytes, the pinned design
-commit, the eligibility accounting, and the sealed seven-claim family — and
-fails closed on any mismatch; `--verify-only` re-hashes every bundle file, the
-v2 record included, against the manifest.
+rebuilt, the exporter revalidates that record: the seal schema and its full
+claim content and stop rules, every embedded hash, the pinned design and
+execution commits (including commit ancestry where the git object store is
+present), the eligibility accounting, and — recomputed independently from the
+retained raw rows — every published estimate, standard error, bound, support
+decision, sign test, C1 correlation and Fisher-z summary, descriptive
+diagnostic, and audit-block mean, together with the protocol's raw-row validity
+conditions. It fails closed on any mismatch; `--verify-only` re-hashes every
+bundle file, the v2 record included, against the manifest.
 
 Corruption reports are exported as per-batch derivatives: the `per_example` array
 is dropped and the `per_batch` array — the unit of analysis — retained. This is
