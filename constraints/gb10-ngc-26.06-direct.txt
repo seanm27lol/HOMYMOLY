@@ -3,7 +3,7 @@
 # replace them from PyPI. An exported artifact bundle records the complete
 # resolved distribution inventory for each promoted result set.
 networkx==3.6.1
-PyYAML==6.0.3
+PyYAML==6.0.4
 tensorboard==2.21.0
 
 # Optional `molecular` extra, verified on ARM64/GB10.
